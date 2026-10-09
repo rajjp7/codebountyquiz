@@ -906,6 +906,11 @@ class Track1Manager {
       this.stagesUnlocked = data.stagesUnlocked || { 1: true, 2: false, 3: false, 4: false };
       this.stagesCompleted = data.stagesCompleted || { 1: false, 2: false, 3: false };
       this.currentStage = data.currentStage || 1;
+      this.isTimeUp = false;
+
+      // Remove lock banner if present
+      const banner = document.getElementById('tr1-time-up-banner');
+      if (banner) banner.remove();
 
       if (this.attempt) {
         this.updateStudentHeader(this.attempt.student_name, this.attempt.student_id, this.attempt.batch, this.attempt.lab);
@@ -914,13 +919,16 @@ class Track1Manager {
       this.startRoundTimer(this.startTime);
 
       // Restore Stage 1
-      if (data.stage1Bridges && data.stage1Bridges.length > 0) {
-        if (this.hashiEngine) {
+      if (this.hashiEngine) {
+        this.hashiEngine.setInteractive(true);
+        if (data.stage1Bridges && data.stage1Bridges.length > 0) {
           this.hashiEngine.loadBridges(data.stage1Bridges);
-          this.updateStage1Status();
         } else {
-          this._pendingBridges = data.stage1Bridges;
+          this.hashiEngine.reset(true);
         }
+        this.updateStage1Status();
+      } else {
+        this._pendingBridges = data.stage1Bridges || [];
       }
 
       // Restore Stage 2
@@ -937,11 +945,11 @@ class Track1Manager {
         this.renderBirdPool();
         this.renderLaunchSlots();
       }
-      if (data.damageInput) {
+      if (data.damageInput !== undefined) {
         const dmgEl = document.getElementById('tr1-input-damage');
         if (dmgEl) dmgEl.value = data.damageInput;
       }
-      if (data.pinInput) {
+      if (data.pinInput !== undefined) {
         const pinEl = document.getElementById('tr1-input-vault-pin');
         if (pinEl) pinEl.value = data.pinInput;
       }
@@ -963,6 +971,93 @@ class Track1Manager {
     }
   }
 
+  resetForNewAttempt(studentName, studentId, batch, lab, attemptId) {
+    this.attempt = {
+      id: attemptId || `att_tr1_${Date.now()}`,
+      student_name: studentName,
+      student_id: studentId,
+      batch,
+      lab
+    };
+    this.isTimeUp = false;
+
+    // Remove lock banner if present
+    const banner = document.getElementById('tr1-time-up-banner');
+    if (banner) banner.remove();
+
+    // Re-enable toolbar buttons
+    ['tr1-hashi-undo', 'tr1-hashi-redo', 'tr1-hashi-reset', 'tr1-hashi-guides'].forEach(id => {
+      const b = document.getElementById(id);
+      if (b) { b.disabled = false; b.style.opacity = '1'; b.style.cursor = 'pointer'; }
+    });
+
+    // Reset Stage 1 Hashi engine
+    if (this.hashiEngine) {
+      this.hashiEngine.setInteractive(true);
+      this.hashiEngine.reset(true);
+      this.updateStage1Status();
+    }
+    this._pendingBridges = [];
+
+    // Reset Stage 2 Pig Fortress
+    this.pigsClassification = {
+      Minion: null,
+      Corporal: null,
+      Foreman: null,
+      King: null,
+      Helmet: null
+    };
+    document.querySelectorAll('.pig-toggle-btn').forEach(btn => {
+      btn.disabled = false;
+      btn.style.cursor = 'pointer';
+      btn.classList.remove('active');
+    });
+    this.launchOrder = [];
+    this.renderBirdPool();
+    this.renderLaunchSlots();
+    const pinInput = document.getElementById('tr1-input-vault-pin');
+    if (pinInput) { pinInput.disabled = false; pinInput.readOnly = false; pinInput.value = ''; }
+    const damageInput = document.getElementById('tr1-input-damage');
+    if (damageInput) { damageInput.disabled = false; damageInput.readOnly = false; damageInput.value = ''; }
+    this.recalculateScoring();
+
+    // Reset Stage 3 25 Officers
+    this.officerGrid = new Array(25).fill(null);
+    this.selectedOfficer = null;
+    this.draggedOfficer = null;
+    this.renderOfficerBank();
+    this.renderOfficerGrid();
+    this.checkOfficerConflicts();
+    const passcode = document.getElementById('tr1-input-officer-passcode');
+    if (passcode) { passcode.disabled = false; passcode.readOnly = false; passcode.value = ''; }
+    document.querySelectorAll('.officer-palette-btn').forEach(b => {
+      b.disabled = false;
+      b.style.cursor = 'pointer';
+    });
+
+    // Re-enable verification buttons
+    ['tr1-btn-verify-stage1', 'tr1-btn-verify-stage2', 'tr1-btn-verify-stage3', 'tr1-btn-final-submit'].forEach(id => {
+      const btn = document.getElementById(id);
+      if (btn) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+      }
+    });
+
+    // Reset stages state
+    this.stagesUnlocked = { 1: true, 2: false, 3: false, 4: false };
+    this.stagesCompleted = { 1: false, 2: false, 3: false };
+    this.currentStage = 1;
+    this.startTime = Date.now();
+
+    this.updateStudentHeader(studentName, studentId, batch, lab);
+    this.updateStepperUI();
+    this.switchStage(1);
+    this.startRoundTimer(this.startTime);
+    this.saveProgress();
+  }
+
   startOrResumeAttempt(studentName, studentId, batch, lab, attemptId) {
     this.attempt = {
       id: attemptId,
@@ -975,14 +1070,7 @@ class Track1Manager {
 
     const restored = this.restoreProgress(attemptId);
     if (!restored) {
-      this.startTime = Date.now();
-      this.stagesUnlocked = { 1: true, 2: false, 3: false, 4: false };
-      this.stagesCompleted = { 1: false, 2: false, 3: false };
-      this.currentStage = 1;
-      this.saveProgress();
-      this.startRoundTimer(this.startTime);
-      this.updateStepperUI();
-      this.switchStage(1);
+      this.resetForNewAttempt(studentName, studentId, batch, lab, attemptId);
       window.app?.showToast(`Joined FY Track as ${studentName}! 30-minute timer started.`, 'success');
     } else {
       window.app?.showToast(`Welcome back, ${studentName}! Progress restored.`, 'info');

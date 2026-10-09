@@ -75,6 +75,7 @@ class PowerupsManager {
   saveState() {
     try {
       const state = {
+        attemptId: this.attemptId,
         questionsSolved: this.questionsSolved,
         unlockedPool: this.unlockedPool,
         selectedPowerups: Array.from(this.selectedPowerups),
@@ -82,19 +83,24 @@ class PowerupsManager {
         lockedAt: this.lockedAt,
         sabotageTarget: this.sabotageTarget
       };
-      localStorage.setItem('hashi_powerups_state', JSON.stringify(state));
+      const key = this.attemptId ? `hashi_powerups_state_${this.attemptId}` : 'hashi_powerups_state';
+      localStorage.setItem(key, JSON.stringify(state));
     } catch (e) {
       console.warn('Could not save powerups state:', e);
     }
   }
 
-  restoreState() {
+  restoreState(attemptId = null) {
     try {
-      const raw = localStorage.getItem('hashi_powerups_state');
-      if (!raw) return;
+      const curId = attemptId || this.attemptId;
+      if (!curId) return false;
+      const key = `hashi_powerups_state_${curId}`;
+      const raw = localStorage.getItem(key);
+      if (!raw) return false;
       const state = JSON.parse(raw);
-      if (!state) return;
+      if (!state) return false;
 
+      this.attemptId = curId;
       this.questionsSolved = state.questionsSolved || 0;
       this.unlockedPool = Array.isArray(state.unlockedPool) ? state.unlockedPool : [];
       this.selectedPowerups = new Set(Array.isArray(state.selectedPowerups) ? state.selectedPowerups : []);
@@ -103,12 +109,42 @@ class PowerupsManager {
       this.sabotageTarget = state.sabotageTarget || '';
 
       const inputSabotage = document.getElementById('input-sabotage-target');
-      if (inputSabotage && this.sabotageTarget) {
-        inputSabotage.value = this.sabotageTarget;
+      if (inputSabotage) {
+        inputSabotage.value = this.sabotageTarget || '';
+        inputSabotage.disabled = this.isConfirmed;
       }
+      this.renderPowerupsUI();
+      return true;
     } catch (e) {
       console.warn('Could not restore powerups state:', e);
+      return false;
     }
+  }
+
+  resetForNewAttempt(attemptId = null) {
+    this.attemptId = attemptId;
+    this.questionsSolved = 0;
+    this.unlockedPool = [];
+    this.selectedPowerups = new Set();
+    this.isConfirmed = false;
+    this.lockedAt = null;
+    this.sabotageTarget = '';
+
+    const inputSabotage = document.getElementById('input-sabotage-target');
+    if (inputSabotage) {
+      inputSabotage.value = '';
+      inputSabotage.disabled = false;
+    }
+    const confirmBtn = document.getElementById('btn-confirm-powerups');
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.innerHTML = '<span>Lock In Choices</span>';
+    }
+
+    if (attemptId) {
+      this.restoreState(attemptId);
+    }
+    this.renderPowerupsUI();
   }
 
   bindDOM() {

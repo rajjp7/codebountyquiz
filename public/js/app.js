@@ -244,15 +244,25 @@ class App {
 
     // 5. Initialize or Resume chosen track attempt with async polling resilience
     const initAttempt = (retries = 20) => {
+      if (window.powerupsManager?.resetForNewAttempt) {
+        window.powerupsManager.resetForNewAttempt(profile.attempt_id);
+      }
+
       if (profile.track === 'track1') {
         if (window.track1Manager) {
           window.track1Manager.startOrResumeAttempt(profile.name, profile.student_id, profile.college, profile.lab, profile.attempt_id);
+          if (window.track2Manager?.resetForNewAttempt) {
+            window.track2Manager.resetForNewAttempt('', '', '', '', null);
+          }
         } else if (retries > 0) {
           setTimeout(() => initAttempt(retries - 1), 50);
         }
       } else {
         if (window.track2Manager) {
           window.track2Manager.startOrResumeAttempt(profile.name, profile.student_id, profile.college, profile.lab, profile.attempt_id);
+          if (window.track1Manager?.resetForNewAttempt) {
+            window.track1Manager.resetForNewAttempt('', '', '', '', null);
+          }
         } else if (retries > 0) {
           setTimeout(() => initAttempt(retries - 1), 50);
         }
@@ -324,6 +334,18 @@ class App {
     localStorage.removeItem('round2_auth');
     this.currentRole = null;
     this.contestantProfile = null;
+
+    // Reset boards and state so previous user's bridges or answers do not persist
+    if (window.track1Manager?.resetForNewAttempt) {
+      window.track1Manager.resetForNewAttempt('', '', '', '', null);
+    }
+    if (window.track2Manager?.resetForNewAttempt) {
+      window.track2Manager.resetForNewAttempt('', '', '', '', null);
+    }
+    if (window.powerupsManager?.resetForNewAttempt) {
+      window.powerupsManager.resetForNewAttempt(null);
+    }
+
     this.openAuthModal(true);
   }
 

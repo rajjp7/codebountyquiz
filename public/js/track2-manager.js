@@ -1056,13 +1056,10 @@ class Track2Manager {
   }
 
   restoreProgress(attemptId) {
+    if (!attemptId) return false;
     try {
-      const key = attemptId ? `hashi_tr2_progress_${attemptId}` : `hashi_tr2_progress_${localStorage.getItem('hashi_tr2_latest_attempt_id')}`;
+      const key = `hashi_tr2_progress_${attemptId}`;
       let raw = localStorage.getItem(key);
-      if (!raw && attemptId) {
-        const latestId = localStorage.getItem('hashi_tr2_latest_attempt_id');
-        if (latestId) raw = localStorage.getItem(`hashi_tr2_progress_${latestId}`);
-      }
       if (!raw) return false;
 
       const data = JSON.parse(raw);
@@ -1073,6 +1070,11 @@ class Track2Manager {
       this.stagesUnlocked = data.stagesUnlocked || { 1: true, 2: false, 3: false, 4: false };
       this.stagesCompleted = data.stagesCompleted || { 1: false, 2: false, 3: false };
       this.currentStage = data.currentStage || 1;
+      this.isTimeUp = false;
+
+      // Remove time up banner if any
+      const banner = document.getElementById('tr2-time-up-banner');
+      if (banner) banner.remove();
 
       if (this.attempt) {
         this.updateStudentHeader(this.attempt.student_name, this.attempt.student_id, this.attempt.batch, this.attempt.lab);
@@ -1080,21 +1082,30 @@ class Track2Manager {
       this.updateStepperUI();
       this.startRoundTimer(this.startTime);
 
-      if (data.stage1Bridges && data.stage1Bridges.length > 0) {
-        if (this.hashiEngine) {
+      if (this.hashiEngine) {
+        this.hashiEngine.setInteractive(true);
+        if (data.stage1Bridges && data.stage1Bridges.length > 0) {
           this.hashiEngine.loadBridges(data.stage1Bridges);
-          this.updateStage1Status();
         } else {
-          this._pendingBridges = data.stage1Bridges;
+          this.hashiEngine.reset(true);
         }
+        this.updateStage1Status();
+      } else {
+        this._pendingBridges = data.stage1Bridges || [];
       }
 
       if (data.selectedDeepfake) {
         this.selectDeepfake(data.selectedDeepfake);
+      } else {
+        this.selectedDeepfake = null;
+        document.querySelectorAll('.deepfake-choice-btn').forEach(b => b.classList.remove('active'));
       }
+
       if (data.uploadOrder && Array.isArray(data.uploadOrder)) {
         this.uploadOrder = data.uploadOrder;
         this.renderVideoOrderSlots();
+      } else {
+        this.resetUploadOrder();
       }
 
       if (data.letterMapping) {
@@ -1104,9 +1115,9 @@ class Track2Manager {
       const sareeInput = document.getElementById('tr2-input-saree');
       const quotientInput = document.getElementById('tr2-input-quotient');
       const wordInput = document.getElementById('tr2-input-word');
-      if (sareeInput && data.saree_value !== undefined) sareeInput.value = data.saree_value;
-      if (quotientInput && data.quotient_value !== undefined) quotientInput.value = data.quotient_value;
-      if (wordInput && data.final_word !== undefined) wordInput.value = data.final_word;
+      if (sareeInput) sareeInput.value = data.saree_value !== undefined ? data.saree_value : '';
+      if (quotientInput) quotientInput.value = data.quotient_value !== undefined ? data.quotient_value : '';
+      if (wordInput) wordInput.value = data.final_word !== undefined ? data.final_word : '';
 
       this.updateCryptarithmDisplays();
       this.switchStage(this.currentStage);
@@ -1115,6 +1126,83 @@ class Track2Manager {
       console.error('Error restoring Track 2 progress:', e);
       return false;
     }
+  }
+
+  resetForNewAttempt(studentName, studentId, batch, lab, attemptId) {
+    this.attempt = {
+      id: attemptId || `att_tr2_${Date.now()}`,
+      student_name: studentName,
+      student_id: studentId,
+      batch,
+      lab
+    };
+    this.isTimeUp = false;
+
+    // Remove lock banner if present
+    const banner = document.getElementById('tr2-time-up-banner');
+    if (banner) banner.remove();
+
+    // Re-enable Hashi toolbar buttons
+    ['tr2-hashi-undo', 'tr2-hashi-redo', 'tr2-hashi-reset', 'tr2-hashi-guides'].forEach(id => {
+      const b = document.getElementById(id);
+      if (b) { b.disabled = false; b.style.opacity = '1'; b.style.cursor = 'pointer'; }
+    });
+
+    // Reset Stage 1 Hashi engine
+    if (this.hashiEngine) {
+      this.hashiEngine.setInteractive(true);
+      this.hashiEngine.reset(true);
+      this.updateStage1Status();
+    }
+    this._pendingBridges = [];
+
+    // Reset Stage 2
+    this.selectedDeepfake = null;
+    this.uploadOrder = [];
+    document.querySelectorAll('.deepfake-choice-btn').forEach(btn => {
+      btn.disabled = false;
+      btn.style.cursor = 'pointer';
+      btn.classList.remove('active');
+    });
+    document.querySelectorAll('.video-pool-chip').forEach(chip => {
+      chip.disabled = false;
+      chip.style.cursor = 'pointer';
+      chip.classList.remove('placed');
+    });
+    const resetOrderBtn = document.getElementById('tr2-btn-reset-order');
+    if (resetOrderBtn) { resetOrderBtn.disabled = false; resetOrderBtn.style.opacity = '1'; }
+    this.renderVideoOrderSlots();
+
+    // Reset Stage 3
+    this.letterMapping = { R: '', A: '', J: '', Z: '', E: '', O: '', C: '', G: '', N: '', S: '' };
+    this.renderLetterKeypad();
+    ['tr2-input-saree', 'tr2-input-quotient', 'tr2-input-word'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.disabled = false; el.readOnly = false; el.value = ''; }
+    });
+    this.updateCryptarithmDisplays();
+
+    // Re-enable verification buttons
+    ['tr2-btn-verify-stage1', 'tr2-btn-verify-stage2', 'tr2-btn-verify-stage3', 'tr2-btn-final-submit'].forEach(id => {
+      const btn = document.getElementById(id);
+      if (btn) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+      }
+    });
+
+    // Reset stages state
+    this.stagesUnlocked = { 1: true, 2: false, 3: false, 4: false };
+    this.stagesCompleted = { 1: false, 2: false, 3: false };
+    this.currentStage = 1;
+    this.startTime = Date.now();
+
+    this.updateStudentHeader(studentName, studentId, batch, lab);
+    this.updateStepperUI();
+    this.switchStage(1);
+    this.startRoundTimer(this.startTime);
+    this.saveProgress();
   }
 
   startOrResumeAttempt(studentName, studentId, batch, lab, attemptId) {
@@ -1129,14 +1217,7 @@ class Track2Manager {
 
     const restored = this.restoreProgress(attemptId);
     if (!restored) {
-      this.startTime = Date.now();
-      this.stagesUnlocked = { 1: true, 2: false, 3: false, 4: false };
-      this.stagesCompleted = { 1: false, 2: false, 3: false };
-      this.currentStage = 1;
-      this.saveProgress();
-      this.startRoundTimer(this.startTime);
-      this.updateStepperUI();
-      this.switchStage(1);
+      this.resetForNewAttempt(studentName, studentId, batch, lab, attemptId);
       window.app?.showToast(`Joined Track 2 as ${studentName}! 30-minute timer started.`, 'success');
     } else {
       window.app?.showToast(`Welcome back, ${studentName}! Progress restored.`, 'info');

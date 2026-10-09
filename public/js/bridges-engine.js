@@ -322,8 +322,13 @@ class BridgesEngine {
     return true;
   }
 
-  reset() {
-    if (this.options.readOnly || !this.options.interactive) return;
+  setInteractive(val) {
+    this.options.interactive = !!val;
+    this.options.readOnly = !val;
+  }
+
+  reset(force = false) {
+    if (!force && (this.options.readOnly || !this.options.interactive)) return;
     this.bridgeState.clear();
     this.undoStack = [];
     this.redoStack = [];
