@@ -98,9 +98,18 @@ class Track2Manager {
     });
 
     // Stage 3: Word, Saree, Quotient inputs
-    document.getElementById('tr2-input-saree')?.addEventListener('input', (e) => this.updateCryptarithmDisplays());
-    document.getElementById('tr2-input-quotient')?.addEventListener('input', (e) => this.updateCryptarithmDisplays());
-    document.getElementById('tr2-input-word')?.addEventListener('input', (e) => this.updateCryptarithmDisplays());
+    document.getElementById('tr2-input-saree')?.addEventListener('input', (e) => {
+      this.updateCryptarithmDisplays();
+      this.saveProgress();
+    });
+    document.getElementById('tr2-input-quotient')?.addEventListener('input', (e) => {
+      this.updateCryptarithmDisplays();
+      this.saveProgress();
+    });
+    document.getElementById('tr2-input-word')?.addEventListener('input', (e) => {
+      this.updateCryptarithmDisplays();
+      this.saveProgress();
+    });
 
     // Final Submit Button
     document.getElementById('tr2-btn-final-submit')?.addEventListener('click', () => {
@@ -110,46 +119,45 @@ class Track2Manager {
 
   async loadTrackData() {
     try {
-      const res = await fetch('/api/track2/info');
-      const data = await res.json();
-      this.config = data;
-      this.puzzle10x10 = data.puzzle10x10;
+      let data = null;
+      try {
+        const res = await fetch('/api/track2/info');
+        if (res.ok) {
+          data = await res.json();
+          localStorage.setItem('cached_track2_info', JSON.stringify(data));
+        }
+      } catch (netErr) {
+        console.warn('Network issue fetching Track 2 info, using cached if available:', netErr);
+      }
 
-      // Mount Hashi 10x10 board in Stage 1 container
-      this.initHashiBoard();
+      if (!data) {
+        const cached = localStorage.getItem('cached_track2_info');
+        if (cached) data = JSON.parse(cached);
+      }
 
-      // Setup Stage 2 Video slots
-      this.renderVideoOrderSlots();
+      if (data) {
+        this.config = data;
+        this.puzzle10x10 = data.puzzle10x10;
 
-      // Setup Stage 3 Letter-Digit keypad
-      this.renderLetterKeypad();
+        // Mount Hashi 10x10 board in Stage 1 container
+        this.initHashiBoard();
 
-      // Check stored attempt
-      const saved = localStorage.getItem('hashi_tr2_attempt');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          this.attempt = parsed;
-          this.startTimer();
-          this.updateStudentHeader(parsed.student_name, parsed.student_id, parsed.batch);
-        } catch (e) {}
+        // Setup Stage 2 Video slots
+        this.renderVideoOrderSlots();
+
+        // Setup Stage 3 Letter-Digit keypad
+        this.renderLetterKeypad();
+
+        // If pending bridges were restored before board was mounted
+        if (this._pendingBridges && this.hashiEngine) {
+          this.hashiEngine.loadBridges(this._pendingBridges);
+          delete this._pendingBridges;
+          this.updateStage1Status();
+        }
       }
     } catch (err) {
       console.error('Failed to load Track 2 data:', err);
     }
-  }
-
-  startNewAttempt(studentName, studentId, batch, lab, attemptId) {
-    this.attempt = {
-      id: attemptId || `att_${Date.now()}`,
-      student_name: studentName,
-      student_id: studentId,
-      batch: batch || 'Cohort 1',
-      lab: lab || 'Lab 1'
-    };
-    this.updateStudentHeader(studentName, studentId, (batch && lab) ? `${batch} • ${lab}` : (lab || batch || 'Active'));
-    this.initHashiBoard();
-    this.switchStage(1);
   }
 
   initHashiBoard() {
@@ -161,8 +169,18 @@ class Track2Manager {
         cellSize: 46,
         padding: 34,
         showGuides: true,
-        onStateChange: () => this.updateStage1Status()
+        onMove: () => this.saveProgress(),
+        onStateChange: () => {
+          this.updateStage1Status();
+          this.saveProgress();
+        }
       });
+
+      if (this._pendingBridges && this._pendingBridges.length > 0) {
+        this.hashiEngine.loadBridges(this._pendingBridges);
+        delete this._pendingBridges;
+      }
+      this.updateStage1Status();
     }
   }
 
@@ -240,6 +258,8 @@ class Track2Manager {
       this.updateSummaryReview();
     }
 
+    this.saveProgress();
+
     // Scroll to top of stage
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -272,6 +292,7 @@ class Track2Manager {
         window.soundManager?.playSuccess();
         window.app?.showToast('Stage 1 Solved! Stage 2 Unlocked: Time Cracker & Topic Finder added to pool.', 'success');
         window.powerupsManager?.updatePool(1, result.unlocked_powerups);
+        this.saveProgress();
         this.switchStage(2);
       } else {
         window.soundManager?.playError();
@@ -313,6 +334,7 @@ class Track2Manager {
         window.soundManager?.playSuccess();
         window.app?.showToast('Stage 2 Solved! Stage 3 Unlocked: Penalty Sweeper & Jumper Points added to pool.', 'success');
         window.powerupsManager?.updatePool(2, result.unlocked_powerups);
+        this.saveProgress();
         this.switchStage(3);
       } else {
         window.soundManager?.playError();
@@ -365,6 +387,7 @@ class Track2Manager {
         window.app?.triggerConfetti();
         window.app?.showToast('Stage 3 Conquered! All 3 Challenges Solved: Full Power-Up Pool Unlocked (5 of 5).', 'success');
         window.powerupsManager?.updatePool(3, result.unlocked_powerups);
+        this.saveProgress();
 
         setTimeout(() => {
           this.switchStage(4);
@@ -396,6 +419,7 @@ class Track2Manager {
     }
 
     this.checkStage2Progress();
+    this.saveProgress();
   }
 
   renderVideoOrderSlots() {
@@ -454,18 +478,21 @@ class Track2Manager {
     if (this.uploadOrder.length >= 5) return;
     this.uploadOrder.push(videoLetter);
     this.renderVideoOrderSlots();
+    this.saveProgress();
   }
 
   removeVideoFromSlot(index) {
     if (index >= 0 && index < this.uploadOrder.length) {
       this.uploadOrder.splice(index, 1);
       this.renderVideoOrderSlots();
+      this.saveProgress();
     }
   }
 
   resetUploadOrder() {
     this.uploadOrder = [];
     this.renderVideoOrderSlots();
+    this.saveProgress();
   }
 
   getOrdinal(n) {
@@ -543,6 +570,7 @@ class Track2Manager {
       sel.addEventListener('change', (e) => {
         this.letterMapping[letter] = e.target.value;
         this.updateCryptarithmDisplays();
+        this.saveProgress();
       });
 
       container.appendChild(card);
@@ -734,11 +762,12 @@ class Track2Manager {
     modal.style.display = 'flex';
   }
 
-  // Single 30-Minute Round Timer
-  startRoundTimer() {
+  // Single 30-Minute Round Timer (Resilient to Page Refresh)
+  startRoundTimer(savedStartTime = null) {
     if (this.timerInterval) clearInterval(this.timerInterval);
     const totalSeconds = 1800; // 30 minutes
-    const startTime = Date.now();
+    const startTime = savedStartTime || this.startTime || Date.now();
+    this.startTime = startTime;
 
     this.timerInterval = setInterval(() => {
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
@@ -779,10 +808,110 @@ class Track2Manager {
     if (nameEl) nameEl.textContent = name;
     if (idEl) idEl.textContent = id;
     if (batchEl) batchEl.textContent = `${batch}${lab ? ' • ' + lab : ''}`;
-    if (avatarEl) avatarEl.textContent = name.charAt(0).toUpperCase();
+    if (avatarEl) avatarEl.textContent = (name || 'T').charAt(0).toUpperCase();
   }
 
-  startNewAttempt(studentName, studentId, batch, lab, attemptId) {
+  saveProgress() {
+    if (!this.attempt || !this.attempt.id) return;
+    try {
+      const bridges = this.hashiEngine ? Array.from(this.hashiEngine.bridgeState.entries()).map(([k, cnt]) => {
+        const [u, v] = k.split('-').map(Number);
+        return { u, v, count: cnt };
+      }) : (this._pendingBridges || []);
+
+      const wordInput = document.getElementById('tr2-input-word');
+      const sareeInput = document.getElementById('tr2-input-saree');
+      const quotientInput = document.getElementById('tr2-input-quotient');
+
+      const data = {
+        attempt: this.attempt,
+        startTime: this.startTime || (Date.now() - (this.elapsedSeconds * 1000)),
+        stagesUnlocked: this.stagesUnlocked,
+        stagesCompleted: this.stagesCompleted,
+        currentStage: this.currentStage,
+        stage1Bridges: bridges,
+        selectedDeepfake: this.selectedDeepfake,
+        uploadOrder: this.uploadOrder,
+        letterMapping: this.letterMapping,
+        saree_value: sareeInput?.value || '',
+        quotient_value: quotientInput?.value || '',
+        final_word: wordInput?.value || ''
+      };
+
+      localStorage.setItem(`hashi_tr2_progress_${this.attempt.id}`, JSON.stringify(data));
+      localStorage.setItem('hashi_tr2_latest_attempt_id', this.attempt.id);
+      localStorage.setItem('hashi_tr2_attempt', JSON.stringify(this.attempt));
+    } catch (e) {
+      console.warn('Could not save Track 2 progress:', e);
+    }
+  }
+
+  restoreProgress(attemptId) {
+    try {
+      const key = attemptId ? `hashi_tr2_progress_${attemptId}` : `hashi_tr2_progress_${localStorage.getItem('hashi_tr2_latest_attempt_id')}`;
+      let raw = localStorage.getItem(key);
+      if (!raw && attemptId) {
+        const latestId = localStorage.getItem('hashi_tr2_latest_attempt_id');
+        if (latestId) raw = localStorage.getItem(`hashi_tr2_progress_${latestId}`);
+      }
+      if (!raw) return false;
+
+      const data = JSON.parse(raw);
+      if (!data) return false;
+
+      this.attempt = data.attempt || this.attempt;
+      this.startTime = data.startTime || Date.now();
+      this.stagesUnlocked = data.stagesUnlocked || { 1: true, 2: false, 3: false, 4: false };
+      this.stagesCompleted = data.stagesCompleted || { 1: false, 2: false, 3: false };
+      this.currentStage = data.currentStage || 1;
+
+      if (this.attempt) {
+        this.updateStudentHeader(this.attempt.student_name, this.attempt.student_id, this.attempt.batch, this.attempt.lab);
+      }
+      this.updateStepperUI();
+      this.startRoundTimer(this.startTime);
+
+      // Restore Stage 1 Bridges
+      if (data.stage1Bridges && data.stage1Bridges.length > 0) {
+        if (this.hashiEngine) {
+          this.hashiEngine.loadBridges(data.stage1Bridges);
+          this.updateStage1Status();
+        } else {
+          this._pendingBridges = data.stage1Bridges;
+        }
+      }
+
+      // Restore Stage 2
+      if (data.selectedDeepfake) {
+        this.selectDeepfake(data.selectedDeepfake);
+      }
+      if (data.uploadOrder && Array.isArray(data.uploadOrder)) {
+        this.uploadOrder = data.uploadOrder;
+        this.renderVideoOrderSlots();
+      }
+
+      // Restore Stage 3
+      if (data.letterMapping) {
+        this.letterMapping = { ...this.letterMapping, ...data.letterMapping };
+        this.renderLetterKeypad();
+      }
+      const sareeInput = document.getElementById('tr2-input-saree');
+      const quotientInput = document.getElementById('tr2-input-quotient');
+      const wordInput = document.getElementById('tr2-input-word');
+      if (sareeInput && data.saree_value !== undefined) sareeInput.value = data.saree_value;
+      if (quotientInput && data.quotient_value !== undefined) quotientInput.value = data.quotient_value;
+      if (wordInput && data.final_word !== undefined) wordInput.value = data.final_word;
+
+      this.updateCryptarithmDisplays();
+      this.switchStage(this.currentStage);
+      return true;
+    } catch (e) {
+      console.error('Error restoring Track 2 progress:', e);
+      return false;
+    }
+  }
+
+  startOrResumeAttempt(studentName, studentId, batch, lab, attemptId) {
     this.attempt = {
       id: attemptId,
       student_name: studentName,
@@ -790,14 +919,26 @@ class Track2Manager {
       batch,
       lab
     };
-    this.stagesUnlocked = { 1: true, 2: false, 3: false, 4: false };
-    this.stagesCompleted = { 1: false, 2: false, 3: false };
-    localStorage.setItem('hashi_tr2_attempt', JSON.stringify(this.attempt));
     this.updateStudentHeader(studentName, studentId, batch, lab);
-    this.startRoundTimer();
-    this.updateStepperUI();
-    this.switchStage(1);
-    window.app?.showToast(`Joined Track 2 as ${studentName}! 30-minute timer started.`, 'success');
+
+    const restored = this.restoreProgress(attemptId);
+    if (!restored) {
+      this.startTime = Date.now();
+      this.stagesUnlocked = { 1: true, 2: false, 3: false, 4: false };
+      this.stagesCompleted = { 1: false, 2: false, 3: false };
+      this.currentStage = 1;
+      this.saveProgress();
+      this.startRoundTimer(this.startTime);
+      this.updateStepperUI();
+      this.switchStage(1);
+      window.app?.showToast(`Joined Track 2 as ${studentName}! 30-minute timer started.`, 'success');
+    } else {
+      window.app?.showToast(`Welcome back, ${studentName}! Progress restored.`, 'info');
+    }
+  }
+
+  startNewAttempt(studentName, studentId, batch, lab, attemptId) {
+    return this.startOrResumeAttempt(studentName, studentId, batch, lab, attemptId);
   }
 }
 

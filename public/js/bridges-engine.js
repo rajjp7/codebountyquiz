@@ -437,6 +437,20 @@ class BridgesEngine {
     return list;
   }
 
+  loadBridges(bridgeList) {
+    if (!Array.isArray(bridgeList)) return;
+    this.bridgeState.clear();
+    for (const b of bridgeList) {
+      if (!b || !b.count) continue;
+      const key = `${Math.min(b.u, b.v)}-${Math.max(b.u, b.v)}`;
+      if (this.edgeMap.has(key)) {
+        this.bridgeState.set(key, b.count);
+      }
+    }
+    this.updateVisualState();
+    this.checkCompletion();
+  }
+
   // Calculate connected components for group tinting
   getConnectedComponents() {
     const adj = new Map();

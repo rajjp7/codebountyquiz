@@ -68,7 +68,47 @@ class PowerupsManager {
 
   init() {
     this.bindDOM();
+    this.restoreState();
     this.renderPowerupsUI();
+  }
+
+  saveState() {
+    try {
+      const state = {
+        questionsSolved: this.questionsSolved,
+        unlockedPool: this.unlockedPool,
+        selectedPowerups: Array.from(this.selectedPowerups),
+        isConfirmed: this.isConfirmed,
+        lockedAt: this.lockedAt,
+        sabotageTarget: this.sabotageTarget
+      };
+      localStorage.setItem('hashi_powerups_state', JSON.stringify(state));
+    } catch (e) {
+      console.warn('Could not save powerups state:', e);
+    }
+  }
+
+  restoreState() {
+    try {
+      const raw = localStorage.getItem('hashi_powerups_state');
+      if (!raw) return;
+      const state = JSON.parse(raw);
+      if (!state) return;
+
+      this.questionsSolved = state.questionsSolved || 0;
+      this.unlockedPool = Array.isArray(state.unlockedPool) ? state.unlockedPool : [];
+      this.selectedPowerups = new Set(Array.isArray(state.selectedPowerups) ? state.selectedPowerups : []);
+      this.isConfirmed = !!state.isConfirmed;
+      this.lockedAt = state.lockedAt || null;
+      this.sabotageTarget = state.sabotageTarget || '';
+
+      const inputSabotage = document.getElementById('input-sabotage-target');
+      if (inputSabotage && this.sabotageTarget) {
+        inputSabotage.value = this.sabotageTarget;
+      }
+    } catch (e) {
+      console.warn('Could not restore powerups state:', e);
+    }
   }
 
   bindDOM() {
@@ -90,6 +130,7 @@ class PowerupsManager {
     // Sabotage target input
     document.getElementById('input-sabotage-target')?.addEventListener('input', (e) => {
       this.sabotageTarget = e.target.value;
+      this.saveState();
     });
   }
 
@@ -112,6 +153,7 @@ class PowerupsManager {
       }
     }
 
+    this.saveState();
     this.renderCapsuleBadges();
     this.renderPowerupsUI();
 
@@ -206,6 +248,7 @@ class PowerupsManager {
 
     if (this.selectedPowerups.has(powerupId)) {
       this.selectedPowerups.delete(powerupId);
+      this.saveState();
     } else {
       if (this.selectedPowerups.size >= 2) {
         window.app?.showToast('You can only select exactly 2 power-ups! Deselect one first.', 'warning');
@@ -213,6 +256,7 @@ class PowerupsManager {
         return;
       }
       this.selectedPowerups.add(powerupId);
+      this.saveState();
       window.soundManager?.playPlace();
     }
 
@@ -287,6 +331,7 @@ class PowerupsManager {
       if (data.success || data.locked) {
         this.isConfirmed = true;
         this.lockedAt = data.locked_at || new Date().toISOString();
+        this.saveState();
 
         window.soundManager?.playFanfare();
         window.app?.triggerConfetti();
@@ -301,6 +346,7 @@ class PowerupsManager {
       // Offline fallback lock
       this.isConfirmed = true;
       this.lockedAt = new Date().toISOString();
+      this.saveState();
       window.app?.showToast('Power-ups locked locally!', 'info');
       this.renderPowerupsUI();
     }

@@ -102,7 +102,21 @@ class App {
         this.applyContestantSession(profile);
         this.showToast(`Welcome ${name}! Track locked to ${track === 'track1' ? 'FY Track' : 'Track 2'}.`, 'success');
       } catch (err) {
-        alert('Registration Error: ' + err.message);
+        console.warn('Network issue during round2 start, activating offline session:', err);
+        const fallbackAttemptId = `att_offline_${Date.now()}`;
+        const fallbackStudentId = `stu_offline_${Date.now()}`;
+        const profile = {
+          role: 'contestant',
+          name,
+          college,
+          lab,
+          track,
+          student_id: fallbackStudentId,
+          attempt_id: fallbackAttemptId
+        };
+        localStorage.setItem('round2_auth', JSON.stringify(profile));
+        this.applyContestantSession(profile);
+        this.showToast(`Welcome ${name}! Session active (Progress auto-saved in browser).`, 'info');
       }
     });
 
@@ -164,7 +178,10 @@ class App {
     this.openAuthModal();
   }
 
-  openAuthModal() {
+  openAuthModal(force = false) {
+    if (!force && localStorage.getItem('round2_auth')) {
+      return;
+    }
     const modal = document.getElementById('modal-auth-gateway');
     if (modal) modal.classList.add('open');
   }
@@ -225,12 +242,23 @@ class App {
     this.closeAuthModal();
     this.switchTab('quiz');
 
-    // 5. Initialize chosen track attempt
-    if (profile.track === 'track1') {
-      window.track1Manager?.startNewAttempt(profile.name, profile.student_id, profile.college, profile.lab, profile.attempt_id);
-    } else {
-      window.track2Manager?.startNewAttempt(profile.name, profile.student_id, profile.college, profile.lab, profile.attempt_id);
-    }
+    // 5. Initialize or Resume chosen track attempt with async polling resilience
+    const initAttempt = (retries = 20) => {
+      if (profile.track === 'track1') {
+        if (window.track1Manager) {
+          window.track1Manager.startOrResumeAttempt(profile.name, profile.student_id, profile.college, profile.lab, profile.attempt_id);
+        } else if (retries > 0) {
+          setTimeout(() => initAttempt(retries - 1), 50);
+        }
+      } else {
+        if (window.track2Manager) {
+          window.track2Manager.startOrResumeAttempt(profile.name, profile.student_id, profile.college, profile.lab, profile.attempt_id);
+        } else if (retries > 0) {
+          setTimeout(() => initAttempt(retries - 1), 50);
+        }
+      }
+    };
+    initAttempt();
   }
 
   applyAdminSession() {
@@ -282,9 +310,15 @@ class App {
   }
 
   promptSwitchOrLogout() {
+    if (this.currentRole === 'contestant') {
+      if (!confirm('Are you sure you want to log out of your contestant session? (Your saved progress will remain stored in this browser)')) {
+        return;
+      }
+    }
     localStorage.removeItem('round2_auth');
     this.currentRole = null;
-    this.openAuthModal();
+    this.contestantProfile = null;
+    this.openAuthModal(true);
   }
 
   bindTrackSwitcher() {

@@ -57,40 +57,37 @@ class Track1Manager {
 
   async loadTrackData() {
     try {
-      const res = await fetch('/api/track1/info');
-      const data = await res.json();
-      this.config = data;
-      this.puzzleFY = data.puzzle;
+      let data = null;
+      try {
+        const res = await fetch('/api/track1/info');
+        if (res.ok) {
+          data = await res.json();
+          localStorage.setItem('cached_track1_info', JSON.stringify(data));
+        }
+      } catch (netErr) {
+        console.warn('Network issue fetching Track 1 info, using cached if available:', netErr);
+      }
 
-      this.initStage1Board();
-      this.initStage2UI();
-      this.initStage3Board();
-      this.updateStepperUI();
+      if (!data) {
+        const cached = localStorage.getItem('cached_track1_info');
+        if (cached) data = JSON.parse(cached);
+      }
+
+      if (data) {
+        this.config = data;
+        this.puzzleFY = data.puzzle;
+
+        this.initStage1Board();
+        this.initStage2UI();
+        this.initStage3Board();
+        this.updateStepperUI();
+      }
     } catch (err) {
       console.error('Failed to load Track 1 info:', err);
     }
   }
 
-  startNewAttempt(studentName, studentId, batch, lab, attemptId) {
-    this.attempt = {
-      id: attemptId || `att_${Date.now()}`,
-      student_name: studentName,
-      student_id: studentId,
-      batch: batch || 'Cohort 1',
-      lab: lab || 'Lab 1'
-    };
-    const nameEl = document.getElementById('tr1-display-student-name');
-    const idEl = document.getElementById('tr1-display-student-id');
-    const batchEl = document.getElementById('tr1-display-batch');
-    const avatarEl = document.getElementById('tr1-display-avatar');
-    if (nameEl) nameEl.textContent = studentName;
-    if (idEl) idEl.textContent = studentId;
-    if (batchEl) batchEl.textContent = (batch && lab) ? `${batch} • ${lab}` : (lab || batch || 'Active');
-    if (avatarEl) avatarEl.textContent = (studentName || 'F').charAt(0).toUpperCase();
 
-    this.initStage1Board();
-    this.switchStage(1);
-  }
 
   bindDOM() {
     // Stepper buttons
@@ -212,8 +209,20 @@ class Track1Manager {
       autoMarkSatisfied: true,
       interactive: true,
       soundEnabled: true,
-      onMove: () => this.updateStage1Status()
+      onMove: () => {
+        this.updateStage1Status();
+        this.saveProgress();
+      },
+      onStateChange: () => {
+        this.updateStage1Status();
+        this.saveProgress();
+      }
     });
+
+    if (this._pendingBridges && this._pendingBridges.length > 0) {
+      this.hashiEngine.loadBridges(this._pendingBridges);
+      this._pendingBridges = null;
+    }
 
     this.updateStage1Status();
   }
@@ -696,15 +705,100 @@ class Track1Manager {
     }
   }
 
-  startAttempt(attemptData) {
-    this.attempt = attemptData;
-    this.stagesUnlocked = { 1: true, 2: false, 3: false, 4: false };
-    this.stagesCompleted = { 1: false, 2: false, 3: false };
-    this.updateStepperUI();
-    this.switchStage(1);
+  saveProgress() {
+    if (!this.attempt || !this.attempt.id) return;
+    const progress = {
+      attempt: this.attempt,
+      startTime: this.startTime || Date.now(),
+      stagesUnlocked: this.stagesUnlocked,
+      stagesCompleted: this.stagesCompleted,
+      currentStage: this.currentStage || 1,
+      stage1Bridges: this.hashiEngine ? this.hashiEngine.serializeSolution() : (this._pendingBridges || []),
+      pigRoles: this.pigRoles || {},
+      launchOrder: this.launchOrder || [],
+      damageInput: document.getElementById('tr1-input-damage')?.value || '',
+      pinInput: document.getElementById('tr1-input-vault-pin')?.value || '',
+      officerGrid: this.officerGrid || []
+    };
+    try {
+      localStorage.setItem(`hashi_tr1_progress_${this.attempt.id}`, JSON.stringify(progress));
+      localStorage.setItem('hashi_tr1_latest_attempt_id', this.attempt.id);
+    } catch (e) {
+      console.warn('Failed to save Track 1 progress to localStorage', e);
+    }
   }
 
-  startNewAttempt(studentName, studentId, batch, lab, attemptId) {
+  restoreProgress(attemptId) {
+    if (!attemptId) return false;
+    const raw = localStorage.getItem(`hashi_tr1_progress_${attemptId}`);
+    if (!raw) return false;
+    try {
+      const data = JSON.parse(raw);
+      if (!data) return false;
+
+      this.attempt = data.attempt || this.attempt;
+      this.startTime = data.startTime || Date.now();
+      this.stagesUnlocked = data.stagesUnlocked || { 1: true, 2: false, 3: false, 4: false };
+      this.stagesCompleted = data.stagesCompleted || { 1: false, 2: false, 3: false };
+      this.currentStage = data.currentStage || 1;
+
+      if (this.attempt) {
+        this.updateStudentHeader(this.attempt.student_name, this.attempt.student_id, this.attempt.batch, this.attempt.lab);
+      }
+      this.updateStepperUI();
+      this.startRoundTimer(this.startTime);
+
+      // Restore Stage 1
+      if (data.stage1Bridges && data.stage1Bridges.length > 0) {
+        if (this.hashiEngine) {
+          this.hashiEngine.loadBridges(data.stage1Bridges);
+          this.updateStage1Status();
+        } else {
+          this._pendingBridges = data.stage1Bridges;
+        }
+      }
+
+      // Restore Stage 2
+      if (data.pigRoles) {
+        this.pigRoles = data.pigRoles;
+        Object.entries(this.pigRoles).forEach(([pig, type]) => {
+          document.querySelectorAll(`.pig-toggle-btn[data-pig="${pig}"]`).forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-type') === type);
+          });
+        });
+      }
+      if (data.launchOrder && Array.isArray(data.launchOrder)) {
+        this.launchOrder = data.launchOrder;
+        this.renderBirdPool();
+        this.renderLaunchSlots();
+      }
+      if (data.damageInput) {
+        const dmgEl = document.getElementById('tr1-input-damage');
+        if (dmgEl) dmgEl.value = data.damageInput;
+      }
+      if (data.pinInput) {
+        const pinEl = document.getElementById('tr1-input-vault-pin');
+        if (pinEl) pinEl.value = data.pinInput;
+      }
+      this.recalculateScoring();
+
+      // Restore Stage 3
+      if (data.officerGrid && Array.isArray(data.officerGrid)) {
+        this.officerGrid = data.officerGrid;
+        this.renderOfficerBank();
+        this.renderOfficerGrid();
+        this.checkOfficerConflicts();
+      }
+
+      this.switchStage(this.currentStage);
+      return true;
+    } catch (e) {
+      console.error('Error restoring Track 1 progress:', e);
+      return false;
+    }
+  }
+
+  startOrResumeAttempt(studentName, studentId, batch, lab, attemptId) {
     this.attempt = {
       id: attemptId,
       student_name: studentName,
@@ -712,14 +806,26 @@ class Track1Manager {
       batch,
       lab
     };
-    this.stagesUnlocked = { 1: true, 2: false, 3: false, 4: false };
-    this.stagesCompleted = { 1: false, 2: false, 3: false };
-    localStorage.setItem('hashi_tr1_attempt', JSON.stringify(this.attempt));
     this.updateStudentHeader(studentName, studentId, batch, lab);
-    this.startRoundTimer();
-    this.updateStepperUI();
-    this.switchStage(1);
-    window.app?.showToast(`Joined FY Track as ${studentName}! 30-minute timer started.`, 'success');
+
+    const restored = this.restoreProgress(attemptId);
+    if (!restored) {
+      this.startTime = Date.now();
+      this.stagesUnlocked = { 1: true, 2: false, 3: false, 4: false };
+      this.stagesCompleted = { 1: false, 2: false, 3: false };
+      this.currentStage = 1;
+      this.saveProgress();
+      this.startRoundTimer(this.startTime);
+      this.updateStepperUI();
+      this.switchStage(1);
+      window.app?.showToast(`Joined FY Track as ${studentName}! 30-minute timer started.`, 'success');
+    } else {
+      window.app?.showToast(`Welcome back, ${studentName}! Progress restored.`, 'info');
+    }
+  }
+
+  startNewAttempt(studentName, studentId, batch, lab, attemptId) {
+    return this.startOrResumeAttempt(studentName, studentId, batch, lab, attemptId);
   }
 
   updateStudentHeader(name, id, batch, lab) {
@@ -733,14 +839,15 @@ class Track1Manager {
     if (idEl) idEl.textContent = id;
     if (batchEl) batchEl.textContent = batch;
     if (labEl) labEl.textContent = lab || 'Lab 1';
-    if (avatarEl) avatarEl.textContent = name.charAt(0).toUpperCase();
+    if (avatarEl) avatarEl.textContent = (name || 'F').charAt(0).toUpperCase();
   }
 
-  // Single 30-Minute Round Timer
-  startRoundTimer() {
+  // Single 30-Minute Round Timer (Resilient to Page Refresh)
+  startRoundTimer(savedStartTime = null) {
     if (this.timerInterval) clearInterval(this.timerInterval);
     const totalSeconds = 1800; // 30 minutes
-    const startTime = Date.now();
+    const startTime = savedStartTime || this.startTime || Date.now();
+    this.startTime = startTime;
 
     this.timerInterval = setInterval(() => {
       const elapsed = Math.floor((Date.now() - startTime) / 1000);

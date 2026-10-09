@@ -92,6 +92,11 @@ class StudentQuiz {
         } catch (e) {}
       }
 
+      // Check if Round 2 session exists
+      if (localStorage.getItem('round2_auth')) {
+        return;
+      }
+
       // If no active session, show join modal
       this.showJoinModal();
     } catch (err) {
@@ -100,6 +105,7 @@ class StudentQuiz {
   }
 
   showJoinModal() {
+    if (localStorage.getItem('round2_auth')) return;
     if (window.app?.openAuthModal) {
       window.app.openAuthModal();
       return;
