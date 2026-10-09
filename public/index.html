@@ -56,10 +56,11 @@
       <div class="header-timer mono" id="header-global-timer" style="display: none;">30:00</div>
 
       <!-- Live Power-Up Capsule in Header -->
-      <button class="header-powerup-capsule btn-open-powerups" id="header-powerup-capsule" style="display: none;" title="View Unlocked Power-Ups Pool">
+      <button class="header-powerup-capsule btn-open-powerups" id="header-powerup-capsule" title="View Unlocked Power-Ups Pool">
         <span class="powerup-capsule-icon">⚡</span>
-        <span class="powerup-capsule-label">Power-Ups:</span>
+        <span class="powerup-capsule-label" id="header-capsule-text">Power-Ups:</span>
         <span class="live-powerup-pool-count mono">0/5</span>
+        <span class="header-capsule-badges" id="header-capsule-badges"></span>
       </button>
 
       <!-- User Profile / Session Badge -->
@@ -229,6 +230,10 @@
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                   <span>Clear</span>
                 </button>
+                <button class="toolbar-btn" id="tr1-btn-demo-solve" onclick="window.track1Manager?.solveHashiDemo()" title="Test with correct solution" style="color: #38bdf8;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  <span>Test Solution</span>
+                </button>
                 <button class="toolbar-btn" id="tr1-hashi-guides">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
                   <span>Guides</span>
@@ -255,10 +260,15 @@
             </div>
           </div>
 
+          <div class="live-stage-powerup-status" id="tr1-stage1-powerup-status">
+            <span class="live-stage-powerup-icon">⚡</span>
+            <span>Solving Stage 1 unlocks <strong>2 Power-Ups</strong> (Time Cracker + Topic Finder) in real time</span>
+          </div>
+
           <div class="stage-actions-row">
             <div></div>
             <button class="btn-primary" id="tr1-btn-verify-stage1" onclick="if(window.track1Manager){window.track1Manager.verifyStage1()}else{console.warn('Track 1 manager not ready')}">
-              <span>Verify & Continue to Stage 2</span>
+              <span>Verify & Unlock Next Stage →</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </button>
           </div>
@@ -442,12 +452,17 @@
             </div>
           </div>
 
+          <div class="live-stage-powerup-status" id="tr1-stage2-powerup-status">
+            <span class="live-stage-powerup-icon">⚡</span>
+            <span>Solving Stage 2 unlocks <strong>2 More Power-Ups</strong> (Penalty Sweeper + Jumper Points, 4/5 total)</span>
+          </div>
+
           <div class="stage-actions-row">
             <button class="btn-secondary" id="tr1-btn-back-to-stage1" onclick="window.track1Manager?.switchStage(1)">
               <span>Back to Stage 1</span>
             </button>
             <button class="btn-primary" id="tr1-btn-verify-stage2" onclick="if(window.track1Manager){window.track1Manager.verifyStage2()}else{console.warn('Track 1 manager not ready')}">
-              <span>Verify & Proceed to Stage 3</span>
+              <span>Verify & Unlock Stage 3 →</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </button>
           </div>
@@ -515,11 +530,16 @@
 
               <div>
                 <button type="button" class="btn-primary" id="tr1-btn-verify-stage3" style="padding: 0.65rem 1.25rem;" onclick="if(window.track1Manager){window.track1Manager.verifyStage3()}else{console.warn('Track 1 manager not ready')}">
-                  <span>Verify & Unlock Power-Ups</span>
+                  <span>Verify & Unlock Final Power-Up →</span>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </button>
               </div>
             </div>
+          </div>
+
+          <div class="live-stage-powerup-status" id="tr1-stage3-powerup-status">
+            <span class="live-stage-powerup-icon">💣</span>
+            <span>Solving Stage 3 unlocks the <strong>5th & Final Power-Up</strong> (Sweet Sabotage, full 5/5 pool)</span>
           </div>
 
           <div class="stage-actions-row">
@@ -708,6 +728,10 @@
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                   <span>Clear</span>
                 </button>
+                <button class="toolbar-btn" id="tr2-btn-demo-solve" onclick="window.track2Manager?.solveHashiDemo()" title="Test with correct solution" style="color: #38bdf8;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  <span>Test Solution</span>
+                </button>
                 <button class="toolbar-btn" id="tr2-hashi-guides">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
                   <span>Guides</span>
@@ -732,10 +756,15 @@
             </div>
           </div>
 
+          <div class="live-stage-powerup-status" id="tr2-stage1-powerup-status">
+            <span class="live-stage-powerup-icon">⚡</span>
+            <span>Solving Stage 1 unlocks <strong>2 Power-Ups</strong> (Time Cracker + Topic Finder) in real time</span>
+          </div>
+
           <div class="stage-actions-row">
             <div></div>
             <button class="btn-primary" id="tr2-btn-verify-stage1" onclick="if(window.track2Manager){window.track2Manager.verifyStage1()}else{console.warn('Track 2 manager not ready')}">
-              <span>Verify & Continue to Stage 2</span>
+              <span>Verify & Unlock Next Stage →</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </button>
           </div>
@@ -929,12 +958,17 @@
             </div>
           </div>
 
+          <div class="live-stage-powerup-status" id="tr2-stage2-powerup-status">
+            <span class="live-stage-powerup-icon">⚡</span>
+            <span>Solving Stage 2 unlocks <strong>2 More Power-Ups</strong> (Penalty Sweeper + Jumper Points, 4/5 total)</span>
+          </div>
+
           <div class="stage-actions-row">
             <button class="btn-secondary" id="tr2-btn-back-to-stage1" onclick="window.track2Manager?.switchStage(1)">
               <span>Back to Stage 1</span>
             </button>
             <button class="btn-primary" id="tr2-btn-verify-stage2" onclick="if(window.track2Manager){window.track2Manager.verifyStage2()}else{console.warn('Track 2 manager not ready')}">
-              <span>Verify & Proceed to Stage 3</span>
+              <span>Verify & Unlock Stage 3 →</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </button>
           </div>
@@ -1066,12 +1100,17 @@
             </div>
           </div>
 
+          <div class="live-stage-powerup-status" id="tr2-stage3-powerup-status">
+            <span class="live-stage-powerup-icon">💣</span>
+            <span>Solving Stage 3 unlocks the <strong>5th & Final Power-Up</strong> (Sweet Sabotage, full 5/5 pool)</span>
+          </div>
+
           <div class="stage-actions-row">
             <button class="btn-secondary" id="tr2-btn-back-to-stage2" onclick="window.track2Manager?.switchStage(2)">
               <span>Back to Stage 2</span>
             </button>
             <button class="btn-primary" id="tr2-btn-verify-stage3" onclick="if(window.track2Manager){window.track2Manager.verifyStage3()}else{console.warn('Track 2 manager not ready')}">
-              <span>Verify & Complete Track 2</span>
+              <span>Verify & Unlock Final Power-Up →</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </button>
           </div>
@@ -1808,14 +1847,14 @@
 
   <!-- Scripts -->
   <script src="js/audio.js"></script>
-  <script src="js/bridges-engine.js?v=20261009_v10"></script>
-  <script src="js/powerups-manager.js?v=20261009_v10"></script>
-  <script src="js/track1-manager.js?v=20261009_v10"></script>
-  <script src="js/track2-manager.js?v=20261009_v10"></script>
-  <script src="js/student-quiz.js?v=20261009_v10"></script>
-  <script src="js/leaderboard.js?v=20261009_v10"></script>
-  <script src="js/dataset-view.js?v=20261009_v10"></script>
-  <script src="js/admin-controls.js?v=20261009_v10"></script>
-  <script src="js/app.js?v=20261009_v10"></script>
+  <script src="js/bridges-engine.js?v=20261009_v11"></script>
+  <script src="js/powerups-manager.js?v=20261009_v11"></script>
+  <script src="js/track1-manager.js?v=20261009_v11"></script>
+  <script src="js/track2-manager.js?v=20261009_v11"></script>
+  <script src="js/student-quiz.js?v=20261009_v11"></script>
+  <script src="js/leaderboard.js?v=20261009_v11"></script>
+  <script src="js/dataset-view.js?v=20261009_v11"></script>
+  <script src="js/admin-controls.js?v=20261009_v11"></script>
+  <script src="js/app.js?v=20261009_v11"></script>
 </body>
 </html>

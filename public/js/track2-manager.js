@@ -152,6 +152,14 @@ class Track2Manager {
         onStateChange: () => {
           this.updateStage1Status();
           this.saveProgress();
+        },
+        onSolved: () => {
+          const btn = document.getElementById('tr2-btn-verify-stage1');
+          if (btn && !this.stagesCompleted[1]) {
+            btn.classList.add('pulse-ready');
+            btn.innerHTML = '<span>⚡ Board Solved! Click to Verify & Unlock 2 Power-Ups →</span>';
+          }
+          window.app?.showToast('🎉 All islands satisfied into 1 network! Click "Verify & Unlock" to claim your 2 Power-Ups!', 'success');
         }
       });
 
@@ -161,6 +169,12 @@ class Track2Manager {
       }
       this.updateStage1Status();
     }
+  }
+
+  solveHashiDemo() {
+    if (!this.hashiEngine || !this.puzzle10x10 || !this.puzzle10x10.solutionEdges) return;
+    this.hashiEngine.loadBridges(this.puzzle10x10.solutionEdges);
+    window.app?.showToast('Championship 10×10 solution loaded! Click "Verify & Unlock" to claim 2 Power-Ups.', 'success');
   }
 
   updateStage1Status() {
@@ -1227,6 +1241,18 @@ class Track2Manager {
       if (wordInput) wordInput.value = data.final_word !== undefined ? data.final_word : '';
 
       this.updateCryptarithmDisplays();
+
+      // Synchronize live power-up pool in real-time based on restored completed stages
+      let solvedCount = 0;
+      if (this.stagesCompleted[1]) solvedCount++;
+      if (this.stagesCompleted[2]) solvedCount++;
+      if (this.stagesCompleted[3]) solvedCount++;
+
+      if (window.powerupsManager) {
+        window.powerupsManager.attemptId = this.attempt?.id || attemptId;
+        window.powerupsManager.updatePool(solvedCount);
+      }
+
       this.switchStage(this.currentStage);
       return true;
     } catch (e) {

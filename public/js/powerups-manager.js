@@ -175,7 +175,7 @@ class PowerupsManager {
     const prevSolved = this.questionsSolved;
     this.questionsSolved = Math.max(this.questionsSolved, solvedCount);
 
-    if (unlockedIds) {
+    if (unlockedIds && Array.isArray(unlockedIds) && unlockedIds.length > 0) {
       this.unlockedPool = unlockedIds;
     } else {
       if (this.questionsSolved >= 3) {
@@ -266,14 +266,49 @@ class PowerupsManager {
       el.textContent = `${this.questionsSolved}/3`;
     });
 
+    // Top navbar capsule
     const headerCapsule = document.getElementById('header-powerup-capsule');
     if (headerCapsule) {
+      headerCapsule.style.display = 'inline-flex';
+      const labelEl = headerCapsule.querySelector('.powerup-capsule-label');
+      if (labelEl) {
+        labelEl.textContent = poolSize > 0 ? `${poolSize} Unlocked:` : 'Power-Ups:';
+      }
       if (poolSize > 0) {
         headerCapsule.classList.add('has-unlocked');
       } else {
         headerCapsule.classList.remove('has-unlocked');
       }
     }
+
+    // Live Strip Real-Time Badges in Track 1 and Track 2
+    document.querySelectorAll('.quiz-powerup-pool-strip').forEach(strip => {
+      const titleBox = strip.querySelector('.qps-title');
+      if (!titleBox) return;
+
+      let rtBadge = titleBox.querySelector('.qps-realtime-badge');
+      if (!rtBadge) {
+        rtBadge = document.createElement('span');
+        rtBadge.className = 'qps-realtime-badge';
+        titleBox.appendChild(rtBadge);
+      }
+
+      if (poolSize >= 5) {
+        rtBadge.className = 'qps-realtime-badge qps-realtime-ultimate';
+        rtBadge.innerHTML = '💣 5/5 Full Pool: Sweet Sabotage Ready!';
+        rtBadge.style.display = 'inline-flex';
+      } else if (poolSize >= 4) {
+        rtBadge.className = 'qps-realtime-badge';
+        rtBadge.innerHTML = '✨ 4 Unlocked: +Penalty Sweeper 🛡️ + Jumper Points 🚀';
+        rtBadge.style.display = 'inline-flex';
+      } else if (poolSize >= 2) {
+        rtBadge.className = 'qps-realtime-badge';
+        rtBadge.innerHTML = '✨ 2 Unlocked: Time Cracker ⚡ + Topic Finder 🔍';
+        rtBadge.style.display = 'inline-flex';
+      } else {
+        rtBadge.style.display = 'none';
+      }
+    });
 
     // Update live on-screen power-up chips on Track 1 and Track 2 portals
     document.querySelectorAll('.qps-chip').forEach(chip => {
@@ -292,6 +327,42 @@ class PowerupsManager {
         if (badge) {
           const reqStage = (pId === 'sweet_sabotage') ? 'Q3' : (['penalty_sweeper', 'jumper_points'].includes(pId) ? 'Q2' : 'Q1');
           badge.textContent = `🔒 ${reqStage}`;
+        }
+      }
+    });
+
+    // Update on-screen stage reward cards in Track 1 and Track 2
+    ['tr1', 'tr2'].forEach(prefix => {
+      const s1 = document.getElementById(`${prefix}-stage1-powerup-status`);
+      if (s1) {
+        if (poolSize >= 2) {
+          s1.className = 'live-stage-powerup-status lsp-unlocked';
+          s1.innerHTML = '<span class="lsp-icon">✅</span><span><strong>2 Power-Ups Unlocked in Real-Time:</strong> Time Cracker ⚡ + Topic Finder 🔍</span>';
+        } else {
+          s1.className = 'live-stage-powerup-status';
+          s1.innerHTML = '<span class="lsp-icon">⚡</span><span><strong>Reward on Solve:</strong> 2 Power-Ups Unlock into your Round 3 Pool (Time Cracker & Topic Finder)</span>';
+        }
+      }
+
+      const s2 = document.getElementById(`${prefix}-stage2-powerup-status`);
+      if (s2) {
+        if (poolSize >= 4) {
+          s2.className = 'live-stage-powerup-status lsp-unlocked';
+          s2.innerHTML = '<span class="lsp-icon">✅</span><span><strong>4 Power-Ups Unlocked:</strong> Penalty Sweeper 🛡️ + Jumper Points 🚀 (4/5 in Pool)</span>';
+        } else {
+          s2.className = 'live-stage-powerup-status';
+          s2.innerHTML = '<span class="lsp-icon">🛡️</span><span><strong>Reward on Solve:</strong> +2 Power-Ups Unlock (Penalty Sweeper & Jumper Points)</span>';
+        }
+      }
+
+      const s3 = document.getElementById(`${prefix}-stage3-powerup-status`);
+      if (s3) {
+        if (poolSize >= 5) {
+          s3.className = 'live-stage-powerup-status lsp-unlocked';
+          s3.innerHTML = '<span class="lsp-icon">💣</span><span><strong>All 5 Power-Ups Unlocked:</strong> Sweet Sabotage Ultimate Ready!</span>';
+        } else {
+          s3.className = 'live-stage-powerup-status';
+          s3.innerHTML = '<span class="lsp-icon">💣</span><span><strong>Reward on Solve:</strong> Final Ultimate Power-Up Unlocks: Sweet Sabotage (5/5 Pool)</span>';
         }
       }
     });
