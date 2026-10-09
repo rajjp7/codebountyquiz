@@ -610,7 +610,7 @@ class BridgesEngine {
           <text class="island-num" y="0.5" text-anchor="middle" dominant-baseline="central" font-family="var(--font-sans)" font-weight="600" font-size="${radius * 1.05}px" fill="var(--island-text)">${isl.number}</text>
 
           <!-- Degree Status Sub-Indicator Dot -->
-          <circle class="degree-badge" cx="${radius * 0.7}" cy="-${radius * 0.7}" r="3" fill="var(--text-primary)" style="display: none;" />
+          <circle class="degree-badge" cx="${radius * 0.72}" cy="-${radius * 0.72}" r="3.5" fill="var(--island-satisfied-border, #10b981)" stroke="var(--board-bg, #0f121a)" stroke-width="1.5" style="display: none;" />
         </g>
       `;
     }
@@ -690,24 +690,38 @@ class BridgesEngine {
         ring.setAttribute('stroke', 'transparent');
       }
 
-      // Degree satisfaction states
+      // Degree satisfaction states: Clean, Vibrant Emerald Green UI
+      g.classList.remove('satisfied', 'overflow', 'unsatisfied');
+
       if (deg === isl.number) {
+        g.classList.add('satisfied');
         body.setAttribute('fill', 'var(--island-satisfied-bg)');
-        body.setAttribute('stroke', 'var(--text-primary)');
-        body.setAttribute('stroke-width', '2');
-        text.setAttribute('fill', 'var(--island-satisfied-text)');
-        if (badge) badge.style.display = 'block';
+        body.setAttribute('stroke', 'var(--island-satisfied-border, #10b981)');
+        body.setAttribute('stroke-width', '2.5');
+        body.style.filter = 'drop-shadow(0 0 8px rgba(16, 185, 129, 0.55))';
+        text.setAttribute('fill', 'var(--island-satisfied-text, #34d399)');
+        text.style.fontWeight = '700';
+        if (badge) {
+          badge.setAttribute('fill', 'var(--island-satisfied-border, #10b981)');
+          badge.style.display = 'block';
+        }
       } else if (deg > isl.number) {
+        g.classList.add('overflow');
         body.setAttribute('fill', 'var(--island-overflow-bg)');
-        body.setAttribute('stroke', 'var(--rose-500)');
-        body.setAttribute('stroke-width', '2');
-        text.setAttribute('fill', 'var(--rose-500)');
+        body.setAttribute('stroke', 'var(--island-overflow-border, #ef4444)');
+        body.setAttribute('stroke-width', '2.5');
+        body.style.filter = 'drop-shadow(0 0 8px rgba(239, 68, 68, 0.55))';
+        text.setAttribute('fill', 'var(--island-overflow-text, #f87171)');
+        text.style.fontWeight = '700';
         if (badge) badge.style.display = 'none';
       } else {
+        g.classList.add('unsatisfied');
         body.setAttribute('fill', 'var(--island-bg)');
         body.setAttribute('stroke', 'var(--island-border)');
         body.setAttribute('stroke-width', '1.5');
+        body.style.filter = 'none';
         text.setAttribute('fill', 'var(--island-text)');
+        text.style.fontWeight = '600';
         if (badge) badge.style.display = 'none';
       }
     }

@@ -42,9 +42,14 @@
   --island-bg: #161a24;
   --island-border: #2c3244;
   --island-text: #f3f4f6;
-  --island-satisfied-bg: #1c2333;
-  --island-satisfied-text: #ffffff;
-  --island-overflow-bg: rgba(239, 68, 68, 0.15);
+  --island-satisfied-bg: rgba(16, 185, 129, 0.22);
+  --island-satisfied-border: #10b981;
+  --island-satisfied-text: #34d399;
+  --island-satisfied-glow: 0 0 10px rgba(16, 185, 129, 0.55);
+  --island-overflow-bg: rgba(239, 68, 68, 0.22);
+  --island-overflow-border: #ef4444;
+  --island-overflow-text: #f87171;
+  --island-overflow-glow: 0 0 10px rgba(239, 68, 68, 0.55);
   --bridge-color: #cbd5e1;
 
   --radius-xs: 4px;
@@ -82,9 +87,14 @@
   --island-bg: #f4f4f6;
   --island-border: #e2e4e9;
   --island-text: #090a0f;
-  --island-satisfied-bg: rgba(16, 185, 129, 0.1);
-  --island-satisfied-text: #059669;
-  --island-overflow-bg: rgba(244, 63, 94, 0.1);
+  --island-satisfied-bg: rgba(16, 185, 129, 0.16);
+  --island-satisfied-border: #059669;
+  --island-satisfied-text: #047857;
+  --island-satisfied-glow: 0 0 8px rgba(16, 185, 129, 0.35);
+  --island-overflow-bg: rgba(239, 68, 68, 0.16);
+  --island-overflow-border: #dc2626;
+  --island-overflow-text: #b91c1c;
+  --island-overflow-glow: 0 0 8px rgba(239, 68, 68, 0.35);
   --bridge-color: #18181b;
 
   --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.04), 0 10px 25px rgba(0, 0, 0, 0.05);
@@ -1979,6 +1989,65 @@ body {
   color: var(--text-tertiary);
   font-family: var(--font-sans);
   text-align: center;
+}
+
+/* Hashi SVG Island Status Aesthetics (Glow & Transitions) */
+.island-group {
+  cursor: pointer;
+  outline: none;
+}
+
+.island-body {
+  transition: fill 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              stroke 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              stroke-width 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.island-num {
+  transition: fill 0.22s ease, font-weight 0.22s ease;
+  user-select: none;
+  pointer-events: none;
+}
+
+.degree-badge {
+  transition: fill 0.22s ease, opacity 0.22s ease, transform 0.22s ease;
+  pointer-events: none;
+}
+
+/* Satisfied State: Bold Emerald Green with Ambient Backlight Glow */
+.island-group.satisfied .island-body {
+  fill: var(--island-satisfied-bg) !important;
+  stroke: var(--island-satisfied-border) !important;
+  stroke-width: 2.5px !important;
+  filter: drop-shadow(0 0 7px rgba(16, 185, 129, 0.55)) !important;
+}
+
+.island-group.satisfied .island-num {
+  fill: var(--island-satisfied-text) !important;
+  font-weight: 700 !important;
+}
+
+.island-group.satisfied .degree-badge {
+  fill: var(--island-satisfied-border) !important;
+  filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.8)) !important;
+}
+
+/* Overflow State: High-contrast Rose Red Alert */
+.island-group.overflow .island-body {
+  fill: var(--island-overflow-bg) !important;
+  stroke: var(--island-overflow-border) !important;
+  stroke-width: 2.5px !important;
+  filter: drop-shadow(0 0 7px rgba(239, 68, 68, 0.55)) !important;
+}
+
+.island-group.overflow .island-num {
+  fill: var(--island-overflow-text) !important;
+  font-weight: 700 !important;
+}
+
+.island-group.overflow .degree-badge {
+  display: none !important;
 }
 
 /* Stage Actions Row */

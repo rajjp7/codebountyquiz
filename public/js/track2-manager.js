@@ -191,7 +191,13 @@ class Track2Manager {
     if (statusText) {
       const pct = Math.round((satisfiedCount / totalCount) * 100);
       statusText.innerHTML = `${satisfiedCount}/${totalCount} Islands (${pct}%) • ${isFullyConnected ? 'Connected' : 'Connecting...'}`;
-      statusText.style.color = isFullyConnected && satisfiedCount === totalCount ? 'var(--text-primary)' : 'var(--text-secondary)';
+      if (isFullyConnected && satisfiedCount === totalCount && totalCount > 0) {
+        statusText.style.color = 'var(--emerald-500, #10b981)';
+      } else if (satisfiedCount > 0) {
+        statusText.style.color = 'var(--island-satisfied-text, #34d399)';
+      } else {
+        statusText.style.color = 'var(--text-secondary)';
+      }
     }
 
     this.updateStepperUI();

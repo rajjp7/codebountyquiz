@@ -233,8 +233,10 @@ class Track1Manager {
 
     const stats = this.hashiEngine.getStats();
     statusPill.textContent = `${stats.satisfied}/${stats.total} Islands Satisfied • ${stats.bridgesCount} Bridges`;
-    if (stats.satisfied === stats.total) {
-      statusPill.style.color = 'var(--text-primary)';
+    if (stats.satisfied === stats.total && stats.total > 0) {
+      statusPill.style.color = 'var(--emerald-500, #10b981)';
+    } else if (stats.satisfied > 0) {
+      statusPill.style.color = 'var(--island-satisfied-text, #34d399)';
     } else {
       statusPill.style.color = 'var(--text-secondary)';
     }
