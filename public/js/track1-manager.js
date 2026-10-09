@@ -255,7 +255,10 @@ class Track1Manager {
           btn.classList.add('pulse-ready');
           btn.innerHTML = '<span>⚡ Board Solved! Click to Verify & Unlock 2 Power-Ups →</span>';
         }
-        window.app?.showToast('🎉 All 24 islands satisfied into 1 network! Click "Verify & Unlock" to claim your 2 Power-Ups!', 'success');
+        if (window.powerupsManager) {
+          window.powerupsManager.updatePool(1, ['time_cracker', 'topic_finder']);
+        }
+        window.app?.showToast('🎉 All 24 islands satisfied! 2 Power-Ups Unlocked in Real Time (Time Cracker ⚡ + Topic Finder 🔍)!', 'success');
       }
     });
 
@@ -270,7 +273,10 @@ class Track1Manager {
   solveHashiDemo() {
     if (!this.hashiEngine || !this.puzzleFY || !this.puzzleFY.solutionEdges) return;
     this.hashiEngine.loadBridges(this.puzzleFY.solutionEdges);
-    window.app?.showToast('FY 10×10 solution loaded! Click "Verify & Unlock" to claim 2 Power-Ups.', 'success');
+    if (window.powerupsManager) {
+      window.powerupsManager.updatePool(1, ['time_cracker', 'topic_finder']);
+    }
+    window.app?.showToast('FY 10×10 solution loaded! 2 Power-Ups Unlocked in Real Time.', 'success');
   }
 
   updateStage1Status() {

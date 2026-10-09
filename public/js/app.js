@@ -247,10 +247,8 @@ class App {
     // 5. Initialize or Resume chosen track attempt with async polling resilience
     const initAttempt = (retries = 20) => {
       if (window.powerupsManager) {
-        const restored = window.powerupsManager.restoreState(profile.attempt_id);
-        if (!restored) {
-          window.powerupsManager.resetForNewAttempt(profile.attempt_id);
-        }
+        window.powerupsManager.attemptId = profile.attempt_id;
+        window.powerupsManager.restoreState(profile.attempt_id);
       }
 
       if (profile.track === 'track1') {

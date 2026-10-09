@@ -83,8 +83,10 @@ class PowerupsManager {
         lockedAt: this.lockedAt,
         sabotageTarget: this.sabotageTarget
       };
-      const key = this.attemptId ? `hashi_powerups_state_${this.attemptId}` : 'hashi_powerups_state';
-      localStorage.setItem(key, JSON.stringify(state));
+      if (this.attemptId) {
+        localStorage.setItem(`hashi_powerups_state_${this.attemptId}`, JSON.stringify(state));
+      }
+      localStorage.setItem('hashi_powerups_state', JSON.stringify(state));
     } catch (e) {
       console.warn('Could not save powerups state:', e);
     }
@@ -92,15 +94,16 @@ class PowerupsManager {
 
   restoreState(attemptId = null) {
     try {
-      const curId = attemptId || this.attemptId;
-      if (!curId) return false;
-      const key = `hashi_powerups_state_${curId}`;
-      const raw = localStorage.getItem(key);
+      const curId = attemptId || this.attemptId || localStorage.getItem('hashi_tr1_latest_attempt_id') || localStorage.getItem('hashi_tr2_latest_attempt_id');
+      let raw = curId ? localStorage.getItem(`hashi_powerups_state_${curId}`) : null;
+      if (!raw) {
+        raw = localStorage.getItem('hashi_powerups_state');
+      }
       if (!raw) return false;
       const state = JSON.parse(raw);
       if (!state) return false;
 
-      this.attemptId = curId;
+      this.attemptId = curId || state.attemptId || this.attemptId;
       this.questionsSolved = state.questionsSolved || 0;
       this.unlockedPool = Array.isArray(state.unlockedPool) ? state.unlockedPool : [];
       this.selectedPowerups = new Set(Array.isArray(state.selectedPowerups) ? state.selectedPowerups : []);
@@ -113,6 +116,7 @@ class PowerupsManager {
         inputSabotage.value = this.sabotageTarget || '';
         inputSabotage.disabled = this.isConfirmed;
       }
+      this.renderCapsuleBadges();
       this.renderPowerupsUI();
       return true;
     } catch (e) {
@@ -279,6 +283,14 @@ class PowerupsManager {
       } else {
         headerCapsule.classList.remove('has-unlocked');
       }
+
+      const badgesContainer = document.getElementById('header-capsule-badges');
+      if (badgesContainer) {
+        badgesContainer.innerHTML = this.unlockedPool.map(id => {
+          const item = this.allPowerups.find(p => p.id === id);
+          return `<span class="header-capsule-chip" title="${item?.name || id}" style="margin-left: 3px; font-size: 0.85rem;">${id === 'time_cracker' ? '⚡' : (id === 'topic_finder' ? '🔍' : (id === 'penalty_sweeper' ? '🛡️' : (id === 'jumper_points' ? '🚀' : '💣')))}</span>`;
+        }).join('');
+      }
     }
 
     // Live Strip Real-Time Badges in Track 1 and Track 2
@@ -318,15 +330,25 @@ class PowerupsManager {
       if (isUnlocked) {
         chip.classList.remove('chip-locked');
         chip.classList.add('chip-unlocked');
+        chip.style.opacity = '1';
+        chip.style.filter = 'none';
+        chip.style.borderColor = (pId === 'sweet_sabotage') ? '#f43f5e' : '#facc15';
         if (badge) {
           badge.textContent = (pId === 'sweet_sabotage') ? '★ UNLOCKED' : '✓ UNLOCKED';
+          badge.style.background = (pId === 'sweet_sabotage') ? 'rgba(244, 63, 94, 0.22)' : 'rgba(16, 185, 129, 0.2)';
+          badge.style.color = (pId === 'sweet_sabotage') ? '#f43f5e' : '#10b981';
         }
       } else {
         chip.classList.add('chip-locked');
         chip.classList.remove('chip-unlocked');
+        chip.style.opacity = '0.5';
+        chip.style.filter = 'grayscale(0.5)';
+        chip.style.borderColor = 'rgba(255, 255, 255, 0.08)';
         if (badge) {
           const reqStage = (pId === 'sweet_sabotage') ? 'Q3' : (['penalty_sweeper', 'jumper_points'].includes(pId) ? 'Q2' : 'Q1');
           badge.textContent = `🔒 ${reqStage}`;
+          badge.style.background = 'rgba(255, 255, 255, 0.08)';
+          badge.style.color = 'var(--text-tertiary, #a1a1aa)';
         }
       }
     });
