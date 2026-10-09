@@ -265,6 +265,36 @@ class PowerupsManager {
     document.querySelectorAll('.live-solved-count').forEach(el => {
       el.textContent = `${this.questionsSolved}/3`;
     });
+
+    const headerCapsule = document.getElementById('header-powerup-capsule');
+    if (headerCapsule) {
+      if (poolSize > 0) {
+        headerCapsule.classList.add('has-unlocked');
+      } else {
+        headerCapsule.classList.remove('has-unlocked');
+      }
+    }
+
+    // Update live on-screen power-up chips on Track 1 and Track 2 portals
+    document.querySelectorAll('.qps-chip').forEach(chip => {
+      const pId = chip.getAttribute('data-powerup');
+      const isUnlocked = this.unlockedPool.includes(pId);
+      const badge = chip.querySelector('.qps-chip-badge');
+      if (isUnlocked) {
+        chip.classList.remove('chip-locked');
+        chip.classList.add('chip-unlocked');
+        if (badge) {
+          badge.textContent = (pId === 'sweet_sabotage') ? '★ UNLOCKED' : '✓ UNLOCKED';
+        }
+      } else {
+        chip.classList.add('chip-locked');
+        chip.classList.remove('chip-unlocked');
+        if (badge) {
+          const reqStage = (pId === 'sweet_sabotage') ? 'Q3' : (['penalty_sweeper', 'jumper_points'].includes(pId) ? 'Q2' : 'Q1');
+          badge.textContent = `🔒 ${reqStage}`;
+        }
+      }
+    });
   }
 
   renderPowerupsUI() {

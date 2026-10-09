@@ -315,9 +315,12 @@ class Track1Manager {
 
         window.app?.showStageConfirmation({
           isCorrect: true,
+          stageNumber: 1,
+          unlockedPowerups: ['time_cracker', 'topic_finder'],
+          poolSize: '2/5',
           title: 'Correct Answer! Stage 1 Verified',
           message: 'All 24 islands are correctly connected into a single unified network according to Nikoli rules.',
-          reward: '<strong>Rewards Earned:</strong> +500 Points • <strong>Time Cracker</strong> & <strong>Topic Finder</strong> added to power-up pool (2 of 5 available).',
+          reward: '<strong>Rewards Earned:</strong> +500 Points',
           buttonText: 'Continue to Stage 2: Pig Fortress →',
           onAction: () => this.switchStage(2)
         });
@@ -583,9 +586,12 @@ class Track1Manager {
 
       window.app?.showStageConfirmation({
         isCorrect: true,
+        stageNumber: 2,
+        unlockedPowerups: ['penalty_sweeper', 'jumper_points'],
+        poolSize: '4/5',
         title: 'Correct Answer! Stage 2 Verified',
         message: result.reason || 'Pig Fortress deductions, bird launch sequence, and Vault PIN verified!',
-        reward: '<strong>Rewards Earned:</strong> +1200 Points • <strong>Penalty Sweeper</strong> & <strong>Jumper Points</strong> added to power-up pool (4 of 5 available).',
+        reward: '<strong>Rewards Earned:</strong> +1200 Points',
         buttonText: 'Continue to Stage 3: 25 Officers →',
         onAction: () => this.switchStage(3)
       });
@@ -850,9 +856,12 @@ class Track1Manager {
 
       window.app?.showStageConfirmation({
         isCorrect: true,
+        stageNumber: 3,
+        unlockedPowerups: ['sweet_sabotage'],
+        poolSize: '5/5 (Full Pool)',
         title: 'Correct Answer! Stage 3 Solved',
         message: 'The 25 Officer Graeco-Latin Square and secret verification passcode have been confirmed!',
-        reward: '<strong>Rewards Earned:</strong> +1000 Points • <strong>Full Power-Up Pool Unlocked (5 of 5)</strong>, including <strong>Sweet Sabotage</strong>!',
+        reward: '<strong>Rewards Earned:</strong> +1000 Points',
         buttonText: 'Proceed to Power-Ups Selection →',
         onAction: () => {
           this.switchStage(4);

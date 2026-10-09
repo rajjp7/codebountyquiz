@@ -230,8 +230,10 @@ class App {
     const headerUserText = document.getElementById('header-user-text');
     const btnAuth = document.getElementById('btn-auth-action');
     const headerTimer = document.getElementById('header-global-timer');
+    const headerCapsule = document.getElementById('header-powerup-capsule');
 
     if (headerTimer) headerTimer.style.display = 'inline-flex';
+    if (headerCapsule) headerCapsule.style.display = 'inline-flex';
     if (headerUserBadge) headerUserBadge.style.display = 'inline-flex';
     if (headerUserText) {
       headerUserText.innerHTML = `<span class="user-name-label">${profile.name}</span> <span class="user-meta-sub">• ${profile.lab || 'Lab'}</span>`;
@@ -279,8 +281,10 @@ class App {
     const trackSwitcher = document.getElementById('main-track-switcher');
     const lockedPill = document.getElementById('contestant-locked-track-pill');
     const headerTimer = document.getElementById('header-global-timer');
+    const headerCapsule = document.getElementById('header-powerup-capsule');
 
     if (headerTimer) headerTimer.style.display = 'none';
+    if (headerCapsule) headerCapsule.style.display = 'none';
     if (trackSwitcher) trackSwitcher.style.display = 'inline-flex';
     if (lockedPill) lockedPill.style.display = 'none';
 
@@ -329,7 +333,9 @@ class App {
       window.track2Manager.timerInterval = null;
     }
     const headerTimer = document.getElementById('header-global-timer');
+    const headerCapsule = document.getElementById('header-powerup-capsule');
     if (headerTimer) headerTimer.style.display = 'none';
+    if (headerCapsule) headerCapsule.style.display = 'none';
 
     localStorage.removeItem('round2_auth');
     this.currentRole = null;
@@ -502,7 +508,7 @@ class App {
     }, 3200);
   }
 
-  showStageConfirmation({ isCorrect, title, message, reward, buttonText, onAction }) {
+  showStageConfirmation({ isCorrect, title, message, reward, stageNumber, unlockedPowerups, poolSize, buttonText, onAction }) {
     const modal = document.getElementById('modal-stage-confirmation');
     const iconBox = document.getElementById('stage-conf-icon-box');
     const titleEl = document.getElementById('stage-conf-title');
@@ -519,9 +525,50 @@ class App {
       titleEl.textContent = title || 'Correct Answer!';
       titleEl.style.color = 'var(--text-primary)';
       msgEl.textContent = message || 'Challenge successfully verified.';
-      if (reward) {
+
+      const powerupMeta = {
+        time_cracker: { name: 'Time Cracker', icon: '⚡', tag: 'TIME', desc: 'Deducts 20% of your total solve time in Round 3.' },
+        topic_finder: { name: 'Topic Finder', icon: '🔍', tag: 'INTEL', desc: 'Reveals the concept and algorithm needed for the question.' },
+        penalty_sweeper: { name: 'Penalty Sweeper', icon: '🛡️', tag: 'SHIELD', desc: 'Removes all penalty points on a question in the next round.' },
+        jumper_points: { name: 'Jumper Points', icon: '🚀', tag: 'BOOST', desc: 'Multiplies points for the selected question by 1.5x.' },
+        sweet_sabotage: { name: 'Sweet Sabotage', icon: '💣', tag: 'ULTIMATE', desc: 'Use on any one participant sitting in your lab. Reduces their points by 10%!' }
+      };
+
+      const pList = unlockedPowerups || (stageNumber === 1 ? ['time_cracker', 'topic_finder'] : (stageNumber === 2 ? ['penalty_sweeper', 'jumper_points'] : (stageNumber === 3 ? ['sweet_sabotage'] : [])));
+      const pCount = poolSize || (stageNumber === 1 ? '2/5' : (stageNumber === 2 ? '4/5' : (stageNumber === 3 ? '5/5 (Full Pool)' : '')));
+
+      let powerupsHtml = '';
+      if (pList.length > 0) {
+        const headline = (stageNumber === 3) ? '💣 Ultimate Power-Up Unlocked!' : `✨ ${pList.length} Power-Ups Unlocked for Round 3!`;
+        powerupsHtml = `
+          <div class="modal-powerups-unlock-block">
+            <div class="mpu-headline">
+              <span class="mpu-title">${headline}</span>
+              ${pCount ? `<span class="mpu-count">${pCount} in Pool</span>` : ''}
+            </div>
+            <div class="mpu-cards">
+              ${pList.map(pid => {
+                const info = powerupMeta[pid];
+                if (!info) return '';
+                const isUlt = pid === 'sweet_sabotage';
+                return `
+                  <div class="mpu-card ${isUlt ? 'mpu-card-ultimate' : ''}">
+                    <span class="mpu-icon">${info.icon}</span>
+                    <div class="mpu-details">
+                      <div class="mpu-name">${info.name} <span class="mpu-badge ${isUlt ? 'mpu-badge-ultimate' : ''}">${info.tag}</span></div>
+                      <div class="mpu-desc">${info.desc}</div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      if (reward || powerupsHtml) {
         rewardEl.style.display = 'block';
-        rewardEl.innerHTML = reward;
+        rewardEl.innerHTML = (reward ? `<div style="margin-bottom: 0.35rem;">${reward}</div>` : '') + powerupsHtml;
       } else {
         rewardEl.style.display = 'none';
       }

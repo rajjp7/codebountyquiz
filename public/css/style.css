@@ -2910,3 +2910,231 @@ body {
   padding-top: 0.7rem;
   text-align: center;
 }
+
+/* ========================================================
+   LIVE ON-SCREEN POWER-UP POOL WIDGET & HEADER PILL
+   ======================================================== */
+
+.header-powerup-capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(24, 24, 27, 0.85);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
+  border-radius: 9999px;
+  padding: 0.28rem 0.75rem;
+  font-size: 0.78rem;
+  color: var(--text-secondary, #a1a1aa);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.header-powerup-capsule:hover {
+  background: rgba(39, 39, 42, 0.95);
+  border-color: rgba(250, 204, 21, 0.4);
+  color: #fff;
+  transform: translateY(-1px);
+}
+.header-powerup-capsule.has-unlocked {
+  border-color: rgba(250, 204, 21, 0.5);
+  background: rgba(234, 179, 8, 0.1);
+  color: #facc15;
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.15);
+}
+.header-powerup-capsule .live-powerup-pool-count {
+  font-weight: 700;
+  color: #facc15;
+}
+
+/* Quiz Page Power-Up Pool Live Strip (Track 1 & Track 2) */
+.quiz-powerup-pool-strip {
+  background: linear-gradient(135deg, rgba(24, 24, 27, 0.95) 0%, rgba(18, 18, 24, 0.98) 100%);
+  border: 1px solid rgba(250, 204, 21, 0.22);
+  border-radius: 12px;
+  padding: 0.85rem 1.15rem;
+  margin: 0.75rem 0 1.25rem 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+.qps-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.qps-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #f4f4f5;
+  letter-spacing: 0.02em;
+}
+.qps-bolt {
+  font-size: 1.05rem;
+  color: #facc15;
+}
+.qps-rule {
+  font-size: 0.72rem;
+  color: var(--text-tertiary, #71717a);
+  font-weight: 500;
+}
+.qps-chips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+  gap: 0.6rem;
+}
+.qps-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.qps-chip.chip-locked {
+  opacity: 0.5;
+  filter: grayscale(0.5);
+}
+.qps-chip.chip-unlocked {
+  opacity: 1;
+  filter: none;
+  background: rgba(250, 204, 21, 0.07);
+  border-color: rgba(250, 204, 21, 0.45);
+  box-shadow: 0 0 14px rgba(250, 204, 21, 0.12);
+  transform: translateY(-1px);
+}
+.qps-chip.chip-ultimate.chip-unlocked {
+  background: rgba(244, 63, 94, 0.1);
+  border-color: rgba(244, 63, 94, 0.6);
+  box-shadow: 0 0 16px rgba(244, 63, 94, 0.2);
+}
+.qps-chip-icon {
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+.qps-chip-info {
+  flex: 1;
+  min-width: 0;
+}
+.qps-chip-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #f4f4f5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.qps-chip-desc {
+  font-size: 0.65rem;
+  color: var(--text-tertiary, #a1a1aa);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.qps-chip-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-tertiary, #a1a1aa);
+  white-space: nowrap;
+  letter-spacing: 0.03em;
+}
+.qps-chip.chip-unlocked .qps-chip-badge {
+  background: rgba(16, 185, 129, 0.18);
+  color: #10b981;
+}
+.qps-chip.chip-ultimate.chip-unlocked .qps-chip-badge {
+  background: rgba(244, 63, 94, 0.22);
+  color: #f43f5e;
+}
+
+/* Modal Power-Ups Unlock Block */
+.modal-powerups-unlock-block {
+  background: linear-gradient(135deg, rgba(30, 27, 75, 0.75) 0%, rgba(24, 24, 38, 0.85) 100%);
+  border: 1px solid rgba(250, 204, 21, 0.35);
+  border-radius: 12px;
+  padding: 1rem 1.15rem;
+  margin: 1rem 0 1.25rem 0;
+  text-align: left;
+}
+.mpu-headline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.mpu-title {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #facc15;
+  letter-spacing: 0.01em;
+}
+.mpu-count {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.15);
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.mpu-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.mpu-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+}
+.mpu-card-ultimate {
+  border-color: rgba(244, 63, 94, 0.4);
+  background: rgba(244, 63, 94, 0.08);
+}
+.mpu-icon {
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+.mpu-details {
+  flex: 1;
+}
+.mpu-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #f4f4f5;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.mpu-badge {
+  font-size: 0.62rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  background: rgba(250, 204, 21, 0.18);
+  color: #facc15;
+  font-weight: 700;
+}
+.mpu-badge-ultimate {
+  background: rgba(244, 63, 94, 0.25);
+  color: #f43f5e;
+}
+.mpu-desc {
+  font-size: 0.72rem;
+  color: var(--text-secondary, #a1a1aa);
+  margin-top: 0.15rem;
+  line-height: 1.35;
+}
+

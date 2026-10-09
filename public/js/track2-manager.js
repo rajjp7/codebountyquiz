@@ -328,9 +328,12 @@ class Track2Manager {
 
         window.app?.showStageConfirmation({
           isCorrect: true,
+          stageNumber: 1,
+          unlockedPowerups: ['time_cracker', 'topic_finder'],
+          poolSize: '2/5',
           title: 'Correct Answer! Stage 1 Verified',
           message: 'All islands on the 10×10 Championship board are correctly connected into a single unified network.',
-          reward: '<strong>Rewards Earned:</strong> +800 Points • <strong>Time Cracker</strong> & <strong>Topic Finder</strong> added to power-up pool (2 of 5 available).',
+          reward: '<strong>Rewards Earned:</strong> +800 Points',
           buttonText: 'Continue to Stage 2: Deepfake Challenge →',
           onAction: () => this.switchStage(2)
         });
@@ -425,9 +428,12 @@ class Track2Manager {
 
       window.app?.showStageConfirmation({
         isCorrect: true,
+        stageNumber: 2,
+        unlockedPowerups: ['penalty_sweeper', 'jumper_points'],
+        poolSize: '4/5',
         title: 'Correct Answer! Stage 2 Verified',
         message: result.reason || 'Deepfake video identified and chronological upload order validated!',
-        reward: '<strong>Rewards Earned:</strong> +1200 Points • <strong>Penalty Sweeper</strong> & <strong>Jumper Points</strong> added to power-up pool (4 of 5 available).',
+        reward: '<strong>Rewards Earned:</strong> +1200 Points',
         buttonText: 'Continue to Stage 3: Zero to Crore →',
         onAction: () => this.switchStage(3)
       });
@@ -532,9 +538,12 @@ class Track2Manager {
 
       window.app?.showStageConfirmation({
         isCorrect: true,
+        stageNumber: 3,
+        unlockedPowerups: ['sweet_sabotage'],
+        poolSize: '5/5 (Full Pool)',
         title: 'Correct Answer! Stage 3 Solved',
         message: result.reason || 'Cryptarithm deciphered! Secret word CRANE confirmed.',
-        reward: '<strong>Rewards Earned:</strong> +1500 Points • <strong>Full Power-Up Pool Unlocked (5 of 5)</strong>, including <strong>Sweet Sabotage</strong>!',
+        reward: '<strong>Rewards Earned:</strong> +1500 Points',
         buttonText: 'Proceed to Power-Ups Selection →',
         onAction: () => {
           this.switchStage(4);
