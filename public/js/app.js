@@ -500,16 +500,35 @@ class App {
     `;
 
     container.appendChild(toast);
+    const duration = type === 'accepted' ? 5200 : 3400;
     setTimeout(() => {
       toast.style.opacity = '0';
       toast.style.transform = 'translateY(6px)';
       toast.style.transition = 'all 0.2s ease';
       setTimeout(() => toast.remove(), 200);
-    }, 3200);
+    }, duration);
+  }
+
+  showAcceptedToast(stageNumber, powerupNames = [], poolSize = '') {
+    const pStr = Array.isArray(powerupNames) && powerupNames.length > 0 ? powerupNames.join(' & ') : '';
+    const isLast = stageNumber === 3;
+    const msg = `
+      <div style="display: flex; flex-direction: column; gap: 3px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="background: #10b981; color: #022c22; font-weight: 800; font-size: 0.6875rem; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.06em; text-transform: uppercase;">ACCEPTED</span>
+          <strong style="color: #10b981; font-size: 0.875rem;">Stage ${stageNumber} Verified!</strong>
+        </div>
+        ${pStr ? `<div style="font-size: 0.775rem; color: var(--text-secondary); margin-top: 1px;">
+          ${isLast ? '💣' : '✨'} Unlocked: <strong style="color: #facc15;">${pStr}</strong> (${poolSize} in pool)
+        </div>` : ''}
+      </div>
+    `;
+    this.showToast(msg, 'accepted');
   }
 
   showStageConfirmation({ isCorrect, title, message, reward, stageNumber, unlockedPowerups, poolSize, buttonText, onAction }) {
     const modal = document.getElementById('modal-stage-confirmation');
+    const badgePill = document.getElementById('stage-conf-badge-pill');
     const iconBox = document.getElementById('stage-conf-icon-box');
     const titleEl = document.getElementById('stage-conf-title');
     const msgEl = document.getElementById('stage-conf-message');
@@ -518,11 +537,16 @@ class App {
     if (!modal) return;
 
     if (isCorrect) {
+      if (badgePill) {
+        badgePill.style.display = 'inline-flex';
+        badgePill.className = 'accepted-status-badge';
+        badgePill.innerHTML = '<span class="asb-dot"></span><span>ACCEPTED • 100% CORRECT</span>';
+      }
       iconBox.style.background = 'rgba(16, 185, 129, 0.15)';
       iconBox.style.color = '#10b981';
       iconBox.style.border = '1px solid rgba(16, 185, 129, 0.3)';
       iconBox.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
-      titleEl.textContent = title || 'Correct Answer!';
+      titleEl.innerHTML = `<span style="color: #10b981; font-weight: 800;">ACCEPTED:</span> ${title || `Stage ${stageNumber} Verified`}`;
       titleEl.style.color = 'var(--text-primary)';
       msgEl.textContent = message || 'Challenge successfully verified.';
 
@@ -573,8 +597,13 @@ class App {
         rewardEl.style.display = 'none';
       }
       actionBtn.className = 'btn-primary';
-      actionBtn.querySelector('span').textContent = buttonText || 'Continue to Next Stage →';
+      const btnSpan = actionBtn.querySelector('span');
+      if (btnSpan) btnSpan.textContent = buttonText || 'Continue to Next Stage →';
+      else actionBtn.textContent = buttonText || 'Continue to Next Stage →';
     } else {
+      if (badgePill) {
+        badgePill.style.display = 'none';
+      }
       iconBox.style.background = 'rgba(239, 68, 68, 0.15)';
       iconBox.style.color = '#ef4444';
       iconBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
@@ -584,7 +613,9 @@ class App {
       msgEl.textContent = message || 'Your solution does not satisfy all challenge rules.';
       rewardEl.style.display = 'none';
       actionBtn.className = 'btn-secondary';
-      actionBtn.querySelector('span').textContent = buttonText || 'Review & Try Again';
+      const btnSpan = actionBtn.querySelector('span');
+      if (btnSpan) btnSpan.textContent = buttonText || 'Review & Try Again';
+      else actionBtn.textContent = buttonText || 'Review & Try Again';
     }
 
     actionBtn.onclick = () => {

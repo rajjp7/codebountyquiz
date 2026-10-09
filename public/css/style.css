@@ -1102,7 +1102,63 @@ body {
   flex-shrink: 0;
 }
 
-.toast-success .toast-dot { background: var(--text-primary); }
+.toast-success .toast-dot { background: #10b981; }
+
+.toast.toast-accepted {
+  background: linear-gradient(135deg, rgba(6, 78, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.6);
+  box-shadow: 0 12px 28px -4px rgba(16, 185, 129, 0.35), 0 0 15px rgba(16, 185, 129, 0.2);
+  padding: 0.85rem 1.15rem;
+  border-radius: var(--radius-md);
+}
+
+.toast.toast-accepted .toast-dot {
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+.accepted-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  color: #10b981;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-full);
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.25);
+  animation: pulseAccepted 2s infinite ease-in-out;
+}
+
+@keyframes pulseAccepted {
+  0%, 100% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); }
+  50% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.45); }
+}
+
+.accepted-status-badge .asb-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+.btn-success-verified {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important;
+  color: #ffffff !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35) !important;
+  font-weight: 600 !important;
+}
+
+.btn-success-verified:hover {
+  background: linear-gradient(135deg, #047857 0%, #059669 100%) !important;
+  transform: translateY(-1px);
+}
+
 
 /* ===================================================
    TRACK 2: CODESTARS TRI-CHALLENGE STYLES

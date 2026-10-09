@@ -1,1 +1,221 @@
-[]
+[
+  {
+    "id": "att_r2_1791563797830_89a2g",
+    "track": "track2",
+    "batch": "Cohort 1",
+    "lab": "Lab 1",
+    "college": "Cohort 1",
+    "student_id": "CST-584",
+    "student_name": "Test Student",
+    "puzzle_id": "puzzle-10x10-pro",
+    "puzzle_name": "Codestars Tri-Challenge",
+    "difficulty": "Championship",
+    "status": "IN_PROGRESS",
+    "time_limit_seconds": 1800,
+    "questions_solved": 0,
+    "pool_size": 0,
+    "unlocked_powerups": [],
+    "powerups_selected": [],
+    "powerups_confirmed": false,
+    "powerups_locked_at": null,
+    "sabotage_target": null,
+    "current_stage": 1,
+    "stages": {
+      "stage1": {
+        "status": "PENDING",
+        "valid": false,
+        "score": 0
+      },
+      "stage2": {
+        "status": "LOCKED",
+        "valid": false,
+        "score": 0
+      },
+      "stage3": {
+        "status": "LOCKED",
+        "valid": false,
+        "score": 0
+      }
+    },
+    "start_time": "2026-10-09T16:36:37.831Z",
+    "finish_time": null,
+    "duration_seconds": null,
+    "formatted_time": "--:--",
+    "moves_count": 0,
+    "mistakes_count": 0,
+    "undos_count": 0,
+    "tab_switches": 0,
+    "score": 0,
+    "bridges": []
+  },
+  {
+    "id": "att_r2_1791564948725_8c4vf",
+    "track": "track1",
+    "batch": "Batch A",
+    "lab": "Lab 1",
+    "college": "Test Tech Institute",
+    "student_id": "FY-E2E-001",
+    "student_name": "Test FY Competitor",
+    "puzzle_id": "puzzle-fy-10x10",
+    "puzzle_name": "FY Track Challenge",
+    "difficulty": "Classic",
+    "status": "IN_PROGRESS",
+    "time_limit_seconds": 1800,
+    "questions_solved": 3,
+    "pool_size": 5,
+    "unlocked_powerups": [
+      "time_cracker",
+      "topic_finder",
+      "penalty_sweeper",
+      "jumper_points",
+      "sweet_sabotage"
+    ],
+    "powerups_selected": [
+      "time_cracker",
+      "sweet_sabotage"
+    ],
+    "powerups_confirmed": true,
+    "powerups_locked_at": "2026-10-09T16:55:48.750Z",
+    "sabotage_target": "STU-042 (Lab 1)",
+    "current_stage": 1,
+    "stages": {
+      "stage1": {
+        "status": "COMPLETED",
+        "valid": true,
+        "score": 500,
+        "completed_at": "2026-10-09T16:55:48.733Z"
+      },
+      "stage2": {
+        "status": "COMPLETED",
+        "valid": true,
+        "score": 1200,
+        "completed_at": "2026-10-09T16:55:48.739Z",
+        "reason": "Outstanding logic deduction! Pigs identified (3 Honest, 2 Liars), Launch Order: Red → Chuck → Matilda → Bomb → Hal, Total Damage: 298, Vault PIN: 1788."
+      },
+      "stage3": {
+        "status": "COMPLETED",
+        "valid": true,
+        "score": 1000,
+        "completed_at": "2026-10-09T16:55:48.746Z",
+        "reason": "25 Officer Puzzle verified! Secret passcode tuhaikon@codestars confirmed."
+      }
+    },
+    "start_time": "2026-10-09T16:55:48.725Z",
+    "finish_time": null,
+    "duration_seconds": null,
+    "formatted_time": "--:--",
+    "moves_count": 0,
+    "mistakes_count": 0,
+    "undos_count": 0,
+    "tab_switches": 0,
+    "score": 0,
+    "bridges": []
+  },
+  {
+    "id": "att_r2_1791564948754_35n6x",
+    "track": "track2",
+    "batch": "Batch B",
+    "lab": "Lab 2",
+    "college": "",
+    "student_id": "TR2-E2E-002",
+    "student_name": "Test Track 2 Competitor",
+    "puzzle_id": "puzzle-10x10-pro",
+    "puzzle_name": "Codestars Tri-Challenge",
+    "difficulty": "Championship",
+    "status": "IN_PROGRESS",
+    "time_limit_seconds": 1800,
+    "questions_solved": 2,
+    "pool_size": 4,
+    "unlocked_powerups": [
+      "time_cracker",
+      "topic_finder",
+      "penalty_sweeper",
+      "jumper_points"
+    ],
+    "powerups_selected": [],
+    "powerups_confirmed": false,
+    "powerups_locked_at": null,
+    "sabotage_target": null,
+    "current_stage": 1,
+    "stages": {
+      "stage1": {
+        "status": "PENDING",
+        "valid": false,
+        "score": 0
+      },
+      "stage2": {
+        "status": "COMPLETED",
+        "valid": true,
+        "score": 1200,
+        "completed_at": "2026-10-09T16:55:48.761Z",
+        "reason": "Perfect deduction! Video C is the deepfake and upload order is B -> A -> C -> E -> D."
+      },
+      "stage3": {
+        "status": "COMPLETED",
+        "valid": true,
+        "score": 1000,
+        "completed_at": "2026-10-09T16:55:48.767Z",
+        "reason": "Flawless cryptarithm deciphering! Decoded word is CRANE (SAREE = 75288, Quotient = 12548)."
+      }
+    },
+    "start_time": "2026-10-09T16:55:48.754Z",
+    "finish_time": null,
+    "duration_seconds": null,
+    "formatted_time": "--:--",
+    "moves_count": 0,
+    "mistakes_count": 0,
+    "undos_count": 0,
+    "tab_switches": 0,
+    "score": 0,
+    "bridges": []
+  },
+  {
+    "id": "att_r2_1791565087203_6zwr7",
+    "track": "track2",
+    "batch": "Cohort 1",
+    "lab": "Lab 1",
+    "college": "Cohort 1",
+    "student_id": "CST-805",
+    "student_name": "Verification Test",
+    "puzzle_id": "puzzle-10x10-pro",
+    "puzzle_name": "Codestars Tri-Challenge",
+    "difficulty": "Championship",
+    "status": "IN_PROGRESS",
+    "time_limit_seconds": 1800,
+    "questions_solved": 0,
+    "pool_size": 0,
+    "unlocked_powerups": [],
+    "powerups_selected": [],
+    "powerups_confirmed": false,
+    "powerups_locked_at": null,
+    "sabotage_target": null,
+    "current_stage": 1,
+    "stages": {
+      "stage1": {
+        "status": "PENDING",
+        "valid": false,
+        "score": 0
+      },
+      "stage2": {
+        "status": "LOCKED",
+        "valid": false,
+        "score": 0
+      },
+      "stage3": {
+        "status": "LOCKED",
+        "valid": false,
+        "score": 0
+      }
+    },
+    "start_time": "2026-10-09T16:58:07.203Z",
+    "finish_time": null,
+    "duration_seconds": null,
+    "formatted_time": "--:--",
+    "moves_count": 0,
+    "mistakes_count": 0,
+    "undos_count": 0,
+    "tab_switches": 0,
+    "score": 0,
+    "bridges": []
+  }
+]

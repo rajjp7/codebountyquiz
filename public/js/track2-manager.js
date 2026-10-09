@@ -210,6 +210,49 @@ class Track2Manager {
         }
       }
     });
+
+    this.syncButtonStates();
+  }
+
+  syncButtonStates() {
+    const btn1 = document.getElementById('tr2-btn-verify-stage1');
+    if (btn1) {
+      if (this.stagesCompleted[1]) {
+        btn1.className = 'btn-primary btn-success-verified';
+        btn1.innerHTML = '<span>✓ Stage 1 Accepted • Continue to Stage 2 →</span>';
+        btn1.disabled = false;
+        btn1.style.opacity = '1';
+      } else {
+        btn1.className = 'btn-primary';
+        btn1.innerHTML = '<span>Verify & Unlock Next Stage →</span>';
+      }
+    }
+
+    const btn2 = document.getElementById('tr2-btn-verify-stage2');
+    if (btn2) {
+      if (this.stagesCompleted[2]) {
+        btn2.className = 'btn-primary btn-success-verified';
+        btn2.innerHTML = '<span>✓ Stage 2 Accepted • Continue to Stage 3 →</span>';
+        btn2.disabled = false;
+        btn2.style.opacity = '1';
+      } else {
+        btn2.className = 'btn-primary';
+        btn2.innerHTML = '<span>Verify & Unlock Final Stage →</span>';
+      }
+    }
+
+    const btn3 = document.getElementById('tr2-btn-verify-stage3');
+    if (btn3) {
+      if (this.stagesCompleted[3]) {
+        btn3.className = 'btn-primary btn-success-verified';
+        btn3.innerHTML = '<span>✓ Stage 3 Accepted • Proceed to Power-Ups Selection →</span>';
+        btn3.disabled = false;
+        btn3.style.opacity = '1';
+      } else {
+        btn3.className = 'btn-primary';
+        btn3.innerHTML = '<span>Verify Final Stage Solution</span>';
+      }
+    }
   }
 
   switchStage(stageNum) {
@@ -321,17 +364,20 @@ class Track2Manager {
         this.stagesUnlocked[2] = true;
         this.updateStepperUI();
         this.saveProgress();
+        this.syncButtonStates();
 
         window.soundManager?.playFanfare();
         window.app?.triggerConfetti();
-        window.powerupsManager?.updatePool(result.questions_solved || 1, result.unlocked_powerups);
+        window.powerupsManager?.updatePool(result.questions_solved || 1, result.unlocked_powerups || ['time_cracker', 'topic_finder']);
+
+        window.app?.showAcceptedToast(1, ['Time Cracker', 'Topic Finder'], '2/5');
 
         window.app?.showStageConfirmation({
           isCorrect: true,
           stageNumber: 1,
           unlockedPowerups: ['time_cracker', 'topic_finder'],
           poolSize: '2/5',
-          title: 'Correct Answer! Stage 1 Verified',
+          title: 'Stage 1 Verified',
           message: 'All islands on the 10×10 Championship board are correctly connected into a single unified network.',
           reward: '<strong>Rewards Earned:</strong> +800 Points',
           buttonText: 'Continue to Stage 2: Deepfake Challenge →',
@@ -341,13 +387,14 @@ class Track2Manager {
         window.soundManager?.playError();
         window.app?.showStageConfirmation({
           isCorrect: false,
+          stageNumber: 1,
           title: 'Incorrect Answer',
           message: result.reason || 'Bridges do not satisfy all island rules or network is disconnected.',
           buttonText: 'Review & Try Again'
         });
       }
     } finally {
-      if (btn) {
+      if (btn && !this.stagesCompleted[1]) {
         btn.disabled = false;
         btn.style.opacity = '1';
         if (originalContent) btn.innerHTML = originalContent;
@@ -362,9 +409,22 @@ class Track2Manager {
       return;
     }
 
+    if (this.stagesCompleted[2]) {
+      this.switchStage(3);
+      return;
+    }
+
     if (!this.selectedDeepfake || this.uploadOrder.length !== 5) {
       window.app?.showToast('Please select the deepfake video and arrange all 5 upload order slots first!', 'warning');
       return;
+    }
+
+    const btn = document.getElementById('tr2-btn-verify-stage2');
+    const originalContent = btn ? btn.innerHTML : null;
+    if (btn) {
+      btn.disabled = true;
+      btn.style.opacity = '0.7';
+      btn.innerHTML = '<span>Verifying Stage 2...</span>';
     }
 
     let result = null;
@@ -416,35 +476,47 @@ class Track2Manager {
       }
     }
 
-    if (result.valid) {
-      this.stagesCompleted[2] = true;
-      this.stagesUnlocked[3] = true;
-      this.updateStepperUI();
-      this.saveProgress();
+    try {
+      if (result.valid) {
+        this.stagesCompleted[2] = true;
+        this.stagesUnlocked[3] = true;
+        this.updateStepperUI();
+        this.saveProgress();
+        this.syncButtonStates();
 
-      window.soundManager?.playFanfare();
-      window.app?.triggerConfetti();
-      window.powerupsManager?.updatePool(result.questions_solved || 2, result.unlocked_powerups);
+        window.soundManager?.playFanfare();
+        window.app?.triggerConfetti();
+        window.powerupsManager?.updatePool(result.questions_solved || 2, result.unlocked_powerups || ['time_cracker', 'topic_finder', 'penalty_sweeper', 'jumper_points']);
 
-      window.app?.showStageConfirmation({
-        isCorrect: true,
-        stageNumber: 2,
-        unlockedPowerups: ['penalty_sweeper', 'jumper_points'],
-        poolSize: '4/5',
-        title: 'Correct Answer! Stage 2 Verified',
-        message: result.reason || 'Deepfake video identified and chronological upload order validated!',
-        reward: '<strong>Rewards Earned:</strong> +1200 Points',
-        buttonText: 'Continue to Stage 3: Zero to Crore →',
-        onAction: () => this.switchStage(3)
-      });
-    } else {
-      window.soundManager?.playError();
-      window.app?.showStageConfirmation({
-        isCorrect: false,
-        title: 'Incorrect Answer',
-        message: result.reason || 'Deduction for deepfake video or upload sequence order is incorrect.',
-        buttonText: 'Review & Try Again'
-      });
+        window.app?.showAcceptedToast(2, ['Penalty Sweeper', 'Jumper Points'], '4/5');
+
+        window.app?.showStageConfirmation({
+          isCorrect: true,
+          stageNumber: 2,
+          unlockedPowerups: ['penalty_sweeper', 'jumper_points'],
+          poolSize: '4/5',
+          title: 'Stage 2 Verified',
+          message: result.reason || 'Deepfake video identified and chronological upload order validated!',
+          reward: '<strong>Rewards Earned:</strong> +1200 Points',
+          buttonText: 'Continue to Stage 3: Zero to Crore →',
+          onAction: () => this.switchStage(3)
+        });
+      } else {
+        window.soundManager?.playError();
+        window.app?.showStageConfirmation({
+          isCorrect: false,
+          stageNumber: 2,
+          title: 'Incorrect Answer',
+          message: result.reason || 'Deduction for deepfake video or upload sequence order is incorrect.',
+          buttonText: 'Review & Try Again'
+        });
+      }
+    } finally {
+      if (btn && !this.stagesCompleted[2]) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        if (originalContent) btn.innerHTML = originalContent;
+      }
     }
   }
 
@@ -452,6 +524,12 @@ class Track2Manager {
     if (this.isTimeUp) {
       window.app?.showToast('Time is up for Round 2! Answers are locked and cannot be modified.', 'error');
       window.app?.showTimeUpModal();
+      return;
+    }
+
+    if (this.stagesCompleted[3]) {
+      this.switchStage(4);
+      window.app?.switchTab('powerups');
       return;
     }
 
@@ -473,6 +551,14 @@ class Track2Manager {
     if (!wordVal) {
       window.app?.showToast('Please enter the decoded secret word!', 'warning');
       return;
+    }
+
+    const btn = document.getElementById('tr2-btn-verify-stage3');
+    const originalContent = btn ? btn.innerHTML : null;
+    if (btn) {
+      btn.disabled = true;
+      btn.style.opacity = '0.7';
+      btn.innerHTML = '<span>Verifying Cryptarithm...</span>';
     }
 
     let result = null;
@@ -526,38 +612,50 @@ class Track2Manager {
       }
     }
 
-    if (result.valid) {
-      this.stagesCompleted[3] = true;
-      this.stagesUnlocked[4] = true;
-      this.updateStepperUI();
-      this.saveProgress();
+    try {
+      if (result.valid) {
+        this.stagesCompleted[3] = true;
+        this.stagesUnlocked[4] = true;
+        this.updateStepperUI();
+        this.saveProgress();
+        this.syncButtonStates();
 
-      window.soundManager?.playFanfare();
-      window.app?.triggerConfetti();
-      window.powerupsManager?.updatePool(3, result.unlocked_powerups);
+        window.soundManager?.playFanfare();
+        window.app?.triggerConfetti();
+        window.powerupsManager?.updatePool(3, result.unlocked_powerups || ['time_cracker', 'topic_finder', 'penalty_sweeper', 'jumper_points', 'sweet_sabotage']);
 
-      window.app?.showStageConfirmation({
-        isCorrect: true,
-        stageNumber: 3,
-        unlockedPowerups: ['sweet_sabotage'],
-        poolSize: '5/5 (Full Pool)',
-        title: 'Correct Answer! Stage 3 Solved',
-        message: result.reason || 'Cryptarithm deciphered! Secret word CRANE confirmed.',
-        reward: '<strong>Rewards Earned:</strong> +1500 Points',
-        buttonText: 'Proceed to Power-Ups Selection →',
-        onAction: () => {
-          this.switchStage(4);
-          window.app?.switchTab('powerups');
-        }
-      });
-    } else {
-      window.soundManager?.playError();
-      window.app?.showStageConfirmation({
-        isCorrect: false,
-        title: 'Incorrect Answer',
-        message: result.reason || 'Cryptarithm letter mapping or word does not match.',
-        buttonText: 'Review & Try Again'
-      });
+        window.app?.showAcceptedToast(3, ['Sweet Sabotage (Ultimate)'], '5/5');
+
+        window.app?.showStageConfirmation({
+          isCorrect: true,
+          stageNumber: 3,
+          unlockedPowerups: ['sweet_sabotage'],
+          poolSize: '5/5 (Full Pool)',
+          title: 'Stage 3 Solved',
+          message: result.reason || 'Cryptarithm deciphered! Secret word CRANE confirmed.',
+          reward: '<strong>Rewards Earned:</strong> +1500 Points',
+          buttonText: 'Proceed to Power-Ups Selection →',
+          onAction: () => {
+            this.switchStage(4);
+            window.app?.switchTab('powerups');
+          }
+        });
+      } else {
+        window.soundManager?.playError();
+        window.app?.showStageConfirmation({
+          isCorrect: false,
+          stageNumber: 3,
+          title: 'Incorrect Answer',
+          message: result.reason || 'Cryptarithm letter mapping or word does not match.',
+          buttonText: 'Review & Try Again'
+        });
+      }
+    } finally {
+      if (btn && !this.stagesCompleted[3]) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        if (originalContent) btn.innerHTML = originalContent;
+      }
     }
   }
 
