@@ -1,0 +1,20 @@
+{
+  "active_track": "track1",
+  "active_puzzle_id": "puzzle-7x7-easy",
+  "quiz_title": "Round 2: The Non-Tech Round",
+  "admin_password": "admin123",
+  "labs": [
+    "Lab 1 (Hall A)",
+    "Lab 2 (Ground Floor)",
+    "Lab 3 (First Floor)",
+    "Lab 4 (Second Floor)"
+  ],
+  "batches": [
+    "Batch A",
+    "Batch B",
+    "Batch C"
+  ],
+  "time_limit_seconds": null,
+  "allow_hints": true,
+  "status": "active"
+}

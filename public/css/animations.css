@@ -1,0 +1,19 @@
+/* Subtle, Minimalist Micro-interactions */
+
+@keyframes subtleShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+.bridge-conflict-pulse .bridge-core {
+  stroke: var(--rose-500) !important;
+  animation: subtleShake 0.25s ease-in-out;
+}
+
+.confetti-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+}
