@@ -244,8 +244,15 @@ class Track1Manager {
 
   async verifyStage1() {
     if (!this.hashiEngine) return;
-    const bridges = this.hashiEngine.exportBridges();
+    const localEval = this.hashiEngine.evaluateState ? this.hashiEngine.evaluateState() : { isSolved: false };
+    const bridges = (typeof this.hashiEngine.exportBridges === 'function')
+      ? this.hashiEngine.exportBridges()
+      : Array.from(this.hashiEngine.bridgeState.entries()).map(([k, cnt]) => {
+          const [u, v] = k.split('-').map(Number);
+          return { u, v, count: cnt };
+        });
 
+    let data = null;
     try {
       const res = await fetch('/api/round2/validate-stage', {
         method: 'POST',
@@ -257,38 +264,58 @@ class Track1Manager {
           data: { bridges }
         })
       });
-      const data = await res.json();
-
-      if (data.valid) {
-        this.stagesCompleted[1] = true;
-        this.stagesUnlocked[2] = true;
-        this.updateStepperUI();
-        this.saveProgress();
-
-        window.soundManager?.playFanfare();
-        window.app?.triggerConfetti();
-        window.powerupsManager?.updatePool(data.questions_solved || 1, data.unlocked_powerups);
-
-        window.app?.showStageConfirmation({
-          isCorrect: true,
-          title: 'Correct Answer! Stage 1 Verified',
-          message: 'All 24 islands are correctly connected into a single unified network according to Nikoli rules.',
-          reward: '<strong>Rewards Earned:</strong> +500 Points • <strong>Time Cracker</strong> & <strong>Topic Finder</strong> added to power-up pool (2 of 5 available).',
-          buttonText: 'Continue to Stage 2: Pig Fortress →',
-          onAction: () => this.switchStage(2)
-        });
-      } else {
-        window.soundManager?.playError();
-        window.app?.showStageConfirmation({
-          isCorrect: false,
-          title: 'Incorrect Answer',
-          message: data.reason || 'Bridges do not satisfy all island rules or network is disconnected.',
-          buttonText: 'Review & Try Again'
-        });
+      if (res.ok) {
+        data = await res.json();
       }
     } catch (err) {
-      console.error(err);
-      window.app?.showToast('Error validating Stage 1 with server', 'error');
+      console.warn('Server validation request issue, falling back to local Nikoli engine:', err);
+    }
+
+    // Graceful Fallback: If server is offline or request timed out, validate via client-side Nikoli solver
+    if (!data) {
+      if (localEval.isSolved) {
+        data = {
+          valid: true,
+          questions_solved: 1,
+          unlocked_powerups: ['time_cracker', 'topic_finder']
+        };
+      } else {
+        let reason = 'Bridges do not satisfy all island rules.';
+        if (!localEval.isFullyConnected) {
+          reason = 'All islands must form a single unified network (found disconnected island groups).';
+        } else if (localEval.completedCount < localEval.totalCount) {
+          reason = `Only ${localEval.completedCount} of ${localEval.totalCount} islands are satisfied. Check bridge counts!`;
+        }
+        data = { valid: false, reason };
+      }
+    }
+
+    if (data.valid) {
+      this.stagesCompleted[1] = true;
+      this.stagesUnlocked[2] = true;
+      this.updateStepperUI();
+      this.saveProgress();
+
+      window.soundManager?.playFanfare();
+      window.app?.triggerConfetti();
+      window.powerupsManager?.updatePool(data.questions_solved || 1, data.unlocked_powerups);
+
+      window.app?.showStageConfirmation({
+        isCorrect: true,
+        title: 'Correct Answer! Stage 1 Verified',
+        message: 'All 24 islands are correctly connected into a single unified network according to Nikoli rules.',
+        reward: '<strong>Rewards Earned:</strong> +500 Points • <strong>Time Cracker</strong> & <strong>Topic Finder</strong> added to power-up pool (2 of 5 available).',
+        buttonText: 'Continue to Stage 2: Pig Fortress →',
+        onAction: () => this.switchStage(2)
+      });
+    } else {
+      window.soundManager?.playError();
+      window.app?.showStageConfirmation({
+        isCorrect: false,
+        title: 'Incorrect Answer',
+        message: data.reason || 'Bridges do not satisfy all island rules or network is disconnected.',
+        buttonText: 'Review & Try Again'
+      });
     }
   }
 
@@ -483,7 +510,12 @@ class Track1Manager {
       }
     } catch (err) {
       console.error(err);
-      window.app?.showToast('Error validating Stage 2 with server', 'error');
+      window.app?.showStageConfirmation({
+        isCorrect: false,
+        title: 'Connection Issue',
+        message: 'Could not connect to the validation server. Please check your network and retry.',
+        buttonText: 'Retry Verification'
+      });
     }
   }
 
@@ -730,7 +762,12 @@ class Track1Manager {
       }
     } catch (err) {
       console.error(err);
-      window.app?.showToast('Error validating Stage 3 with server', 'error');
+      window.app?.showStageConfirmation({
+        isCorrect: false,
+        title: 'Connection Issue',
+        message: 'Could not connect to the validation server. Please check your network and retry.',
+        buttonText: 'Retry Verification'
+      });
     }
   }
 

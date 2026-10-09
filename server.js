@@ -163,7 +163,8 @@ function validateHashiSolution(puzzle, bridges) {
 
     while (queue.length > 0) {
       const cur = queue.shift();
-      for (const nxt of adj.get(cur)) {
+      const neighbors = adj.get(cur) || [];
+      for (const nxt of neighbors) {
         if (!visited.has(nxt)) {
           visited.add(nxt);
           queue.push(nxt);
@@ -773,91 +774,105 @@ app.post('/api/round2/start', (req, res) => {
 
 // Validate Intermediate Stage with Sequential Unlocking
 app.post('/api/round2/validate-stage', (req, res) => {
-  const { attempt_id, track, stage, data } = req.body;
-  const targetTrack = (track === 'track1') ? 'track1' : 'track2';
-  const stageNum = parseInt(stage, 10);
+  try {
+    const { attempt_id, track, stage, data } = req.body || {};
+    const targetTrack = (track === 'track1') ? 'track1' : 'track2';
+    const stageNum = parseInt(stage, 10) || 1;
 
-  const puzzles = readJSON(PUZZLES_FILE, []);
-  let result = { valid: false, reason: 'Invalid validation request' };
+    const puzzles = readJSON(PUZZLES_FILE, []);
+    let result = { valid: false, reason: 'Invalid validation request' };
 
-  if (targetTrack === 'track1') {
-    if (stageNum === 1) {
-      const puzzle = puzzles.find(p => p.id === 'puzzle-fy-10x10') || puzzles[0];
-      result = validateHashiSolution(puzzle, data?.bridges || []);
-    } else if (stageNum === 2) {
-      result = validatePigFortressSolution(data);
-    } else if (stageNum === 3) {
-      result = validateOfficersSolution(data);
-    }
-  } else {
-    if (stageNum === 1) {
-      const puzzle = puzzles.find(p => p.id === 'puzzle-10x10-pro') || puzzles[0];
-      result = validateHashiSolution(puzzle, data?.bridges || []);
-    } else if (stageNum === 2) {
-      result = validateDeepfakeSolution(data);
-    } else if (stageNum === 3) {
-      result = validateZeroToCroreSolution(data);
-    }
-  }
-
-  // If valid, update attempt in dataset if attempt_id supplied
-  let updatedAttempt = null;
-  if (attempt_id) {
-    const dataset = readJSON(DATASET_FILE, []);
-    const idx = dataset.findIndex(a => a.id === attempt_id);
-    if (idx !== -1) {
-      const att = dataset[idx];
-      att.stages = att.stages || {
-        stage1: { status: 'PENDING' },
-        stage2: { status: 'LOCKED' },
-        stage3: { status: 'LOCKED' }
-      };
-
-      if (result.valid) {
-        att.stages[`stage${stageNum}`] = {
-          status: 'COMPLETED',
-          valid: true,
-          score: result.score || 500,
-          completed_at: new Date().toISOString(),
-          reason: result.reason
-        };
-
-        // Unlock next stage sequentially
-        if (stageNum === 1 && att.stages.stage2.status === 'LOCKED') {
-          att.stages.stage2.status = 'PENDING';
-        }
-        if (stageNum === 2 && att.stages.stage3.status === 'LOCKED') {
-          att.stages.stage3.status = 'PENDING';
-        }
-
-        // Recompute questions solved
-        let solvedCount = 0;
-        if (att.stages.stage1?.status === 'COMPLETED') solvedCount++;
-        if (att.stages.stage2?.status === 'COMPLETED') solvedCount++;
-        if (att.stages.stage3?.status === 'COMPLETED') solvedCount++;
-
-        att.questions_solved = solvedCount;
-        att.unlocked_powerups = getUnlockedPowerups(solvedCount);
-        att.pool_size = att.unlocked_powerups.length;
-        dataset[idx] = att;
-        writeJSON(DATASET_FILE, dataset);
-        updatedAttempt = att;
+    if (targetTrack === 'track1') {
+      if (stageNum === 1) {
+        const puzzle = puzzles.find(p => p.id === 'puzzle-fy-10x10') || puzzles[0];
+        result = validateHashiSolution(puzzle, data?.bridges || []);
+      } else if (stageNum === 2) {
+        result = validatePigFortressSolution(data);
+      } else if (stageNum === 3) {
+        result = validateOfficersSolution(data);
+      }
+    } else {
+      if (stageNum === 1) {
+        const puzzle = puzzles.find(p => p.id === 'puzzle-10x10-pro') || puzzles[0];
+        result = validateHashiSolution(puzzle, data?.bridges || []);
+      } else if (stageNum === 2) {
+        result = validateDeepfakeSolution(data);
+      } else if (stageNum === 3) {
+        result = validateZeroToCroreSolution(data);
       }
     }
+
+    // If valid, update attempt in dataset if attempt_id supplied
+    let updatedAttempt = null;
+    if (attempt_id) {
+      const dataset = readJSON(DATASET_FILE, []);
+      const idx = dataset.findIndex(a => a.id === attempt_id);
+      if (idx !== -1) {
+        const att = dataset[idx];
+        att.stages = att.stages || {
+          stage1: { status: 'PENDING' },
+          stage2: { status: 'LOCKED' },
+          stage3: { status: 'LOCKED' }
+        };
+
+        if (result.valid) {
+          att.stages[`stage${stageNum}`] = {
+            status: 'COMPLETED',
+            valid: true,
+            score: result.score || 500,
+            completed_at: new Date().toISOString(),
+            reason: result.reason
+          };
+
+          // Unlock next stage sequentially
+          if (stageNum === 1 && att.stages.stage2 && att.stages.stage2.status === 'LOCKED') {
+            att.stages.stage2.status = 'PENDING';
+          }
+          if (stageNum === 2 && att.stages.stage3 && att.stages.stage3.status === 'LOCKED') {
+            att.stages.stage3.status = 'PENDING';
+          }
+
+          // Recompute questions solved
+          let solvedCount = 0;
+          if (att.stages.stage1?.status === 'COMPLETED') solvedCount++;
+          if (att.stages.stage2?.status === 'COMPLETED') solvedCount++;
+          if (att.stages.stage3?.status === 'COMPLETED') solvedCount++;
+
+          att.questions_solved = solvedCount;
+          att.unlocked_powerups = getUnlockedPowerups(solvedCount);
+          att.pool_size = att.unlocked_powerups.length;
+          dataset[idx] = att;
+          writeJSON(DATASET_FILE, dataset);
+          updatedAttempt = att;
+        }
+      }
+    }
+
+    const currentSolved = updatedAttempt ? updatedAttempt.questions_solved : (result.valid ? stageNum : stageNum - 1);
+    const unlockedPowerups = getUnlockedPowerups(currentSolved);
+
+    res.json({
+      stage: stageNum,
+      track: targetTrack,
+      ...result,
+      questions_solved: currentSolved,
+      pool_size: unlockedPowerups.length,
+      unlocked_powerups: unlockedPowerups,
+      next_stage_unlocked: result.valid && stageNum < 3
+    });
+  } catch (err) {
+    console.error('Error in /api/round2/validate-stage:', err);
+    res.status(200).json({
+      stage: parseInt(req.body?.stage, 10) || 1,
+      track: req.body?.track || 'track1',
+      valid: false,
+      reason: 'Validation processing issue: ' + (err.message || 'unknown error'),
+      questions_solved: 0,
+      pool_size: 0,
+      unlocked_powerups: [],
+      next_stage_unlocked: false
+    });
   }
-
-  const currentSolved = updatedAttempt ? updatedAttempt.questions_solved : (result.valid ? stageNum : stageNum - 1);
-  const unlockedPowerups = getUnlockedPowerups(currentSolved);
-
-  res.json({
-    stage: stageNum,
-    track: targetTrack,
-    ...result,
-    questions_solved: currentSolved,
-    pool_size: unlockedPowerups.length,
-    unlocked_powerups: unlockedPowerups,
-    next_stage_unlocked: result.valid && stageNum < 3
-  });
 });
 
 // Submit Complete Round 2 Attempt
