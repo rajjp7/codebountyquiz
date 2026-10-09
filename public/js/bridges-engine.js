@@ -695,23 +695,33 @@ class BridgesEngine {
 
       if (deg === isl.number) {
         g.classList.add('satisfied');
-        body.setAttribute('fill', 'var(--island-satisfied-bg)');
-        body.setAttribute('stroke', 'var(--island-satisfied-border, #10b981)');
+        body.setAttribute('fill', 'rgba(16, 185, 129, 0.22)');
+        body.setAttribute('stroke', '#10b981');
         body.setAttribute('stroke-width', '2.5');
-        body.style.filter = 'drop-shadow(0 0 8px rgba(16, 185, 129, 0.55))';
-        text.setAttribute('fill', 'var(--island-satisfied-text, #34d399)');
+        body.style.fill = 'var(--island-satisfied-bg, rgba(16, 185, 129, 0.22))';
+        body.style.stroke = 'var(--island-satisfied-border, #10b981)';
+        body.style.strokeWidth = '2.5px';
+        body.style.filter = 'drop-shadow(0 0 8px rgba(16, 185, 129, 0.6))';
+        text.setAttribute('fill', '#34d399');
+        text.style.fill = 'var(--island-satisfied-text, #34d399)';
         text.style.fontWeight = '700';
         if (badge) {
-          badge.setAttribute('fill', 'var(--island-satisfied-border, #10b981)');
+          badge.setAttribute('fill', '#10b981');
+          badge.style.fill = 'var(--island-satisfied-border, #10b981)';
+          badge.style.filter = 'drop-shadow(0 0 4px rgba(16, 185, 129, 0.8))';
           badge.style.display = 'block';
         }
       } else if (deg > isl.number) {
         g.classList.add('overflow');
-        body.setAttribute('fill', 'var(--island-overflow-bg)');
-        body.setAttribute('stroke', 'var(--island-overflow-border, #ef4444)');
+        body.setAttribute('fill', 'rgba(239, 68, 68, 0.22)');
+        body.setAttribute('stroke', '#ef4444');
         body.setAttribute('stroke-width', '2.5');
-        body.style.filter = 'drop-shadow(0 0 8px rgba(239, 68, 68, 0.55))';
-        text.setAttribute('fill', 'var(--island-overflow-text, #f87171)');
+        body.style.fill = 'var(--island-overflow-bg, rgba(239, 68, 68, 0.22))';
+        body.style.stroke = 'var(--island-overflow-border, #ef4444)';
+        body.style.strokeWidth = '2.5px';
+        body.style.filter = 'drop-shadow(0 0 8px rgba(239, 68, 68, 0.6))';
+        text.setAttribute('fill', '#f87171');
+        text.style.fill = 'var(--island-overflow-text, #f87171)';
         text.style.fontWeight = '700';
         if (badge) badge.style.display = 'none';
       } else {
@@ -719,8 +729,12 @@ class BridgesEngine {
         body.setAttribute('fill', 'var(--island-bg)');
         body.setAttribute('stroke', 'var(--island-border)');
         body.setAttribute('stroke-width', '1.5');
+        body.style.fill = '';
+        body.style.stroke = '';
+        body.style.strokeWidth = '';
         body.style.filter = 'none';
         text.setAttribute('fill', 'var(--island-text)');
+        text.style.fill = '';
         text.style.fontWeight = '600';
         if (badge) badge.style.display = 'none';
       }
