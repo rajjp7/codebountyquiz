@@ -16,6 +16,7 @@ class Track2Manager {
     this.heartbeatInterval = null;
     this.tabSwitches = 0;
     this.isSubmitted = false;
+    this.isTimeUp = false;
 
     // Stage 2 state
     this.selectedDeepfake = null;
@@ -45,17 +46,6 @@ class Track2Manager {
         if (stageNum) this.switchStage(stageNum);
       });
     });
-
-    // Verification & Progression buttons
-    document.getElementById('tr2-btn-verify-stage1')?.addEventListener('click', () => this.verifyStage1());
-    document.getElementById('tr2-btn-verify-stage2')?.addEventListener('click', () => this.verifyStage2());
-    document.getElementById('tr2-btn-verify-stage3')?.addEventListener('click', () => this.verifyStage3());
-    document.getElementById('tr2-btn-to-powerups')?.addEventListener('click', () => window.app?.switchTab('powerups'));
-
-    // Back navigation buttons
-    document.getElementById('tr2-btn-back-to-stage1')?.addEventListener('click', () => this.switchStage(1));
-    document.getElementById('tr2-btn-back-to-stage2')?.addEventListener('click', () => this.switchStage(2));
-    document.getElementById('tr2-btn-back-to-stage3')?.addEventListener('click', () => this.switchStage(3));
 
     // Stage 1 Toolbar Controls
     document.getElementById('tr2-hashi-undo')?.addEventListener('click', () => this.hashiEngine?.undo());
@@ -98,22 +88,17 @@ class Track2Manager {
     });
 
     // Stage 3: Word, Saree, Quotient inputs
-    document.getElementById('tr2-input-saree')?.addEventListener('input', (e) => {
+    document.getElementById('tr2-input-saree')?.addEventListener('input', () => {
       this.updateCryptarithmDisplays();
       this.saveProgress();
     });
-    document.getElementById('tr2-input-quotient')?.addEventListener('input', (e) => {
+    document.getElementById('tr2-input-quotient')?.addEventListener('input', () => {
       this.updateCryptarithmDisplays();
       this.saveProgress();
     });
-    document.getElementById('tr2-input-word')?.addEventListener('input', (e) => {
+    document.getElementById('tr2-input-word')?.addEventListener('input', () => {
       this.updateCryptarithmDisplays();
       this.saveProgress();
-    });
-
-    // Final Submit Button
-    document.getElementById('tr2-btn-final-submit')?.addEventListener('click', () => {
-      this.submitTrack2();
     });
   }
 
@@ -139,16 +124,10 @@ class Track2Manager {
         this.config = data;
         this.puzzle10x10 = data.puzzle10x10;
 
-        // Mount Hashi 10x10 board in Stage 1 container
         this.initHashiBoard();
-
-        // Setup Stage 2 Video slots
         this.renderVideoOrderSlots();
-
-        // Setup Stage 3 Letter-Digit keypad
         this.renderLetterKeypad();
 
-        // If pending bridges were restored before board was mounted
         if (this._pendingBridges && this.hashiEngine) {
           this.hashiEngine.loadBridges(this._pendingBridges);
           delete this._pendingBridges;
@@ -242,13 +221,11 @@ class Track2Manager {
 
     this.currentStage = stageNum;
 
-    // Update Stepper buttons
     document.querySelectorAll('.tr2-step-btn').forEach(btn => {
       const num = parseInt(btn.getAttribute('data-stage'), 10);
       btn.classList.toggle('active', num === stageNum);
     });
 
-    // Update Stage views
     document.querySelectorAll('.tr2-stage-view').forEach(view => {
       const num = parseInt(view.getAttribute('data-stage'), 10);
       view.classList.toggle('active', num === stageNum);
@@ -265,13 +242,16 @@ class Track2Manager {
     }
 
     this.saveProgress();
-
-    // Scroll to top of stage
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   async verifyStage1() {
-    // If already verified and completed, directly advance to Stage 2
+    if (this.isTimeUp) {
+      window.app?.showToast('Time is up for Round 2! Answers are locked and cannot be modified.', 'error');
+      window.app?.showTimeUpModal();
+      return;
+    }
+
     if (this.stagesCompleted[1]) {
       this.switchStage(2);
       return;
@@ -305,7 +285,7 @@ class Track2Manager {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            attempt_id: this.attempt?.id,
+            attempt_id: this.attempt?.id || localStorage.getItem('hashi_tr2_latest_attempt_id') || '',
             track: 'track2',
             stage: 1,
             data: { bridges }
@@ -315,10 +295,9 @@ class Track2Manager {
           result = await res.json();
         }
       } catch (err) {
-        console.warn('Server validation request issue, falling back to local Nikoli engine:', err);
+        console.warn('Server validation issue, falling back to local Nikoli engine:', err);
       }
 
-      // Graceful Fallback: If server is offline or request timed out, validate via client-side Nikoli solver
       if (!result) {
         if (localEval.isSolved) {
           result = {
@@ -350,7 +329,7 @@ class Track2Manager {
         window.app?.showStageConfirmation({
           isCorrect: true,
           title: 'Correct Answer! Stage 1 Verified',
-          message: 'All islands on the 10×10 Championship board are correctly connected into a single unified network according to Nikoli rules.',
+          message: 'All islands on the 10×10 Championship board are correctly connected into a single unified network.',
           reward: '<strong>Rewards Earned:</strong> +800 Points • <strong>Time Cracker</strong> & <strong>Topic Finder</strong> added to power-up pool (2 of 5 available).',
           buttonText: 'Continue to Stage 2: Deepfake Challenge →',
           onAction: () => this.switchStage(2)
@@ -374,17 +353,25 @@ class Track2Manager {
   }
 
   async verifyStage2() {
+    if (this.isTimeUp) {
+      window.app?.showToast('Time is up for Round 2! Answers are locked and cannot be modified.', 'error');
+      window.app?.showTimeUpModal();
+      return;
+    }
+
     if (!this.selectedDeepfake || this.uploadOrder.length !== 5) {
       window.app?.showToast('Please select the deepfake video and arrange all 5 upload order slots first!', 'warning');
       return;
     }
+
+    let result = null;
 
     try {
       const res = await fetch('/api/round2/validate-stage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          attempt_id: this.attempt?.id,
+          attempt_id: this.attempt?.id || localStorage.getItem('hashi_tr2_latest_attempt_id') || '',
           track: 'track2',
           stage: 2,
           data: {
@@ -393,115 +380,174 @@ class Track2Manager {
           }
         })
       });
-      const result = await res.json();
 
-      if (result.valid) {
-        this.stagesCompleted[2] = true;
-        this.stagesUnlocked[3] = true;
-        this.updateStepperUI();
-        this.saveProgress();
-
-        window.soundManager?.playFanfare();
-        window.app?.triggerConfetti();
-        window.powerupsManager?.updatePool(2, result.unlocked_powerups);
-
-        window.app?.showStageConfirmation({
-          isCorrect: true,
-          title: 'Correct Answer! Stage 2 Verified',
-          message: result.reason || 'Deepfake video identified and chronological upload order validated!',
-          reward: '<strong>Rewards Earned:</strong> +1200 Points • <strong>Penalty Sweeper</strong> & <strong>Jumper Points</strong> added to power-up pool (4 of 5 available).',
-          buttonText: 'Continue to Stage 3: Zero to Crore →',
-          onAction: () => this.switchStage(3)
-        });
+      if (res.ok) {
+        result = await res.json();
       } else {
-        window.soundManager?.playError();
-        window.app?.showStageConfirmation({
-          isCorrect: false,
-          title: 'Incorrect Answer',
-          message: result.reason || 'Deduction for deepfake video or upload sequence order is incorrect.',
-          buttonText: 'Review & Try Again'
-        });
+        console.warn(`Server responded with HTTP ${res.status}, validating locally`);
       }
     } catch (err) {
-      console.error(err);
+      console.warn('Network issue during Stage 2 validation, using client-side deduction fallback:', err);
+    }
+
+    // Client-side fallback check: Video C is fake, Upload Order is B -> A -> C -> E -> D
+    if (!result) {
+      const isDeepfakeCorrect = String(this.selectedDeepfake || '').toUpperCase() === 'C';
+      const cleanOrder = (this.uploadOrder || []).join('').toUpperCase();
+      const isOrderCorrect = cleanOrder === 'BACED';
+
+      if (isDeepfakeCorrect && isOrderCorrect) {
+        result = {
+          valid: true,
+          questions_solved: 2,
+          unlocked_powerups: ['time_cracker', 'topic_finder', 'penalty_sweeper', 'jumper_points'],
+          reason: 'Perfect deduction! Video C is the deepfake and upload order is B -> A -> C -> E -> D.'
+        };
+      } else {
+        result = {
+          valid: false,
+          reason: !isDeepfakeCorrect
+            ? 'Deepfake selection is incorrect.'
+            : 'Upload order is incorrect (check clues for chronological sequence).'
+        };
+      }
+    }
+
+    if (result.valid) {
+      this.stagesCompleted[2] = true;
+      this.stagesUnlocked[3] = true;
+      this.updateStepperUI();
+      this.saveProgress();
+
+      window.soundManager?.playFanfare();
+      window.app?.triggerConfetti();
+      window.powerupsManager?.updatePool(result.questions_solved || 2, result.unlocked_powerups);
+
+      window.app?.showStageConfirmation({
+        isCorrect: true,
+        title: 'Correct Answer! Stage 2 Verified',
+        message: result.reason || 'Deepfake video identified and chronological upload order validated!',
+        reward: '<strong>Rewards Earned:</strong> +1200 Points • <strong>Penalty Sweeper</strong> & <strong>Jumper Points</strong> added to power-up pool (4 of 5 available).',
+        buttonText: 'Continue to Stage 3: Zero to Crore →',
+        onAction: () => this.switchStage(3)
+      });
+    } else {
+      window.soundManager?.playError();
       window.app?.showStageConfirmation({
         isCorrect: false,
-        title: 'Connection Issue',
-        message: 'Could not connect to the validation server. Please check your network and retry.',
-        buttonText: 'Retry Verification'
+        title: 'Incorrect Answer',
+        message: result.reason || 'Deduction for deepfake video or upload sequence order is incorrect.',
+        buttonText: 'Review & Try Again'
       });
     }
   }
 
   async verifyStage3() {
+    if (this.isTimeUp) {
+      window.app?.showToast('Time is up for Round 2! Answers are locked and cannot be modified.', 'error');
+      window.app?.showTimeUpModal();
+      return;
+    }
+
     const wordInput = document.getElementById('tr2-input-word');
     const sareeInput = document.getElementById('tr2-input-saree');
     const quotientInput = document.getElementById('tr2-input-quotient');
 
-    const word = String(wordInput?.value || '').trim().toUpperCase();
-    const saree = sareeInput?.value;
-    const quotient = quotientInput?.value;
+    const m = this.letterMapping;
+    // Auto-calculate SAREE if not typed manually
+    let calculatedSaree = '';
+    if (['S', 'A', 'R', 'E'].every(k => m[k] !== '')) {
+      calculatedSaree = `${m.S}${m.A}${m.R}${m.E}${m.E}`;
+    }
+    const sareeVal = parseInt(sareeInput?.value || calculatedSaree || '0', 10);
+    const calculatedQuotient = sareeVal ? Math.floor(sareeVal / 6) : 0;
+    const quotientVal = parseInt(quotientInput?.value || calculatedQuotient || '0', 10);
+    const wordVal = String(wordInput?.value || '').trim().toUpperCase();
 
-    if (!word) {
+    if (!wordVal) {
       window.app?.showToast('Please enter the decoded secret word!', 'warning');
       return;
     }
+
+    let result = null;
 
     try {
       const res = await fetch('/api/round2/validate-stage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          attempt_id: this.attempt?.id,
+          attempt_id: this.attempt?.id || localStorage.getItem('hashi_tr2_latest_attempt_id') || '',
           track: 'track2',
           stage: 3,
           data: {
             mapping: this.letterMapping,
-            saree_value: saree,
-            quotient_value: quotient,
-            final_word: word
+            saree_value: sareeVal,
+            quotient_value: quotientVal,
+            final_word: wordVal
           }
         })
       });
-      const result = await res.json();
 
-      if (result.valid) {
-        this.stagesCompleted[3] = true;
-        this.stagesUnlocked[4] = true;
-        this.updateStepperUI();
-        this.saveProgress();
-
-        window.soundManager?.playFanfare();
-        window.app?.triggerConfetti();
-        window.powerupsManager?.updatePool(3, result.unlocked_powerups);
-
-        window.app?.showStageConfirmation({
-          isCorrect: true,
-          title: 'Correct Answer! Stage 3 Solved',
-          message: result.reason || 'Alphabetic cryptarithm solved, SAREE computed, and secret word decoded!',
-          reward: '<strong>Rewards Earned:</strong> +1000 Points • <strong>Full Power-Up Pool Unlocked (5 of 5)</strong>, including <strong>Sweet Sabotage</strong>!',
-          buttonText: 'Proceed to Power-Ups Selection →',
-          onAction: () => {
-            this.switchStage(4);
-            window.app?.switchTab('powerups');
-          }
-        });
+      if (res.ok) {
+        result = await res.json();
       } else {
-        window.soundManager?.playError();
-        window.app?.showStageConfirmation({
-          isCorrect: false,
-          title: 'Incorrect Answer',
-          message: result.reason || 'Decoded word, SAREE computation, or letter-to-digit mapping is incorrect.',
-          buttonText: 'Review & Try Again'
-        });
+        console.warn(`Server responded with HTTP ${res.status}, validating locally`);
       }
     } catch (err) {
-      console.error(err);
+      console.warn('Network issue during Stage 3 validation, checking cryptarithm locally:', err);
+    }
+
+    // Client-side fallback check: word === 'CRANE', SAREE === 75288, quotient === 12548
+    if (!result) {
+      const isWordCorrect = wordVal === 'CRANE';
+      const isSareeCorrect = sareeVal === 75288;
+      const isQuotCorrect = quotientVal === 12548;
+
+      if (isWordCorrect && (isSareeCorrect || isQuotCorrect)) {
+        result = {
+          valid: true,
+          questions_solved: 3,
+          unlocked_powerups: ['time_cracker', 'topic_finder', 'penalty_sweeper', 'jumper_points', 'sweet_sabotage'],
+          reason: 'Flawless cryptarithm deciphering! Decoded word is CRANE (SAREE = 75288, Quotient = 12548).'
+        };
+      } else {
+        result = {
+          valid: false,
+          reason: !isWordCorrect
+            ? 'Decoded word is incorrect. Review your letter-digit mapping and division by 6.'
+            : 'SAREE value or quotient calculation is incorrect.'
+        };
+      }
+    }
+
+    if (result.valid) {
+      this.stagesCompleted[3] = true;
+      this.stagesUnlocked[4] = true;
+      this.updateStepperUI();
+      this.saveProgress();
+
+      window.soundManager?.playFanfare();
+      window.app?.triggerConfetti();
+      window.powerupsManager?.updatePool(3, result.unlocked_powerups);
+
+      window.app?.showStageConfirmation({
+        isCorrect: true,
+        title: 'Correct Answer! Stage 3 Solved',
+        message: result.reason || 'Cryptarithm deciphered! Secret word CRANE confirmed.',
+        reward: '<strong>Rewards Earned:</strong> +1500 Points • <strong>Full Power-Up Pool Unlocked (5 of 5)</strong>, including <strong>Sweet Sabotage</strong>!',
+        buttonText: 'Proceed to Power-Ups Selection →',
+        onAction: () => {
+          this.switchStage(4);
+          window.app?.switchTab('powerups');
+        }
+      });
+    } else {
+      window.soundManager?.playError();
       window.app?.showStageConfirmation({
         isCorrect: false,
-        title: 'Connection Issue',
-        message: 'Could not connect to the validation server. Please check your network and retry.',
-        buttonText: 'Retry Verification'
+        title: 'Incorrect Answer',
+        message: result.reason || 'Cryptarithm letter mapping or word does not match.',
+        buttonText: 'Review & Try Again'
       });
     }
   }
@@ -531,7 +577,6 @@ class Track2Manager {
     const poolContainer = document.getElementById('tr2-video-pool');
     if (!slotsContainer || !poolContainer) return;
 
-    // 1. Render 5 slots
     slotsContainer.innerHTML = '';
     for (let i = 0; i < 5; i++) {
       const slot = document.createElement('div');
@@ -560,7 +605,6 @@ class Track2Manager {
       slotsContainer.appendChild(slot);
     }
 
-    // 2. Render available videos pool
     poolContainer.innerHTML = '';
     const all = ['A', 'B', 'C', 'D', 'E'];
     all.forEach(v => {
@@ -623,10 +667,12 @@ class Track2Manager {
     }
 
     try {
-      const res = await fetch('/api/track2/validate-stage', {
+      const res = await fetch('/api/round2/validate-stage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          attempt_id: this.attempt?.id || localStorage.getItem('hashi_tr2_latest_attempt_id') || '',
+          track: 'track2',
           stage: 2,
           data: {
             deepfake: this.selectedDeepfake,
@@ -684,7 +730,6 @@ class Track2Manager {
   }
 
   updateCryptarithmDisplays() {
-    // 1. Update unassigned digit chips
     const usedDigits = new Set(Object.values(this.letterMapping).filter(v => v !== ''));
     const pool = document.getElementById('tr2-digit-pool');
     if (pool) {
@@ -695,10 +740,8 @@ class Track2Manager {
       }
     }
 
-    // 2. Evaluate Equation 1: RAJA + ZERO = CRORE
     const m = this.letterMapping;
     const canEvalEq1 = ['R', 'A', 'J', 'Z', 'E', 'O', 'C'].every(k => m[k] !== '');
-    const eq1Card = document.getElementById('tr2-eq1-card');
     const eq1Status = document.getElementById('tr2-eq1-status');
 
     if (canEvalEq1) {
@@ -715,7 +758,6 @@ class Track2Manager {
       if (eq1Status) eq1Status.innerHTML = 'Assign letters to compute';
     }
 
-    // 3. Evaluate Equation 2: GANGA + ZERO = SAREE
     const canEvalEq2 = ['G', 'A', 'N', 'Z', 'E', 'R', 'O', 'S'].every(k => m[k] !== '');
     const eq2Status = document.getElementById('tr2-eq2-status');
 
@@ -733,7 +775,6 @@ class Track2Manager {
       if (eq2Status) eq2Status.innerHTML = 'Assign letters to compute';
     }
 
-    // Check completion of Stage 3
     const wordInput = document.getElementById('tr2-input-word');
     const wordClean = (wordInput?.value || '').trim().toUpperCase();
     const isComplete = wordClean.length >= 4;
@@ -750,20 +791,17 @@ class Track2Manager {
   // ------------------------------------------------------------------
 
   updateSummaryReview() {
-    // Stage 1 summary
     const s1Card = document.getElementById('summary-stage1-val');
     if (s1Card && this.hashiEngine) {
       const st = this.hashiEngine.evaluateState();
       s1Card.textContent = `${st.satisfiedCount}/${st.totalCount} Islands Satisfied • ${st.isFullyConnected ? 'Single Network (Connected)' : 'Disconnected'}`;
     }
 
-    // Stage 2 summary
     const s2Card = document.getElementById('summary-stage2-val');
     if (s2Card) {
       s2Card.textContent = `Deepfake: Video ${this.selectedDeepfake || '-'} | Order: ${this.uploadOrder.length === 5 ? this.uploadOrder.join(' → ') : 'Incomplete'}`;
     }
 
-    // Stage 3 summary
     const s3Card = document.getElementById('summary-stage3-val');
     const wordInput = document.getElementById('tr2-input-word');
     const sareeInput = document.getElementById('tr2-input-saree');
@@ -782,7 +820,6 @@ class Track2Manager {
       return;
     }
 
-    // Collect all data
     const stage1Bridges = this.hashiEngine ? Array.from(this.hashiEngine.bridgeState.entries()).map(([k, cnt]) => {
       const [u, v] = k.split('-').map(Number);
       return { u, v, count: cnt };
@@ -827,7 +864,6 @@ class Track2Manager {
         clearInterval(this.timerInterval);
         clearInterval(this.heartbeatInterval);
 
-        // Show celebratory modal
         this.showVictoryModal(data);
         if (window.app) window.app.triggerConfetti();
         if (window.soundManager) window.soundManager.playVictory();
@@ -861,14 +897,13 @@ class Track2Manager {
     requestAnimationFrame(() => modal.classList.add('open'));
   }
 
-  // Single 30-Minute Round Timer (Resilient to Page Refresh)
   startRoundTimer(savedStartTime = null) {
     if (this.timerInterval) clearInterval(this.timerInterval);
     if (window.track1Manager?.timerInterval) {
       clearInterval(window.track1Manager.timerInterval);
       window.track1Manager.timerInterval = null;
     }
-    const totalSeconds = 1800; // 30 minutes
+    const totalSeconds = 1800;
     const startTime = savedStartTime || this.startTime || Date.now();
     this.startTime = startTime;
 
@@ -900,14 +935,77 @@ class Track2Manager {
       }
 
       if (remaining <= 0) {
-        clearInterval(this.timerInterval);
-        this.timerInterval = null;
-        window.app?.showToast('Time is up for Round 2! Please review and submit your power-ups.', 'warning');
+        this.onTimeUp();
       }
     };
 
     updateTick();
     this.timerInterval = setInterval(updateTick, 1000);
+  }
+
+  onTimeUp() {
+    this.isTimeUp = true;
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+
+    if (this.hashiEngine) {
+      this.hashiEngine.setInteractive(false);
+    }
+    ['tr2-hashi-undo', 'tr2-hashi-redo', 'tr2-hashi-reset', 'tr2-hashi-guides'].forEach(id => {
+      const b = document.getElementById(id);
+      if (b) { b.disabled = true; b.style.opacity = '0.5'; b.style.cursor = 'not-allowed'; }
+    });
+
+    document.querySelectorAll('.deepfake-choice-btn').forEach(btn => {
+      btn.disabled = true;
+      btn.style.cursor = 'not-allowed';
+    });
+    document.querySelectorAll('.video-pool-chip').forEach(chip => {
+      chip.disabled = true;
+      chip.style.cursor = 'not-allowed';
+    });
+    const resetOrderBtn = document.getElementById('tr2-btn-reset-order');
+    if (resetOrderBtn) { resetOrderBtn.disabled = true; resetOrderBtn.style.opacity = '0.5'; }
+
+    document.querySelectorAll('.digit-select').forEach(sel => {
+      sel.disabled = true;
+    });
+    ['tr2-input-saree', 'tr2-input-quotient', 'tr2-input-word'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.disabled = true; el.readOnly = true; }
+    });
+
+    ['tr2-btn-verify-stage1', 'tr2-btn-verify-stage2', 'tr2-btn-verify-stage3', 'tr2-btn-final-submit'].forEach(id => {
+      const btn = document.getElementById(id);
+      if (btn) {
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        btn.style.cursor = 'not-allowed';
+      }
+    });
+
+    this.showLockedBanner();
+    window.soundManager?.playError();
+    window.app?.showTimeUpModal();
+  }
+
+  showLockedBanner() {
+    let banner = document.getElementById('tr2-time-up-banner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'tr2-time-up-banner';
+      banner.className = 'time-up-lock-banner';
+      banner.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>ROUND 2 TIME EXPIRED • ALL ANSWERS &amp; BOARDS ARE LOCKED</span>
+      `;
+      const container = document.getElementById('view-track2');
+      if (container) {
+        container.insertBefore(banner, container.firstChild);
+      }
+    }
   }
 
   updateStudentHeader(name, id, batch, lab) {
@@ -982,7 +1080,6 @@ class Track2Manager {
       this.updateStepperUI();
       this.startRoundTimer(this.startTime);
 
-      // Restore Stage 1 Bridges
       if (data.stage1Bridges && data.stage1Bridges.length > 0) {
         if (this.hashiEngine) {
           this.hashiEngine.loadBridges(data.stage1Bridges);
@@ -992,7 +1089,6 @@ class Track2Manager {
         }
       }
 
-      // Restore Stage 2
       if (data.selectedDeepfake) {
         this.selectDeepfake(data.selectedDeepfake);
       }
@@ -1001,7 +1097,6 @@ class Track2Manager {
         this.renderVideoOrderSlots();
       }
 
-      // Restore Stage 3
       if (data.letterMapping) {
         this.letterMapping = { ...this.letterMapping, ...data.letterMapping };
         this.renderLetterKeypad();

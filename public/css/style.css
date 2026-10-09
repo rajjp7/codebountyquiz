@@ -2724,3 +2724,189 @@ body {
   margin-right: 0.35rem;
 }
 
+/* Hashi Official Guidelines Card */
+.hashi-rules-card {
+  background: var(--bg-surface-elevated, #131722);
+  border: 1px solid var(--border-hairline, rgba(255, 255, 255, 0.08));
+  border-left: 3px solid #3b82f6;
+  border-radius: var(--radius-md, 8px);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.hashi-rules-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #60a5fa;
+  margin-bottom: 0.65rem;
+}
+
+.hashi-rules-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  color: var(--text-secondary, #94a3b8);
+}
+
+.hashi-rules-list li {
+  margin-bottom: 0.25rem;
+}
+
+.hashi-rules-list li:last-child {
+  margin-bottom: 0;
+}
+
+/* Time Expired Lock Banner */
+.time-up-lock-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: var(--radius-md, 8px);
+  padding: 0.85rem 1.25rem;
+  margin-bottom: 1.5rem;
+  color: #ef4444;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-align: center;
+  animation: pulseLock 2s infinite ease-in-out;
+}
+
+@keyframes pulseLock {
+  0%, 100% { border-color: rgba(239, 68, 68, 0.35); }
+  50% { border-color: rgba(239, 68, 68, 0.8); }
+}
+
+/* Power-Up Unlock Notification Banner */
+.powerup-unlock-banner {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 9999;
+  background: linear-gradient(135deg, #1e1b4b 0%, #1a1f35 100%);
+  border: 1px solid rgba(250, 204, 21, 0.5);
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem 1rem;
+  width: clamp(300px, 380px, 95vw);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(250, 204, 21, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transform: translateY(120%) scale(0.96);
+  opacity: 0;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease;
+  pointer-events: auto;
+}
+
+.powerup-unlock-banner.visible {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+.pub-close {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 1.25rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  transition: color 0.2s, background 0.2s;
+}
+.pub-close:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.pub-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.pub-label {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #facc15;
+  letter-spacing: 0.02em;
+}
+
+.pub-stage {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(250, 204, 21, 0.65);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-left: auto;
+}
+
+.pub-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
+}
+
+.pub-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  animation: pubCardSlide 0.4s ease both;
+}
+
+.pub-card:nth-child(2) { animation-delay: 0.1s; }
+
+@keyframes pubCardSlide {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.pub-card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(250, 204, 21, 0.12);
+  border: 1px solid rgba(250, 204, 21, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #facc15;
+}
+
+.pub-card-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-bottom: 0.15rem;
+}
+
+.pub-card-desc {
+  font-size: 0.72rem;
+  color: rgba(148, 163, 184, 0.85);
+  line-height: 1.4;
+}
+
+.pub-footer {
+  font-size: 0.73rem;
+  color: rgba(148, 163, 184, 0.7);
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding-top: 0.7rem;
+  text-align: center;
+}

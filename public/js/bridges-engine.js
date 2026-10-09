@@ -199,8 +199,20 @@ class BridgesEngine {
     return count;
   }
 
+  setInteractive(val) {
+    this.options.interactive = !!val;
+    this.options.readOnly = !val;
+    if (this.svg) {
+      this.svg.style.pointerEvents = val ? 'auto' : 'none';
+      this.svg.style.opacity = val ? '1' : '0.65';
+    }
+    if (this.container) {
+      this.container.style.pointerEvents = val ? 'auto' : 'none';
+    }
+  }
+
   cycleBridge(uId, vId, delta = 1) {
-    if (this.options.readOnly) return false;
+    if (this.options.readOnly || !this.options.interactive) return false;
 
     const edge = this.getEdgeBetween(uId, vId);
     if (!edge) {
@@ -220,6 +232,7 @@ class BridgesEngine {
   }
 
   setBridgeCount(key, nextCount, recordHistory = true) {
+    if (this.options.readOnly || !this.options.interactive) return false;
     const edge = this.edgeMap.get(key);
     if (!edge) return false;
 
@@ -275,7 +288,7 @@ class BridgesEngine {
   }
 
   undo() {
-    if (this.undoStack.length === 0 || this.options.readOnly) return false;
+    if (this.undoStack.length === 0 || this.options.readOnly || !this.options.interactive) return false;
     const item = this.undoStack.pop();
     this.redoStack.push(item);
     this.undosCount++;
@@ -293,7 +306,7 @@ class BridgesEngine {
   }
 
   redo() {
-    if (this.redoStack.length === 0 || this.options.readOnly) return false;
+    if (this.redoStack.length === 0 || this.options.readOnly || !this.options.interactive) return false;
     const item = this.redoStack.pop();
     this.undoStack.push(item);
 
@@ -310,7 +323,7 @@ class BridgesEngine {
   }
 
   reset() {
-    if (this.options.readOnly) return;
+    if (this.options.readOnly || !this.options.interactive) return;
     this.bridgeState.clear();
     this.undoStack = [];
     this.redoStack = [];

@@ -15,6 +15,7 @@ class Track1Manager {
     this.timerInterval = null;
     this.tabSwitches = 0;
     this.isSubmitted = false;
+    this.isTimeUp = false;
 
     // Stage 2: The Pig Fortress Problem state
     this.pigsClassification = {
@@ -87,8 +88,6 @@ class Track1Manager {
     }
   }
 
-
-
   bindDOM() {
     // Stepper buttons
     document.querySelectorAll('.tr1-step-btn').forEach(btn => {
@@ -112,12 +111,9 @@ class Track1Manager {
       }
     });
 
-    // Stage 1 Verification
-    document.getElementById('tr1-btn-verify-stage1')?.addEventListener('click', () => this.verifyStage1());
-
     // Stage 2 Pig buttons
     document.querySelectorAll('.pig-toggle-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', () => {
         const pig = btn.getAttribute('data-pig');
         const type = btn.getAttribute('data-type');
         this.setPigType(pig, type);
@@ -129,18 +125,9 @@ class Track1Manager {
       this.resetBirdOrder();
     });
 
-    // Stage 2 Verification
-    document.getElementById('tr1-btn-verify-stage2')?.addEventListener('click', () => this.verifyStage2());
-    document.getElementById('tr1-btn-back-to-stage1')?.addEventListener('click', () => this.switchStage(1));
-
     // Stage 3 Verification & Actions
-    document.getElementById('tr1-btn-verify-stage3')?.addEventListener('click', () => this.verifyStage3());
     document.getElementById('tr1-btn-clear-officers')?.addEventListener('click', () => {
       if (confirm('Clear the 5x5 officer grid?')) this.resetOfficerGrid();
-    });
-    document.getElementById('tr1-btn-back-to-stage2')?.addEventListener('click', () => this.switchStage(2));
-    document.getElementById('tr1-btn-to-powerups')?.addEventListener('click', () => {
-      window.app?.switchTab('powerups');
     });
   }
 
@@ -189,9 +176,6 @@ class Track1Manager {
         if (this.stagesCompleted[s]) {
           statusEl.textContent = '✓';
           statusEl.classList.add('completed');
-        } else if (!this.stagesUnlocked[s]) {
-          statusEl.textContent = String(s);
-          statusEl.classList.remove('completed');
         } else {
           statusEl.textContent = String(s);
           statusEl.classList.remove('completed');
@@ -248,7 +232,12 @@ class Track1Manager {
   }
 
   async verifyStage1() {
-    // If already verified and completed, directly advance to Stage 2
+    if (this.isTimeUp) {
+      window.app?.showToast('Time is up for Round 2! Answers are locked and cannot be modified.', 'error');
+      window.app?.showTimeUpModal();
+      return;
+    }
+
     if (this.stagesCompleted[1]) {
       this.switchStage(2);
       return;
@@ -282,7 +271,7 @@ class Track1Manager {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            attempt_id: this.attempt?.id,
+            attempt_id: this.attempt?.id || localStorage.getItem('hashi_tr1_latest_attempt_id') || '',
             track: 'track1',
             stage: 1,
             data: { bridges }
@@ -295,7 +284,7 @@ class Track1Manager {
         console.warn('Server validation request issue, falling back to local Nikoli engine:', err);
       }
 
-      // Graceful Fallback: If server is offline or request timed out, validate via client-side Nikoli solver
+      // Graceful Client-side Fallback
       if (!data) {
         if (localEval.isSolved) {
           data = {
@@ -359,6 +348,7 @@ class Track1Manager {
   }
 
   setPigType(pig, type) {
+    if (this.isTimeUp) return;
     this.pigsClassification[pig] = type;
 
     // Update active button classes
@@ -439,7 +429,6 @@ class Track1Manager {
   }
 
   recalculateScoring() {
-    // Check if all 5 birds placed
     const breakdownEl = document.getElementById('tr1-calc-breakdown');
     if (!breakdownEl) return;
 
@@ -448,7 +437,6 @@ class Track1Manager {
       return;
     }
 
-    // Bird immediately after Bomb gets base power doubled!
     const bombIndex = this.launchOrder.indexOf('bomb');
     let totalDamage = 0;
     const lines = [];
@@ -464,7 +452,6 @@ class Track1Manager {
       lines.push(`${bird.name} (Pos ${pos} × Power ${effectivePower}${isDoubled ? ' [Doubled!]' : ''}) = ${dmg}`);
     });
 
-    // Count Honest / Liar pigs
     let honestCount = 0;
     let liarCount = 0;
     Object.values(this.pigsClassification).forEach(t => {
@@ -474,6 +461,12 @@ class Track1Manager {
 
     const calculatedPin = totalDamage * honestCount * liarCount;
 
+    // Synchronize inputs if they are present in the DOM
+    const dmgInput = document.getElementById('tr1-input-damage');
+    const pinInput = document.getElementById('tr1-input-vault-pin');
+    if (dmgInput && (!dmgInput.value || dmgInput.value === '0')) dmgInput.value = totalDamage;
+    if (pinInput && (!pinInput.value || pinInput.value === '0')) pinInput.value = calculatedPin;
+
     breakdownEl.innerHTML = `
       <div style="font-size: 0.8rem; line-height: 1.5; color: var(--text-secondary);">
         ${lines.join(' • ')}<br>
@@ -482,15 +475,39 @@ class Track1Manager {
         <strong>Calculated PIN:</strong> <span class="mono" style="color: var(--text-primary); font-weight: 700; font-size: 1rem;">${calculatedPin > 0 ? calculatedPin : '—'}</span>
       </div>
     `;
-
-    // Total damage & calculated pin displayed in summary
   }
 
   async verifyStage2() {
+    if (this.isTimeUp) {
+      window.app?.showToast('Time is up for Round 2! Answers are locked and cannot be modified.', 'error');
+      window.app?.showTimeUpModal();
+      return;
+    }
+
+    // Auto-calculate exact values from current selections
+    let bombIndex = this.launchOrder.indexOf('bomb');
+    let computedDamage = 0;
+    this.launchOrder.forEach((birdId, idx) => {
+      const pos = idx + 1;
+      const bird = this.availableBirds.find(b => b.id === birdId);
+      if (bird) {
+        const isDoubled = (idx === bombIndex + 1);
+        computedDamage += pos * (isDoubled ? bird.power * 2 : bird.power);
+      }
+    });
+
+    let honestCount = 0;
+    let liarCount = 0;
+    Object.values(this.pigsClassification).forEach(t => {
+      if (t === 'Honest') honestCount++;
+      if (t === 'Liar') liarCount++;
+    });
+    const computedPin = computedDamage * honestCount * liarCount;
+
     const pinInput = document.getElementById('tr1-input-vault-pin');
     const damageInput = document.getElementById('tr1-input-damage');
-    const pinVal = parseInt(pinInput?.value || '0', 10);
-    const damageVal = parseInt(damageInput?.value || '0', 10);
+    const pinVal = parseInt(pinInput?.value || computedPin || 0, 10);
+    const damageVal = parseInt(damageInput?.value || computedDamage || 0, 10);
 
     const data = {
       pigs: this.pigsClassification,
@@ -499,53 +516,86 @@ class Track1Manager {
       total_damage: damageVal
     };
 
+    let result = null;
+
     try {
       const res = await fetch('/api/round2/validate-stage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          attempt_id: this.attempt?.id,
+          attempt_id: this.attempt?.id || localStorage.getItem('hashi_tr1_latest_attempt_id') || '',
           track: 'track1',
           stage: 2,
           data
         })
       });
-      const result = await res.json();
 
-      if (result.valid) {
-        this.stagesCompleted[2] = true;
-        this.stagesUnlocked[3] = true;
-        this.updateStepperUI();
-        this.saveProgress();
-
-        window.soundManager?.playFanfare();
-        window.app?.triggerConfetti();
-        window.powerupsManager?.updatePool(result.questions_solved || 2, result.unlocked_powerups);
-
-        window.app?.showStageConfirmation({
-          isCorrect: true,
-          title: 'Correct Answer! Stage 2 Verified',
-          message: result.reason || 'Pig Fortress deductions, bird launch sequence, and Vault PIN verified!',
-          reward: '<strong>Rewards Earned:</strong> +1200 Points • <strong>Penalty Sweeper</strong> & <strong>Jumper Points</strong> added to power-up pool (4 of 5 available).',
-          buttonText: 'Continue to Stage 3: 25 Officers →',
-          onAction: () => this.switchStage(3)
-        });
+      if (res.ok) {
+        result = await res.json();
       } else {
-        window.soundManager?.playError();
-        window.app?.showStageConfirmation({
-          isCorrect: false,
-          title: 'Incorrect Answer',
-          message: result.reason || 'Pig role classification, launch order, or vault PIN does not match.',
-          buttonText: 'Review & Try Again'
-        });
+        console.warn(`Server validation returned status ${res.status}, using local solver fallback`);
       }
     } catch (err) {
-      console.error(err);
+      console.warn('Network issue during Stage 2 validation, evaluating locally:', err);
+    }
+
+    // Client-side evaluation fallback to avoid network lockouts
+    if (!result) {
+      const isMinion = String(this.pigsClassification.Minion || '').toUpperCase() === 'HONEST';
+      const isCorporal = String(this.pigsClassification.Corporal || '').toUpperCase() === 'LIAR';
+      const isForeman = String(this.pigsClassification.Foreman || '').toUpperCase() === 'LIAR';
+      const isKing = String(this.pigsClassification.King || '').toUpperCase() === 'HONEST';
+      const isHelmet = String(this.pigsClassification.Helmet || '').toUpperCase() === 'HONEST';
+      const pigsCorrect = isMinion && isCorporal && isForeman && isKing && isHelmet;
+
+      const expectedOrder = ['red', 'chuck', 'matilda', 'bomb', 'hal'];
+      const cleanOrder = (this.launchOrder || []).map(b => String(b).toLowerCase());
+      const orderCorrect = cleanOrder.length === 5 && cleanOrder.every((b, i) => b === expectedOrder[i]);
+      const pinCorrect = pinVal === 1788;
+      const damageCorrect = damageVal === 298;
+
+      if (pinCorrect || (pigsCorrect && orderCorrect)) {
+        result = {
+          valid: true,
+          questions_solved: 2,
+          unlocked_powerups: ['time_cracker', 'topic_finder', 'penalty_sweeper', 'jumper_points'],
+          reason: 'Pig Fortress deductions, bird launch sequence, and Vault PIN verified!'
+        };
+      } else {
+        result = {
+          valid: false,
+          reason: !orderCorrect
+            ? 'Launch sequence order is incorrect. Check pig clues!'
+            : (!pigsCorrect ? 'Pig Honest/Liar classifications are incorrect.' : 'Vault PIN calculation is incorrect.')
+        };
+      }
+    }
+
+    if (result.valid) {
+      this.stagesCompleted[2] = true;
+      this.stagesUnlocked[3] = true;
+      this.updateStepperUI();
+      this.saveProgress();
+
+      window.soundManager?.playFanfare();
+      window.app?.triggerConfetti();
+      window.powerupsManager?.updatePool(result.questions_solved || 2, result.unlocked_powerups);
+
+      window.app?.showStageConfirmation({
+        isCorrect: true,
+        title: 'Correct Answer! Stage 2 Verified',
+        message: result.reason || 'Pig Fortress deductions, bird launch sequence, and Vault PIN verified!',
+        reward: '<strong>Rewards Earned:</strong> +1200 Points • <strong>Penalty Sweeper</strong> & <strong>Jumper Points</strong> added to power-up pool (4 of 5 available).',
+        buttonText: 'Continue to Stage 3: 25 Officers →',
+        onAction: () => this.switchStage(3)
+      });
+    } else {
+      window.soundManager?.playError();
       window.app?.showStageConfirmation({
         isCorrect: false,
-        title: 'Connection Issue',
-        message: 'Could not connect to the validation server. Please check your network and retry.',
-        buttonText: 'Retry Verification'
+        title: 'Incorrect Answer',
+        message: result.reason || 'Pig role classification, launch order, or vault PIN does not match.',
+        buttonText: 'Review & Try Again'
       });
     }
   }
@@ -563,10 +613,8 @@ class Track1Manager {
     if (!bank) return;
     bank.innerHTML = '';
 
-    // Generate 25 pieces: 5 colors x 5 chess pieces
     this.officerColors.forEach(color => {
       this.officerPieces.forEach(piece => {
-        // Count how many are placed on board (max 1 of each pair!)
         const isPlaced = this.officerGrid.some(cell => cell && cell.color === color && cell.piece === piece);
 
         const pieceEl = document.createElement('div');
@@ -637,7 +685,6 @@ class Track1Manager {
         cellEl.appendChild(pieceDisplay);
       }
 
-      // Drag & Drop handlers
       cellEl.addEventListener('dragover', (e) => {
         e.preventDefault();
         cellEl.classList.add('drag-over');
@@ -660,7 +707,6 @@ class Track1Manager {
         }
       });
 
-      // Tap-to-place handler
       cellEl.addEventListener('click', () => {
         if (this.selectedOfficer) {
           this.officerGrid[i] = this.selectedOfficer;
@@ -725,7 +771,6 @@ class Track1Manager {
     this.renderOfficerGrid();
   }
 
-  // Pre-fill canonical 5x5 Graeco-Latin Square for quick demo/testing
   solveOfficerPuzzleDemo() {
     for (let r = 0; r < 5; r++) {
       for (let c = 0; c < 5; c++) {
@@ -740,6 +785,11 @@ class Track1Manager {
   }
 
   async verifyStage3() {
+    if (this.isTimeUp) {
+      window.app?.showToast('Time is up for Round 2! Answers are locked and cannot be modified.', 'error');
+      window.app?.showTimeUpModal();
+      return;
+    }
     const passcodeInput = document.getElementById('tr1-input-officer-passcode');
     const passcodeVal = String(passcodeInput?.value || '').trim();
 
@@ -748,56 +798,74 @@ class Track1Manager {
       arrangement: this.officerGrid
     };
 
+    let result = null;
+
     try {
       const res = await fetch('/api/round2/validate-stage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          attempt_id: this.attempt?.id,
+          attempt_id: this.attempt?.id || localStorage.getItem('hashi_tr1_latest_attempt_id') || '',
           track: 'track1',
           stage: 3,
           data
         })
       });
-      const result = await res.json();
 
-      if (result.valid) {
-        this.stagesCompleted[3] = true;
-        this.stagesUnlocked[4] = true;
-        this.updateStepperUI();
-        this.saveProgress();
-
-        window.soundManager?.playFanfare();
-        window.app?.triggerConfetti();
-        window.powerupsManager?.updatePool(3, result.unlocked_powerups);
-
-        window.app?.showStageConfirmation({
-          isCorrect: true,
-          title: 'Correct Answer! Stage 3 Solved',
-          message: 'The 25 Officer Graeco-Latin Square and secret verification passcode have been confirmed!',
-          reward: '<strong>Rewards Earned:</strong> +1000 Points • <strong>Full Power-Up Pool Unlocked (5 of 5)</strong>, including <strong>Sweet Sabotage</strong>!',
-          buttonText: 'Proceed to Power-Ups Selection →',
-          onAction: () => {
-            this.switchStage(4);
-            window.app?.switchTab('powerups');
-          }
-        });
+      if (res.ok) {
+        result = await res.json();
       } else {
-        window.soundManager?.playError();
-        window.app?.showStageConfirmation({
-          isCorrect: false,
-          title: 'Incorrect Answer',
-          message: result.reason || 'Officers arrangement violates orthogonal rows/columns or passcode is incorrect.',
-          buttonText: 'Review & Try Again'
-        });
+        console.warn(`Server responded with HTTP ${res.status}, evaluating locally`);
       }
     } catch (err) {
-      console.error(err);
+      console.warn('Network issue during Stage 3 validation, checking passcode locally:', err);
+    }
+
+    // Client-side fallback for passcode confirmation
+    if (!result) {
+      if (passcodeVal.toLowerCase() === 'tuhaikon@codestars') {
+        result = {
+          valid: true,
+          questions_solved: 3,
+          unlocked_powerups: ['time_cracker', 'topic_finder', 'penalty_sweeper', 'jumper_points', 'sweet_sabotage'],
+          reason: '25 Officer Puzzle verified! Secret passcode confirmed.'
+        };
+      } else {
+        result = {
+          valid: false,
+          reason: 'Passcode is incorrect or officer grid is incomplete.'
+        };
+      }
+    }
+
+    if (result.valid) {
+      this.stagesCompleted[3] = true;
+      this.stagesUnlocked[4] = true;
+      this.updateStepperUI();
+      this.saveProgress();
+
+      window.soundManager?.playFanfare();
+      window.app?.triggerConfetti();
+      window.powerupsManager?.updatePool(3, result.unlocked_powerups);
+
+      window.app?.showStageConfirmation({
+        isCorrect: true,
+        title: 'Correct Answer! Stage 3 Solved',
+        message: 'The 25 Officer Graeco-Latin Square and secret verification passcode have been confirmed!',
+        reward: '<strong>Rewards Earned:</strong> +1000 Points • <strong>Full Power-Up Pool Unlocked (5 of 5)</strong>, including <strong>Sweet Sabotage</strong>!',
+        buttonText: 'Proceed to Power-Ups Selection →',
+        onAction: () => {
+          this.switchStage(4);
+          window.app?.switchTab('powerups');
+        }
+      });
+    } else {
+      window.soundManager?.playError();
       window.app?.showStageConfirmation({
         isCorrect: false,
-        title: 'Connection Issue',
-        message: 'Could not connect to the validation server. Please check your network and retry.',
-        buttonText: 'Retry Verification'
+        title: 'Incorrect Answer',
+        message: result.reason || 'Officers arrangement violates orthogonal rows/columns or passcode is incorrect.',
+        buttonText: 'Review & Try Again'
       });
     }
   }
@@ -811,7 +879,7 @@ class Track1Manager {
       stagesCompleted: this.stagesCompleted,
       currentStage: this.currentStage || 1,
       stage1Bridges: this.hashiEngine ? this.hashiEngine.serializeSolution() : (this._pendingBridges || []),
-      pigRoles: this.pigRoles || {},
+      pigsClassification: this.pigsClassification || {},
       launchOrder: this.launchOrder || [],
       damageInput: document.getElementById('tr1-input-damage')?.value || '',
       pinInput: document.getElementById('tr1-input-vault-pin')?.value || '',
@@ -856,9 +924,9 @@ class Track1Manager {
       }
 
       // Restore Stage 2
-      if (data.pigRoles) {
-        this.pigRoles = data.pigRoles;
-        Object.entries(this.pigRoles).forEach(([pig, type]) => {
+      if (data.pigsClassification) {
+        this.pigsClassification = data.pigsClassification;
+        Object.entries(this.pigsClassification).forEach(([pig, type]) => {
           document.querySelectorAll(`.pig-toggle-btn[data-pig="${pig}"]`).forEach(btn => {
             btn.classList.toggle('active', btn.getAttribute('data-type') === type);
           });
@@ -939,7 +1007,6 @@ class Track1Manager {
     if (avatarEl) avatarEl.textContent = (name || 'F').charAt(0).toUpperCase();
   }
 
-  // Single 30-Minute Round Timer (Resilient to Page Refresh)
   startRoundTimer(savedStartTime = null) {
     if (this.timerInterval) clearInterval(this.timerInterval);
     if (window.track2Manager?.timerInterval) {
@@ -978,14 +1045,78 @@ class Track1Manager {
       }
 
       if (remaining <= 0) {
-        clearInterval(this.timerInterval);
-        this.timerInterval = null;
-        window.app?.showToast('Time is up for Round 2! Please review and submit your power-ups.', 'warning');
+        this.onTimeUp();
       }
     };
 
     updateTick();
     this.timerInterval = setInterval(updateTick, 1000);
+  }
+
+  onTimeUp() {
+    this.isTimeUp = true;
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+
+    if (this.hashiEngine) {
+      this.hashiEngine.setInteractive(false);
+    }
+    ['tr1-hashi-undo', 'tr1-hashi-redo', 'tr1-hashi-reset', 'tr1-hashi-guides'].forEach(id => {
+      const b = document.getElementById(id);
+      if (b) { b.disabled = true; b.style.opacity = '0.5'; b.style.cursor = 'not-allowed'; }
+    });
+
+    document.querySelectorAll('.pig-toggle-btn').forEach(btn => {
+      btn.disabled = true;
+      btn.style.cursor = 'not-allowed';
+    });
+    document.querySelectorAll('.bird-token').forEach(tok => {
+      tok.draggable = false;
+      tok.style.cursor = 'not-allowed';
+    });
+    const pinInput = document.getElementById('tr1-input-vault-pin');
+    if (pinInput) { pinInput.disabled = true; pinInput.readOnly = true; }
+    const damageInput = document.getElementById('tr1-input-damage');
+    if (damageInput) { damageInput.disabled = true; damageInput.readOnly = true; }
+
+    document.querySelectorAll('.officer-palette-btn').forEach(b => {
+      b.disabled = true;
+      b.style.cursor = 'not-allowed';
+    });
+    const passcode = document.getElementById('tr1-input-officer-passcode');
+    if (passcode) { passcode.disabled = true; passcode.readOnly = true; }
+
+    ['tr1-btn-verify-stage1', 'tr1-btn-verify-stage2', 'tr1-btn-verify-stage3'].forEach(id => {
+      const btn = document.getElementById(id);
+      if (btn) {
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        btn.style.cursor = 'not-allowed';
+      }
+    });
+
+    this.showLockedBanner();
+    window.soundManager?.playError();
+    window.app?.showTimeUpModal();
+  }
+
+  showLockedBanner() {
+    let banner = document.getElementById('tr1-time-up-banner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'tr1-time-up-banner';
+      banner.className = 'time-up-lock-banner';
+      banner.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>ROUND 2 TIME EXPIRED • ALL ANSWERS & BOARDS ARE LOCKED</span>
+      `;
+      const container = document.getElementById('view-track1');
+      if (container) {
+        container.insertBefore(banner, container.firstChild);
+      }
+    }
   }
 }
 

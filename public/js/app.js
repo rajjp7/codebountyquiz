@@ -528,6 +528,23 @@ class App {
     requestAnimationFrame(() => modal.classList.add('open'));
   }
 
+  showTimeUpModal() {
+    const modal = document.getElementById('modal-time-up');
+    if (modal) {
+      modal.style.display = 'flex';
+      requestAnimationFrame(() => modal.classList.add('open'));
+    }
+  }
+
+  closeTimeUpModalAndGoPowerups() {
+    const modal = document.getElementById('modal-time-up');
+    if (modal) {
+      modal.classList.remove('open');
+      modal.style.display = 'none';
+    }
+    this.switchTab('powerups');
+  }
+
   initConfetti() {
     const canvas = document.createElement('canvas');
     canvas.className = 'confetti-canvas';

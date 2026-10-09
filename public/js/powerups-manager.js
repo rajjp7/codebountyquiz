@@ -157,15 +157,68 @@ class PowerupsManager {
     this.renderCapsuleBadges();
     this.renderPowerupsUI();
 
-    // Trigger toast if new power-ups unlocked
+    // Show rich unlock banner if new power-ups unlocked
     if (this.questionsSolved > prevSolved) {
-      const newlyEarned = (this.questionsSolved === 1)
-        ? 'Time Cracker & Topic Finder'
-        : (this.questionsSolved === 2)
-          ? 'Penalty Sweeper & Jumper Points'
-          : 'Sweet Sabotage';
-      window.app?.showToast(`Power-Up Unlocked: ${newlyEarned}. Pool Size: ${this.unlockedPool.length}/5`, 'success');
+      this.showUnlockBanner(this.questionsSolved);
     }
+  }
+
+  showUnlockBanner(solvedCount) {
+    // Determine newly unlocked power-ups based on stage
+    let newPowerups = [];
+    let stageLabel = '';
+    if (solvedCount === 1) {
+      newPowerups = this.allPowerups.filter(p => ['time_cracker', 'topic_finder'].includes(p.id));
+      stageLabel = 'Stage 1 Complete';
+    } else if (solvedCount === 2) {
+      newPowerups = this.allPowerups.filter(p => ['penalty_sweeper', 'jumper_points'].includes(p.id));
+      stageLabel = 'Stage 2 Complete';
+    } else {
+      newPowerups = this.allPowerups.filter(p => p.id === 'sweet_sabotage');
+      stageLabel = 'Stage 3 Complete – Full Pool Unlocked!';
+    }
+
+    // Remove any existing banner
+    document.getElementById('powerup-unlock-banner')?.remove();
+
+    const banner = document.createElement('div');
+    banner.id = 'powerup-unlock-banner';
+    banner.className = 'powerup-unlock-banner';
+    banner.innerHTML = `
+      <button class="pub-close" onclick="document.getElementById('powerup-unlock-banner')?.remove()" title="Dismiss">×</button>
+      <div class="pub-header">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <span class="pub-label">Power-Ups Unlocked!</span>
+        <span class="pub-stage">${stageLabel} • ${this.unlockedPool.length}/5 Available</span>
+      </div>
+      <div class="pub-cards">
+        ${newPowerups.map(p => `
+          <div class="pub-card">
+            <div class="pub-card-icon">${p.iconSvg}</div>
+            <div>
+              <div class="pub-card-name">${p.name}</div>
+              <div class="pub-card-desc">${p.description}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="pub-footer">
+        These power-ups are now available in your pool. Select 2 to carry into Round 3!
+      </div>
+    `;
+    document.body.appendChild(banner);
+
+    // Animate in
+    requestAnimationFrame(() => banner.classList.add('visible'));
+
+    // Auto-dismiss after 7 seconds
+    setTimeout(() => {
+      banner.classList.remove('visible');
+      setTimeout(() => banner.remove(), 450);
+    }, 7000);
+
+    // Also fire a toast for quick acknowledgment
+    window.soundManager?.playFanfare();
   }
 
   renderCapsuleBadges() {

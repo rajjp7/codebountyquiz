@@ -138,6 +138,22 @@
             </p>
           </div>
 
+          <!-- Hashi Official Guidelines Card -->
+          <div class="hashi-rules-card">
+            <div class="hashi-rules-header">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <span>Rules</span>
+            </div>
+            <ol class="hashi-rules-list">
+              <li>Bridges can connect islands only horizontally or vertically.</li>
+              <li>An island must have exactly the required number of bridges.</li>
+              <li>Maximum two bridges can connect the same two islands.</li>
+              <li>Bridges cannot cross each other.</li>
+              <li>A bridge cannot pass through another island.</li>
+              <li>All islands must form one connected network.</li>
+            </ol>
+          </div>
+
           <div class="board-container-card">
             <!-- Toolbar -->
             <div class="board-toolbar">
@@ -448,7 +464,7 @@
           </div>
 
           <div class="stage-actions-row">
-            <button class="btn-secondary" id="tr1-btn-back-to-stage2">
+            <button class="btn-secondary" id="tr1-btn-back-to-stage2" onclick="window.track1Manager?.switchStage(2)">
               <span>Back to Stage 2</span>
             </button>
           </div>
@@ -484,7 +500,7 @@
               <p style="font-size: 0.8125rem; color: var(--text-secondary); max-width: 440px; margin: 0 auto 1.25rem auto;">
                 Proceed to the Power-Up selection page to choose your <b>2 power-ups</b> to carry into Round 3.
               </p>
-              <button class="btn-primary" id="tr1-btn-to-powerups" style="padding: 0.65rem 1.5rem;">
+              <button class="btn-primary" id="tr1-btn-to-powerups" style="padding: 0.65rem 1.5rem;" onclick="window.app?.switchTab('powerups')">
                 <span>Select 2 Power-Ups</span>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
               </button>
@@ -546,6 +562,22 @@
             <p>
               Championship grid matching official size 52 specifications (<a href="https://www.puzzle-bridges.com/?size=52" target="_blank" style="color: var(--text-secondary); text-decoration: underline;">puzzle-bridges.com</a>). Connect islands with orthogonal bridges so island numbers match and all islands form a single network.
             </p>
+          </div>
+
+          <!-- Hashi Official Guidelines Card -->
+          <div class="hashi-rules-card">
+            <div class="hashi-rules-header">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <span>Rules</span>
+            </div>
+            <ol class="hashi-rules-list">
+              <li>Bridges can connect islands only horizontally or vertically.</li>
+              <li>An island must have exactly the required number of bridges.</li>
+              <li>Maximum two bridges can connect the same two islands.</li>
+              <li>Bridges cannot cross each other.</li>
+              <li>A bridge cannot pass through another island.</li>
+              <li>All islands must form one connected network.</li>
+            </ol>
           </div>
 
           <div class="board-container-card">
@@ -968,17 +1000,17 @@
               <p style="font-size: 0.8125rem; color: var(--text-secondary); max-width: 440px; margin: 0 auto 1.25rem auto;">
                 Proceed to the Power-Up selection page to choose your <b>2 power-ups</b> to carry into Round 3.
               </p>
-              <button class="btn-primary" id="tr2-btn-to-powerups" style="padding: 0.65rem 1.5rem;">
+              <button class="btn-primary" id="tr2-btn-to-powerups" style="padding: 0.65rem 1.5rem;" onclick="window.app?.switchTab('powerups')">
                 <span>Select 2 Power-Ups</span>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
               </button>
             </div>
 
             <div class="stage-actions-row" style="margin-top: 1.5rem;">
-              <button class="btn-secondary" id="tr2-btn-back-to-stage3">
+              <button class="btn-secondary" id="tr2-btn-back-to-stage3" onclick="window.track2Manager?.switchStage(3)">
                 <span>Back to Edit</span>
               </button>
-              <button class="btn-primary" id="tr2-btn-final-submit" style="padding: 0.65rem 1.5rem;">
+              <button class="btn-primary" id="tr2-btn-final-submit" style="padding: 0.65rem 1.5rem;" onclick="if(window.track2Manager){window.track2Manager.submitTrack2()}else{console.warn('Track 2 manager not ready')}">
                 <span>Submit 2nd Track Contest Entry</span>
               </button>
             </div>
@@ -1635,19 +1667,42 @@
     </div>
   </div>
 
+  <!-- ==============================================
+       MODAL 6: TIME IS UP / ROUND ENDED MODAL
+       (Enforces Hard Lock & Directs to Power-Up Selection)
+       ============================================== -->
+  <div class="modal-backdrop" id="modal-time-up" style="display: none;">
+    <div class="modal-dialog" style="max-width: 480px; text-align: center; padding: 2.25rem 2rem; border: 1px solid var(--rose-500, #ef4444);">
+      <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #ef4444; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem auto;">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <h3 style="font-size: 1.35rem; font-weight: 700; color: var(--rose-500, #ef4444); margin-bottom: 0.5rem;">Round 2 Time Expired!</h3>
+      <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1.25rem;">
+        The 30-minute time limit for Round 2 has ended. All boards, puzzle submissions, and answer inputs have been locked. No further modifications can be made.
+      </p>
+      <div style="background: var(--bg-surface-elevated); border: 1px solid var(--border-hairline); border-radius: var(--radius-sm); padding: 0.85rem 1rem; margin-bottom: 1.5rem; font-size: 0.8125rem; color: var(--text-primary); text-align: left;">
+        <div><strong>Status:</strong> <span style="color: var(--rose-500, #ef4444); font-weight: 600;">Time's Up • Answers Permanently Locked</span></div>
+        <div style="margin-top: 0.35rem;"><strong>Next Step:</strong> Open the Power-Ups page and select your 2 power-ups to carry into Round 3.</div>
+      </div>
+      <button class="btn-primary" id="btn-time-up-action" style="width: 100%; padding: 0.75rem 1.5rem; font-weight: 600;" onclick="window.app?.closeTimeUpModalAndGoPowerups()">
+        <span>Go to Power-Up Selection →</span>
+      </button>
+    </div>
+  </div>
+
   <!-- Minimal Toast Container -->
   <div class="toast-container" id="toast-container"></div>
 
   <!-- Scripts -->
   <script src="js/audio.js"></script>
-  <script src="js/bridges-engine.js?v=20261009_v3"></script>
-  <script src="js/powerups-manager.js?v=20261009_v3"></script>
-  <script src="js/track1-manager.js?v=20261009_v3"></script>
-  <script src="js/track2-manager.js?v=20261009_v3"></script>
-  <script src="js/student-quiz.js?v=20261009_v3"></script>
-  <script src="js/leaderboard.js?v=20261009_v3"></script>
-  <script src="js/dataset-view.js?v=20261009_v3"></script>
-  <script src="js/admin-controls.js?v=20261009_v3"></script>
-  <script src="js/app.js?v=20261009_v3"></script>
+  <script src="js/bridges-engine.js?v=20261009_v6"></script>
+  <script src="js/powerups-manager.js?v=20261009_v6"></script>
+  <script src="js/track1-manager.js?v=20261009_v6"></script>
+  <script src="js/track2-manager.js?v=20261009_v6"></script>
+  <script src="js/student-quiz.js?v=20261009_v6"></script>
+  <script src="js/leaderboard.js?v=20261009_v6"></script>
+  <script src="js/dataset-view.js?v=20261009_v6"></script>
+  <script src="js/admin-controls.js?v=20261009_v6"></script>
+  <script src="js/app.js?v=20261009_v6"></script>
 </body>
 </html>
