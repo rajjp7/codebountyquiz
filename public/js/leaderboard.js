@@ -89,10 +89,15 @@ class LeaderboardManager {
 
     const completed = records.filter(r => r.status === 'COMPLETED');
 
+    if (completed.length === 0) {
+      podiumEl.innerHTML = '';
+      return;
+    }
+
     if (completed.length < 3) {
       podiumEl.innerHTML = `
-        <div style="grid-column: 1 / -1; text-align: center; padding: 2.5rem; color: var(--text-tertiary); font-size: 0.8125rem;">
-          At least 3 completed submissions required to display podium.
+        <div style="grid-column: 1 / -1; text-align: center; padding: 1.5rem; color: var(--text-tertiary); font-size: 0.8125rem;">
+          ${completed.length} participant(s) finished so far. Top 3 finishers will appear on the podium.
         </div>
       `;
       return;
@@ -140,7 +145,7 @@ class LeaderboardManager {
       tbody.innerHTML = `
         <tr>
           <td colspan="9" style="text-align: center; padding: 3rem; color: var(--text-tertiary);">
-            No attempts recorded for this cohort yet.
+            No contestant attempts recorded yet. Results will appear here live.
           </td>
         </tr>
       `;
