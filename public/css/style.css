@@ -1571,12 +1571,18 @@ body {
   padding: 0.4rem;
   position: relative;
   transition: var(--transition);
+  cursor: pointer;
 }
 
 .tr2-sequence-slot.filled {
   background: var(--bg-surface-elevated);
   border-style: solid;
   border-color: var(--border-subtle);
+}
+
+.tr2-sequence-slot.selected {
+  border-color: #facc15;
+  box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.24);
 }
 
 .slot-pos {
@@ -2376,6 +2382,13 @@ body {
   gap: 1.25rem;
   margin-top: 1.5rem;
   margin-bottom: 2rem;
+}
+
+.powerup-empty-state {
+  grid-column: 1 / -1;
+  padding: 1.5rem;
+  color: var(--text-secondary);
+  text-align: center;
 }
 
 .powerup-card {

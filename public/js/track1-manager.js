@@ -124,6 +124,9 @@ class Track1Manager {
     document.getElementById('tr1-btn-reset-bird-order')?.addEventListener('click', () => {
       this.resetBirdOrder();
     });
+    ['tr1-input-vault-pin', 'tr1-input-damage', 'tr1-input-officer-passcode'].forEach(id => {
+      document.getElementById(id)?.addEventListener('input', () => this.saveProgress());
+    });
 
     // Stage 3 Verification & Actions
     document.getElementById('tr1-btn-clear-officers')?.addEventListener('click', () => {
@@ -217,12 +220,12 @@ class Track1Manager {
     if (btn3) {
       if (this.stagesCompleted[3]) {
         btn3.className = 'btn-primary btn-success-verified';
-        btn3.innerHTML = '<span>✓ Stage 3 Accepted • Proceed to Power-Ups Selection →</span>';
+        btn3.innerHTML = '<span>✓ Stage 3 Accepted • Open Power-Ups →</span>';
         btn3.disabled = false;
         btn3.style.opacity = '1';
       } else {
         btn3.className = 'btn-primary';
-        btn3.innerHTML = '<span>Verify & Submit 25 Officers</span>';
+        btn3.innerHTML = '<span>Verify 25 Officers</span>';
       }
     }
   }
@@ -255,10 +258,7 @@ class Track1Manager {
           btn.classList.add('pulse-ready');
           btn.innerHTML = '<span>⚡ Board Solved! Click to Verify & Unlock 2 Power-Ups →</span>';
         }
-        if (window.powerupsManager) {
-          window.powerupsManager.updatePool(1, ['time_cracker', 'topic_finder']);
-        }
-        window.app?.showToast('🎉 All 24 islands satisfied! 2 Power-Ups Unlocked in Real Time (Time Cracker ⚡ + Topic Finder 🔍)!', 'success');
+        window.app?.showToast('Board solved. Verify Stage 1 to unlock the next stage and power-ups.', 'success');
       }
     });
 
@@ -273,10 +273,7 @@ class Track1Manager {
   solveHashiDemo() {
     if (!this.hashiEngine || !this.puzzleFY || !this.puzzleFY.solutionEdges) return;
     this.hashiEngine.loadBridges(this.puzzleFY.solutionEdges);
-    if (window.powerupsManager) {
-      window.powerupsManager.updatePool(1, ['time_cracker', 'topic_finder']);
-    }
-    window.app?.showToast('FY 10×10 solution loaded! 2 Power-Ups Unlocked in Real Time.', 'success');
+    window.app?.showToast('FY solution loaded. Verify Stage 1 to continue.', 'success');
   }
 
   updateStage1Status() {
@@ -320,7 +317,6 @@ class Track1Manager {
     }
 
     try {
-      const localEval = this.hashiEngine.evaluateState ? this.hashiEngine.evaluateState() : { isSolved: false };
       const bridges = (typeof this.hashiEngine.exportBridges === 'function')
         ? this.hashiEngine.exportBridges()
         : Array.from(this.hashiEngine.bridgeState.entries()).map(([k, cnt]) => {
@@ -340,31 +336,12 @@ class Track1Manager {
             data: { bridges }
           })
         });
-        if (res.ok) {
-          data = await res.json();
-        }
+        data = await res.json();
       } catch (err) {
-        console.warn('Server validation request issue, falling back to local Nikoli engine:', err);
+        console.warn('Server validation request issue, please retry:', err);
       }
 
-      // Graceful Client-side Fallback
-      if (!data) {
-        if (localEval.isSolved) {
-          data = {
-            valid: true,
-            questions_solved: 1,
-            unlocked_powerups: ['time_cracker', 'topic_finder']
-          };
-        } else {
-          let reason = 'Bridges do not satisfy all island rules.';
-          if (!localEval.isFullyConnected) {
-            reason = 'All islands must form a single unified network (found disconnected island groups).';
-          } else if (localEval.completedCount < localEval.totalCount) {
-            reason = `Only ${localEval.completedCount} of ${localEval.totalCount} islands are satisfied. Check bridge counts!`;
-          }
-          data = { valid: false, reason };
-        }
-      }
+      if (!data) data = { valid: false, reason: 'Server unavailable. Please retry verification.' };
 
       if (data.valid) {
         this.stagesCompleted[1] = true;
@@ -377,16 +354,16 @@ class Track1Manager {
         window.app?.triggerConfetti();
         window.powerupsManager?.updatePool(data.questions_solved || 1, data.unlocked_powerups || ['time_cracker', 'topic_finder']);
 
-        window.app?.showAcceptedToast(1, ['Time Cracker', 'Topic Finder'], '2/5');
+        window.app?.showAcceptedToast(1, ['Time Cracker', 'Topic Finder'], '2/4');
 
         window.app?.showStageConfirmation({
           isCorrect: true,
           stageNumber: 1,
           unlockedPowerups: ['time_cracker', 'topic_finder'],
-          poolSize: '2/5',
+          poolSize: '2/4',
           title: 'Stage 1 Verified',
           message: 'All 24 islands are correctly connected into a single unified network according to Nikoli rules.',
-          reward: '<strong>Rewards Earned:</strong> +500 Points',
+          reward: '<strong>Rewards Earned:</strong> +1000 Points',
           buttonText: 'Continue to Stage 2: Pig Fortress →',
           onAction: () => this.switchStage(2)
         });
@@ -418,7 +395,7 @@ class Track1Manager {
   }
 
   setPigType(pig, type) {
-    if (this.isTimeUp) return;
+    if (this.isTimeUp || this.isSubmitted || this.stagesCompleted[2]) return;
     this.pigsClassification[pig] = type;
 
     // Update active button classes
@@ -427,6 +404,7 @@ class Track1Manager {
     });
 
     this.recalculateScoring();
+    this.saveProgress();
   }
 
   renderLaunchSlots() {
@@ -471,10 +449,12 @@ class Track1Manager {
 
       if (!isPlaced && this.launchOrder.length < 5) {
         chip.addEventListener('click', () => {
+          if (this.isTimeUp || this.isSubmitted || this.stagesCompleted[2]) return;
           this.launchOrder.push(bird.id);
           this.renderBirdPool();
           this.renderLaunchSlots();
           this.recalculateScoring();
+          this.saveProgress();
         });
       } else {
         chip.disabled = isPlaced;
@@ -485,24 +465,33 @@ class Track1Manager {
   }
 
   removeBirdFromOrder(index) {
+    if (this.isTimeUp || this.isSubmitted || this.stagesCompleted[2]) return;
     this.launchOrder.splice(index, 1);
     this.renderBirdPool();
     this.renderLaunchSlots();
     this.recalculateScoring();
+    this.saveProgress();
   }
 
   resetBirdOrder() {
+    if (this.isTimeUp || this.isSubmitted || this.stagesCompleted[2]) return;
     this.launchOrder = [];
     this.renderBirdPool();
     this.renderLaunchSlots();
     this.recalculateScoring();
+    this.saveProgress();
   }
 
   recalculateScoring() {
     const breakdownEl = document.getElementById('tr1-calc-breakdown');
     if (!breakdownEl) return;
 
+    const dmgInput = document.getElementById('tr1-input-damage');
+    const pinInput = document.getElementById('tr1-input-vault-pin');
+
     if (this.launchOrder.length !== 5) {
+      if (dmgInput) dmgInput.value = '';
+      if (pinInput) pinInput.value = '';
       breakdownEl.innerHTML = '<span style="color: var(--text-tertiary);">Place all 5 birds in launch positions (1 to 5) to compute damage.</span>';
       return;
     }
@@ -529,24 +518,19 @@ class Track1Manager {
       if (t === 'Liar') liarCount++;
     });
 
-    const calculatedPin = totalDamage * honestCount * liarCount;
+    const allPigsClassified = honestCount + liarCount === 5;
+    const calculatedPin = allPigsClassified ? totalDamage * honestCount * liarCount : null;
 
-    // Synchronize inputs if they are present in the DOM
-    const dmgInput = document.getElementById('tr1-input-damage');
-    const pinInput = document.getElementById('tr1-input-vault-pin');
-    if (dmgInput && (!dmgInput.value || dmgInput.value === '0')) dmgInput.value = totalDamage;
-    if (calculatedPin === 1788 && this.launchOrder.length === 5) {
-      if (window.powerupsManager) {
-        window.powerupsManager.updatePool(2);
-      }
-    }
+    // These fields display the current calculation, so old values cannot be submitted.
+    if (dmgInput) dmgInput.value = String(totalDamage);
+    if (pinInput) pinInput.value = calculatedPin === null ? '' : String(calculatedPin);
 
     breakdownEl.innerHTML = `
       <div style="font-size: 0.8rem; line-height: 1.5; color: var(--text-secondary);">
         ${lines.join(' • ')}<br>
         <strong>Total Damage:</strong> <span class="mono" style="color: var(--text-primary); font-size: 0.95rem;">${totalDamage}</span> |
         <strong>Pigs:</strong> ${honestCount} Honest, ${liarCount} Liars |
-        <strong>Calculated PIN:</strong> <span class="mono" style="color: var(--text-primary); font-weight: 700; font-size: 1rem;">${calculatedPin > 0 ? calculatedPin : '—'}</span>
+        <strong>Calculated PIN:</strong> <span class="mono" style="color: var(--text-primary); font-weight: 700; font-size: 1rem;">${calculatedPin === null ? '—' : calculatedPin}</span>
       </div>
     `;
   }
@@ -572,19 +556,13 @@ class Track1Manager {
     if (dmgInput) dmgInput.value = '298';
     if (pinInput) pinInput.value = '1788';
     this.recalculateScoring();
-    if (window.powerupsManager) {
-      window.powerupsManager.updatePool(2);
-    }
-    window.app?.showToast('Stage 2 Pig Fortress solution loaded! 4 Power-Ups Unlocked in Real Time.', 'success');
+    window.app?.showToast('Stage 2 Pig Fortress solution loaded! Click Verify Stage 2 to record it.', 'success');
   }
 
   solveOfficersDemo() {
     const input = document.getElementById('tr1-input-officer-passcode');
     if (input) input.value = 'tuhaikon@codestars';
-    if (window.powerupsManager) {
-      window.powerupsManager.updatePool(3);
-    }
-    window.app?.showToast('Stage 3 passcode loaded! All 5 Power-Ups Unlocked in Real Time.', 'success');
+    window.app?.showToast('Stage 3 passcode loaded! Click Verify Stage 3 to record it.', 'success');
   }
 
   async verifyStage2() {
@@ -596,6 +574,11 @@ class Track1Manager {
 
     if (this.stagesCompleted[2]) {
       this.switchStage(3);
+      return;
+    }
+
+    if (this.launchOrder.length !== 5 || Object.values(this.pigsClassification).some(type => type !== 'Honest' && type !== 'Liar')) {
+      window.app?.showToast('Classify all five pigs and place all five birds before verifying.', 'warning');
       return;
     }
 
@@ -629,8 +612,10 @@ class Track1Manager {
 
     const pinInput = document.getElementById('tr1-input-vault-pin');
     const damageInput = document.getElementById('tr1-input-damage');
-    const pinVal = parseInt(pinInput?.value || computedPin || 0, 10);
-    const damageVal = parseInt(damageInput?.value || computedDamage || 0, 10);
+    const pinVal = computedPin;
+    const damageVal = computedDamage;
+    if (pinInput) pinInput.value = String(pinVal);
+    if (damageInput) damageInput.value = String(damageVal);
 
     const data = {
       pigs: this.pigsClassification,
@@ -653,46 +638,12 @@ class Track1Manager {
         })
       });
 
-      if (res.ok) {
-        result = await res.json();
-      } else {
-        console.warn(`Server validation returned status ${res.status}, using local solver fallback`);
-      }
+      result = await res.json();
     } catch (err) {
-      console.warn('Network issue during Stage 2 validation, evaluating locally:', err);
+      console.warn('Network issue during Stage 2 validation, please retry:', err);
     }
 
-    // Client-side evaluation fallback to avoid network lockouts
-    if (!result) {
-      const isMinion = String(this.pigsClassification.Minion || '').toUpperCase() === 'HONEST';
-      const isCorporal = String(this.pigsClassification.Corporal || '').toUpperCase() === 'LIAR';
-      const isForeman = String(this.pigsClassification.Foreman || '').toUpperCase() === 'LIAR';
-      const isKing = String(this.pigsClassification.King || '').toUpperCase() === 'HONEST';
-      const isHelmet = String(this.pigsClassification.Helmet || '').toUpperCase() === 'HONEST';
-      const pigsCorrect = isMinion && isCorporal && isForeman && isKing && isHelmet;
-
-      const expectedOrder = ['red', 'chuck', 'matilda', 'bomb', 'hal'];
-      const cleanOrder = (this.launchOrder || []).map(b => String(b).toLowerCase());
-      const orderCorrect = cleanOrder.length === 5 && cleanOrder.every((b, i) => b === expectedOrder[i]);
-      const pinCorrect = pinVal === 1788;
-      const damageCorrect = damageVal === 298;
-
-      if (pinCorrect || (pigsCorrect && orderCorrect)) {
-        result = {
-          valid: true,
-          questions_solved: 2,
-          unlocked_powerups: ['time_cracker', 'topic_finder', 'penalty_sweeper', 'jumper_points'],
-          reason: 'Pig Fortress deductions, bird launch sequence, and Vault PIN verified!'
-        };
-      } else {
-        result = {
-          valid: false,
-          reason: !orderCorrect
-            ? 'Launch sequence order is incorrect. Check pig clues!'
-            : (!pigsCorrect ? 'Pig Honest/Liar classifications are incorrect.' : 'Vault PIN calculation is incorrect.')
-        };
-      }
-    }
+    if (!result) result = { valid: false, reason: 'Server unavailable. Please retry verification.' };
 
     try {
       if (result.valid) {
@@ -706,16 +657,16 @@ class Track1Manager {
         window.app?.triggerConfetti();
         window.powerupsManager?.updatePool(result.questions_solved || 2, result.unlocked_powerups || ['time_cracker', 'topic_finder', 'penalty_sweeper', 'jumper_points']);
 
-        window.app?.showAcceptedToast(2, ['Penalty Sweeper', 'Jumper Points'], '4/5');
+        window.app?.showAcceptedToast(2, ['Penalty Sweeper', 'Jumper Points'], '4/4');
 
         window.app?.showStageConfirmation({
           isCorrect: true,
           stageNumber: 2,
           unlockedPowerups: ['penalty_sweeper', 'jumper_points'],
-          poolSize: '4/5',
+          poolSize: '4/4',
           title: 'Stage 2 Verified',
           message: result.reason || 'Pig Fortress deductions, bird launch sequence, and Vault PIN verified!',
-          reward: '<strong>Rewards Earned:</strong> +1200 Points',
+          reward: '<strong>Rewards Earned:</strong> +1300 Points',
           buttonText: 'Continue to Stage 3: 25 Officers →',
           onAction: () => this.switchStage(3)
         });
@@ -923,6 +874,10 @@ class Track1Manager {
   }
 
   async verifyStage3() {
+    if (this.stagesCompleted[3] && this.isSubmitted) {
+      window.app?.switchTab('powerups');
+      return;
+    }
     if (this.isTimeUp) {
       window.app?.showToast('Time is up for Round 2! Answers are locked and cannot be modified.', 'error');
       window.app?.showTimeUpModal();
@@ -930,8 +885,7 @@ class Track1Manager {
     }
 
     if (this.stagesCompleted[3]) {
-      this.switchStage(4);
-      window.app?.switchTab('powerups');
+      this.submitRound(true);
       return;
     }
 
@@ -965,31 +919,12 @@ class Track1Manager {
         })
       });
 
-      if (res.ok) {
-        result = await res.json();
-      } else {
-        console.warn(`Server responded with HTTP ${res.status}, evaluating locally`);
-      }
+      result = await res.json();
     } catch (err) {
-      console.warn('Network issue during Stage 3 validation, checking passcode locally:', err);
+      console.warn('Network issue during Stage 3 validation, please retry:', err);
     }
 
-    // Client-side fallback for passcode confirmation
-    if (!result) {
-      if (passcodeVal.toLowerCase() === 'tuhaikon@codestars') {
-        result = {
-          valid: true,
-          questions_solved: 3,
-          unlocked_powerups: ['time_cracker', 'topic_finder', 'penalty_sweeper', 'jumper_points', 'sweet_sabotage'],
-          reason: '25 Officer Puzzle verified! Secret passcode confirmed.'
-        };
-      } else {
-        result = {
-          valid: false,
-          reason: 'Passcode is incorrect or officer grid is incomplete.'
-        };
-      }
-    }
+    if (!result) result = { valid: false, reason: 'Server unavailable. Please retry verification.' };
 
     try {
       if (result.valid) {
@@ -1001,24 +936,11 @@ class Track1Manager {
 
         window.soundManager?.playFanfare();
         window.app?.triggerConfetti();
-        window.powerupsManager?.updatePool(3, result.unlocked_powerups || ['time_cracker', 'topic_finder', 'penalty_sweeper', 'jumper_points', 'sweet_sabotage']);
+        window.powerupsManager?.updatePool(3, result.unlocked_powerups || ['time_cracker', 'topic_finder', 'penalty_sweeper', 'jumper_points']);
 
-        window.app?.showAcceptedToast(3, ['Sweet Sabotage (Ultimate)'], '5/5');
+        window.app?.showAcceptedToast(3, [], '4/4');
 
-        window.app?.showStageConfirmation({
-          isCorrect: true,
-          stageNumber: 3,
-          unlockedPowerups: ['sweet_sabotage'],
-          poolSize: '5/5 (Full Pool)',
-          title: 'Stage 3 Solved',
-          message: 'The 25 Officer Graeco-Latin Square and secret verification passcode have been confirmed!',
-          reward: '<strong>Rewards Earned:</strong> +1000 Points',
-          buttonText: 'Proceed to Power-Ups Selection →',
-          onAction: () => {
-            this.switchStage(4);
-            window.app?.switchTab('powerups');
-          }
-        });
+        await this.submitRound(true);
       } else {
         window.soundManager?.playError();
         window.app?.showStageConfirmation({
@@ -1038,6 +960,84 @@ class Track1Manager {
     }
   }
 
+  async submitRound(skipConfirmation = false) {
+    if (this.isSubmitted) {
+      window.app?.switchTab('powerups');
+      return;
+    }
+    if (!this.attempt || this.isSubmitting) return;
+    if (!skipConfirmation && !this.stagesCompleted[3]) {
+      window.app?.showToast('Verify all three stages before submitting.', 'warning');
+      return;
+    }
+    if (!skipConfirmation && !confirm('Submit your FY Track entry and proceed to power-up selection?')) return;
+
+    const payload = {
+      attempt_id: this.attempt.id,
+      track: 'track1',
+      stage1: { bridges: this.hashiEngine?.exportBridges() || this._pendingBridges || [] },
+      stage2: {
+        pigs: this.pigsClassification,
+        launch_order: this.launchOrder,
+        vault_pin: document.getElementById('tr1-input-vault-pin')?.value,
+        total_damage: document.getElementById('tr1-input-damage')?.value
+      },
+      stage3: {
+        passcode: document.getElementById('tr1-input-officer-passcode')?.value,
+        arrangement: this.officerGrid
+      },
+      moves_count: this.hashiEngine?.movesCount || 0,
+      mistakes_count: this.hashiEngine?.mistakesCount || 0,
+      undos_count: this.hashiEngine?.undosCount || 0,
+      tab_switches: this.tabSwitches
+    };
+    this.isSubmitting = true;
+    const controller = new AbortController();
+    const requestTimeout = setTimeout(() => controller.abort(), 15000);
+    try {
+      const response = await fetch('/api/round2/submit', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: controller.signal
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || 'Submission failed');
+      for (const stage of [1, 2, 3]) {
+        this.stagesCompleted[stage] = !!data.stageBreakdown?.[`stage${stage}`]?.valid;
+      }
+      this.isSubmitted = true;
+      clearInterval(this.timerInterval);
+      this.lockSubmittedInputs();
+      window.powerupsManager?.updatePool(data.questions_solved, data.unlocked_powerups);
+      window.powerupsManager?.setRoundSubmitted();
+      this.saveProgress();
+      window.app?.showToast(`Round submitted: ${data.questions_solved}/3 stages accepted. Choose 2 power-ups.`, 'success');
+      const timeUpModal = document.getElementById('modal-time-up');
+      if (timeUpModal) { timeUpModal.classList.remove('open'); timeUpModal.style.display = 'none'; }
+      window.app?.switchTab('powerups');
+    } catch (error) {
+      window.app?.showToast(error.name === 'AbortError' ? 'Submission took too long. Please retry; a saved result will be recovered.' : `Could not submit round: ${error.message}`, 'error');
+      if (this.isTimeUp) window.app?.showTimeUpModal();
+    } finally {
+      clearTimeout(requestTimeout);
+      this.isSubmitting = false;
+    }
+  }
+
+  lockSubmittedInputs() {
+    this.hashiEngine?.setInteractive(false);
+    document.querySelectorAll('.pig-toggle-btn, #tr1-bird-pool button, .officer-palette-btn').forEach(button => { button.disabled = true; });
+    ['tr1-input-vault-pin', 'tr1-input-damage', 'tr1-input-officer-passcode',
+      'tr1-btn-verify-stage1', 'tr1-btn-verify-stage2'].forEach(id => {
+      const element = document.getElementById(id);
+      if (element) element.disabled = true;
+    });
+    const powerupsButton = document.getElementById('tr1-btn-verify-stage3');
+    if (powerupsButton && this.stagesCompleted[3]) {
+      powerupsButton.disabled = false;
+      powerupsButton.style.opacity = '1';
+      powerupsButton.style.cursor = 'pointer';
+    }
+  }
+
   saveProgress() {
     if (!this.attempt || !this.attempt.id) return;
     const progress = {
@@ -1051,7 +1051,9 @@ class Track1Manager {
       launchOrder: this.launchOrder || [],
       damageInput: document.getElementById('tr1-input-damage')?.value || '',
       pinInput: document.getElementById('tr1-input-vault-pin')?.value || '',
-      officerGrid: this.officerGrid || []
+      officerGrid: this.officerGrid || [],
+      officerPasscode: document.getElementById('tr1-input-officer-passcode')?.value || '',
+      isSubmitted: this.isSubmitted
     };
     try {
       localStorage.setItem(`hashi_tr1_progress_${this.attempt.id}`, JSON.stringify(progress));
@@ -1074,6 +1076,7 @@ class Track1Manager {
       this.stagesUnlocked = data.stagesUnlocked || { 1: true, 2: false, 3: false, 4: false };
       this.stagesCompleted = data.stagesCompleted || { 1: false, 2: false, 3: false };
       this.currentStage = data.currentStage || 1;
+      this.isSubmitted = !!data.isSubmitted;
       this.isTimeUp = false;
 
       // Remove lock banner if present
@@ -1084,7 +1087,6 @@ class Track1Manager {
         this.updateStudentHeader(this.attempt.student_name, this.attempt.student_id, this.attempt.batch, this.attempt.lab);
       }
       this.updateStepperUI();
-      this.startRoundTimer(this.startTime);
 
       // Restore Stage 1
       if (this.hashiEngine) {
@@ -1130,6 +1132,8 @@ class Track1Manager {
         this.renderOfficerGrid();
         this.checkOfficerConflicts();
       }
+      const passcodeInput = document.getElementById('tr1-input-officer-passcode');
+      if (passcodeInput) passcodeInput.value = data.officerPasscode || '';
 
       // Synchronize live power-up pool in real-time based on restored completed stages
       let solvedCount = 0;
@@ -1143,6 +1147,15 @@ class Track1Manager {
       }
 
       this.switchStage(this.currentStage);
+      if (this.isSubmitted) {
+        this.lockSubmittedInputs();
+        window.powerupsManager?.setRoundSubmitted();
+        window.app?.switchTab('powerups');
+      } else if (this.stagesCompleted[3]) {
+        this.submitRound(true);
+      } else {
+        this.startRoundTimer(this.startTime);
+      }
       return true;
     } catch (e) {
       console.error('Error restoring Track 1 progress:', e);
@@ -1159,6 +1172,7 @@ class Track1Manager {
       lab
     };
     this.isTimeUp = false;
+    this.isSubmitted = false;
 
     // Remove lock banner if present
     const banner = document.getElementById('tr1-time-up-banner');
@@ -1195,9 +1209,9 @@ class Track1Manager {
     this.renderBirdPool();
     this.renderLaunchSlots();
     const pinInput = document.getElementById('tr1-input-vault-pin');
-    if (pinInput) { pinInput.disabled = false; pinInput.readOnly = false; pinInput.value = ''; }
+    if (pinInput) { pinInput.disabled = false; pinInput.readOnly = true; pinInput.value = ''; }
     const damageInput = document.getElementById('tr1-input-damage');
-    if (damageInput) { damageInput.disabled = false; damageInput.readOnly = false; damageInput.value = ''; }
+    if (damageInput) { damageInput.disabled = false; damageInput.readOnly = true; damageInput.value = ''; }
     this.recalculateScoring();
 
     // Reset Stage 3 25 Officers
@@ -1317,10 +1331,11 @@ class Track1Manager {
     };
 
     updateTick();
-    this.timerInterval = setInterval(updateTick, 1000);
+    if (!this.isTimeUp) this.timerInterval = setInterval(updateTick, 1000);
   }
 
   onTimeUp() {
+    if (this.isTimeUp || this.isSubmitted) return;
     this.isTimeUp = true;
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
@@ -1365,8 +1380,8 @@ class Track1Manager {
     });
 
     this.showLockedBanner();
+    this.submitRound(true);
     window.soundManager?.playError();
-    window.app?.showTimeUpModal();
   }
 
   showLockedBanner() {

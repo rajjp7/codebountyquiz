@@ -23,6 +23,14 @@ class SoundManager {
   }
 
   // Tactile click on island selection
+  playPlace() {
+    this.playIslandSelect();
+  }
+
+  playFanfare() {
+    this.playVictory();
+  }
+
   playIslandSelect() {
     if (this.muted) return;
     this.init();
