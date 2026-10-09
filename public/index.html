@@ -355,14 +355,14 @@
                 <label style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-tertiary); display: block; margin-bottom: 0.35rem;">
                   Total Damage
                 </label>
-                <input type="number" id="tr1-input-damage" class="form-control mono" placeholder="e.g. 298">
+                <input type="number" id="tr1-input-damage" class="form-control mono">
               </div>
 
               <div>
                 <label style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-tertiary); display: block; margin-bottom: 0.35rem;">
                   Vault PIN
                 </label>
-                <input type="number" id="tr1-input-vault-pin" class="form-control mono" placeholder="e.g. 1788" style="font-weight: 600;">
+                <input type="number" id="tr1-input-vault-pin" class="form-control mono" style="font-weight: 600;">
               </div>
             </div>
           </div>
@@ -435,7 +435,7 @@
                 <label style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-tertiary); display: block; margin-bottom: 0.35rem;">
                   Solved on the external Vercel app? Enter Secret Password:
                 </label>
-                <input type="text" id="tr1-input-officer-passcode" class="form-control mono" placeholder="e.g. tuhaikon@codestars">
+                <input type="text" id="tr1-input-officer-passcode" class="form-control mono">
               </div>
 
               <div>
@@ -846,21 +846,21 @@
                 <label style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-tertiary); display: block; margin-bottom: 0.35rem;">
                   1. Numerical Value of SAREE
                 </label>
-                <input type="number" id="tr2-input-saree" class="form-control mono" placeholder="e.g. 75288">
+                <input type="number" id="tr2-input-saree" class="form-control mono">
               </div>
 
               <div>
                 <label style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-tertiary); display: block; margin-bottom: 0.35rem;">
                   2. Quotient (SAREE ÷ 6)
                 </label>
-                <input type="number" id="tr2-input-quotient" class="form-control mono" placeholder="e.g. 12548">
+                <input type="number" id="tr2-input-quotient" class="form-control mono">
               </div>
 
               <div>
                 <label style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-tertiary); display: block; margin-bottom: 0.35rem;">
                   3. Decoded Secret Word
                 </label>
-                <input type="text" id="tr2-input-word" class="form-control mono" placeholder="e.g. CRANE" style="text-transform: uppercase;">
+                <input type="text" id="tr2-input-word" class="form-control mono" style="text-transform: uppercase;">
               </div>
             </div>
           </div>
@@ -1518,11 +1518,11 @@
         </p>
 
         <div style="display: flex; gap: 0.5rem; justify-content: center;">
-          <button class="btn-primary" onclick="document.getElementById('modal-results').classList.remove('open'); window.app.switchTab('leaderboard');">
-            View Leaderboard
+          <button class="btn-primary" onclick="document.getElementById('modal-results').classList.remove('open'); window.app.switchTab('powerups');">
+            Select Power-Ups →
           </button>
-          <button class="btn-secondary" onclick="document.getElementById('modal-results').classList.remove('open'); window.app.switchTab('dataset');">
-            View Dataset
+          <button class="btn-secondary" onclick="document.getElementById('modal-results').classList.remove('open'); window.app.switchTab('quiz');">
+            Return to Challenges
           </button>
         </div>
       </div>
@@ -1582,11 +1582,8 @@
         </div>
 
         <div style="display: flex; gap: 0.5rem; justify-content: center;">
-          <button class="btn-primary" onclick="document.getElementById('modal-tr2-victory').style.display='none'; window.app.switchTab('leaderboard');">
-            <span>View Leaderboard</span>
-          </button>
-          <button class="btn-secondary" onclick="document.getElementById('modal-tr2-victory').style.display='none'; window.app.switchTab('powerups');">
-            <span>Select Power-Ups</span>
+          <button class="btn-primary" onclick="const m=document.getElementById('modal-tr2-victory'); m.classList.remove('open'); m.style.display='none'; window.app.switchTab('powerups');" style="padding: 0.65rem 1.75rem;">
+            <span>Select Power-Ups →</span>
           </button>
         </div>
       </div>
@@ -1618,6 +1615,23 @@
           Open Selection Page →
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- ==============================================
+       MODAL 5: STAGE VERIFICATION CONFIRMATION
+       (Clear Confirmation: Correct vs Incorrect)
+       ============================================== -->
+  <div class="modal-backdrop" id="modal-stage-confirmation" style="display: none;">
+    <div class="modal-dialog" style="max-width: 440px; text-align: center; padding: 2rem 1.75rem;">
+      <div id="stage-conf-icon-box" style="width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem auto;">
+      </div>
+      <h3 id="stage-conf-title" style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;"></h3>
+      <p id="stage-conf-message" style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1.25rem;"></p>
+      <div id="stage-conf-reward-box" style="display: none; background: var(--bg-surface-elevated); border: 1px solid var(--border-hairline); border-radius: var(--radius-sm); padding: 0.75rem 1rem; margin-bottom: 1.25rem; font-size: 0.8125rem;"></div>
+      <button class="btn-primary" id="stage-conf-action-btn" style="width: 100%; padding: 0.75rem 1.5rem; font-weight: 600;">
+        <span>Continue</span>
+      </button>
     </div>
   </div>
 

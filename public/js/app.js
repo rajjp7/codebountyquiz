@@ -219,7 +219,7 @@ class App {
 
     if (navQuiz) navQuiz.style.display = 'inline-flex';
     if (navPowerups) navPowerups.style.display = 'inline-flex';
-    if (navLeaderboard) navLeaderboard.style.display = 'inline-flex';
+    if (navLeaderboard) navLeaderboard.style.display = 'none';
 
     if (navDataset) navDataset.style.display = 'none';
     if (navAdmin) navAdmin.style.display = 'none';
@@ -310,11 +310,17 @@ class App {
   }
 
   promptSwitchOrLogout() {
-    if (this.currentRole === 'contestant') {
-      if (!confirm('Are you sure you want to log out of your contestant session? (Your saved progress will remain stored in this browser)')) {
-        return;
-      }
+    if (window.track1Manager?.timerInterval) {
+      clearInterval(window.track1Manager.timerInterval);
+      window.track1Manager.timerInterval = null;
     }
+    if (window.track2Manager?.timerInterval) {
+      clearInterval(window.track2Manager.timerInterval);
+      window.track2Manager.timerInterval = null;
+    }
+    const headerTimer = document.getElementById('header-global-timer');
+    if (headerTimer) headerTimer.style.display = 'none';
+
     localStorage.removeItem('round2_auth');
     this.currentRole = null;
     this.contestantProfile = null;
@@ -391,10 +397,10 @@ class App {
   }
 
   switchTab(tabId) {
-    // Guard: contestant can only view quiz, powerups, and leaderboard
+    // Guard: contestant can only view quiz and powerups (Leaderboard is admin-only)
     if (this.currentRole === 'contestant') {
-      if (!['quiz', 'powerups', 'leaderboard'].includes(tabId)) {
-        this.showToast('Access restricted to contestants.', 'warning');
+      if (!['quiz', 'powerups'].includes(tabId)) {
+        this.showToast('Leaderboard is hidden during competition.', 'warning');
         return;
       }
     }
@@ -472,6 +478,54 @@ class App {
       toast.style.transition = 'all 0.2s ease';
       setTimeout(() => toast.remove(), 200);
     }, 3200);
+  }
+
+  showStageConfirmation({ isCorrect, title, message, reward, buttonText, onAction }) {
+    const modal = document.getElementById('modal-stage-confirmation');
+    const iconBox = document.getElementById('stage-conf-icon-box');
+    const titleEl = document.getElementById('stage-conf-title');
+    const msgEl = document.getElementById('stage-conf-message');
+    const rewardEl = document.getElementById('stage-conf-reward-box');
+    const actionBtn = document.getElementById('stage-conf-action-btn');
+    if (!modal) return;
+
+    if (isCorrect) {
+      iconBox.style.background = 'rgba(16, 185, 129, 0.15)';
+      iconBox.style.color = '#10b981';
+      iconBox.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+      iconBox.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      titleEl.textContent = title || 'Correct Answer!';
+      titleEl.style.color = 'var(--text-primary)';
+      msgEl.textContent = message || 'Challenge successfully verified.';
+      if (reward) {
+        rewardEl.style.display = 'block';
+        rewardEl.innerHTML = reward;
+      } else {
+        rewardEl.style.display = 'none';
+      }
+      actionBtn.className = 'btn-primary';
+      actionBtn.querySelector('span').textContent = buttonText || 'Continue to Next Stage →';
+    } else {
+      iconBox.style.background = 'rgba(239, 68, 68, 0.15)';
+      iconBox.style.color = '#ef4444';
+      iconBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+      iconBox.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+      titleEl.textContent = title || 'Incorrect Answer';
+      titleEl.style.color = 'var(--rose-500, #ef4444)';
+      msgEl.textContent = message || 'Your solution does not satisfy all challenge rules.';
+      rewardEl.style.display = 'none';
+      actionBtn.className = 'btn-secondary';
+      actionBtn.querySelector('span').textContent = buttonText || 'Review & Try Again';
+    }
+
+    actionBtn.onclick = () => {
+      modal.classList.remove('open');
+      modal.style.display = 'none';
+      if (typeof onAction === 'function') onAction();
+    };
+
+    modal.style.display = 'flex';
+    requestAnimationFrame(() => modal.classList.add('open'));
   }
 
   initConfetti() {

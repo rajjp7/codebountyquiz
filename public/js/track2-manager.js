@@ -288,15 +288,28 @@ class Track2Manager {
         this.stagesCompleted[1] = true;
         this.stagesUnlocked[2] = true;
         this.updateStepperUI();
-
-        window.soundManager?.playSuccess();
-        window.app?.showToast('Stage 1 Solved! Stage 2 Unlocked: Time Cracker & Topic Finder added to pool.', 'success');
-        window.powerupsManager?.updatePool(1, result.unlocked_powerups);
         this.saveProgress();
-        this.switchStage(2);
+
+        window.soundManager?.playFanfare();
+        window.app?.triggerConfetti();
+        window.powerupsManager?.updatePool(1, result.unlocked_powerups);
+
+        window.app?.showStageConfirmation({
+          isCorrect: true,
+          title: 'Correct Answer! Stage 1 Verified',
+          message: 'All islands on the 10×10 Championship board are correctly connected into a single unified network according to Nikoli rules.',
+          reward: '<strong>Rewards Earned:</strong> +800 Points • <strong>Time Cracker</strong> & <strong>Topic Finder</strong> added to power-up pool (2 of 5 available).',
+          buttonText: 'Continue to Stage 2: Deepfake Challenge →',
+          onAction: () => this.switchStage(2)
+        });
       } else {
         window.soundManager?.playError();
-        window.app?.showToast(`Verification failed: ${result.reason || 'Bridges do not satisfy all rules'}`, 'error');
+        window.app?.showStageConfirmation({
+          isCorrect: false,
+          title: 'Incorrect Answer',
+          message: result.reason || 'Bridges do not satisfy all island rules or network is disconnected.',
+          buttonText: 'Review & Try Again'
+        });
       }
     } catch (err) {
       console.error(err);
@@ -330,15 +343,28 @@ class Track2Manager {
         this.stagesCompleted[2] = true;
         this.stagesUnlocked[3] = true;
         this.updateStepperUI();
-
-        window.soundManager?.playSuccess();
-        window.app?.showToast('Stage 2 Solved! Stage 3 Unlocked: Penalty Sweeper & Jumper Points added to pool.', 'success');
-        window.powerupsManager?.updatePool(2, result.unlocked_powerups);
         this.saveProgress();
-        this.switchStage(3);
+
+        window.soundManager?.playFanfare();
+        window.app?.triggerConfetti();
+        window.powerupsManager?.updatePool(2, result.unlocked_powerups);
+
+        window.app?.showStageConfirmation({
+          isCorrect: true,
+          title: 'Correct Answer! Stage 2 Verified',
+          message: result.reason || 'Deepfake video identified and chronological upload order validated!',
+          reward: '<strong>Rewards Earned:</strong> +1200 Points • <strong>Penalty Sweeper</strong> & <strong>Jumper Points</strong> added to power-up pool (4 of 5 available).',
+          buttonText: 'Continue to Stage 3: Zero to Crore →',
+          onAction: () => this.switchStage(3)
+        });
       } else {
         window.soundManager?.playError();
-        window.app?.showToast(`Verification failed: ${result.reason || 'Deduction is incorrect'}`, 'error');
+        window.app?.showStageConfirmation({
+          isCorrect: false,
+          title: 'Incorrect Answer',
+          message: result.reason || 'Deduction for deepfake video or upload sequence order is incorrect.',
+          buttonText: 'Review & Try Again'
+        });
       }
     } catch (err) {
       console.error(err);
@@ -382,19 +408,31 @@ class Track2Manager {
         this.stagesCompleted[3] = true;
         this.stagesUnlocked[4] = true;
         this.updateStepperUI();
+        this.saveProgress();
 
         window.soundManager?.playFanfare();
         window.app?.triggerConfetti();
-        window.app?.showToast('Stage 3 Conquered! All 3 Challenges Solved: Full Power-Up Pool Unlocked (5 of 5).', 'success');
         window.powerupsManager?.updatePool(3, result.unlocked_powerups);
-        this.saveProgress();
 
-        setTimeout(() => {
-          this.switchStage(4);
-        }, 800);
+        window.app?.showStageConfirmation({
+          isCorrect: true,
+          title: 'Correct Answer! Stage 3 Solved',
+          message: result.reason || 'Alphabetic cryptarithm solved, SAREE computed, and secret word decoded!',
+          reward: '<strong>Rewards Earned:</strong> +1000 Points • <strong>Full Power-Up Pool Unlocked (5 of 5)</strong>, including <strong>Sweet Sabotage</strong>!',
+          buttonText: 'Proceed to Power-Ups Selection →',
+          onAction: () => {
+            this.switchStage(4);
+            window.app?.switchTab('powerups');
+          }
+        });
       } else {
         window.soundManager?.playError();
-        window.app?.showToast(`Verification failed: ${result.reason || 'Incorrect word or calculation'}`, 'error');
+        window.app?.showStageConfirmation({
+          isCorrect: false,
+          title: 'Incorrect Answer',
+          message: result.reason || 'Decoded word, SAREE computation, or letter-to-digit mapping is incorrect.',
+          buttonText: 'Review & Try Again'
+        });
       }
     } catch (err) {
       console.error(err);
@@ -625,12 +663,6 @@ class Track2Manager {
         eq2Status.innerHTML = `${ganga} + ${zero} = ${saree} (${match ? 'Balanced' : 'Mismatch'})`;
         eq2Status.style.color = match ? 'var(--text-primary)' : 'var(--rose-500)';
       }
-
-      // Auto-fill SAREE field helper if user wants
-      const sareeInput = document.getElementById('tr2-input-saree');
-      if (sareeInput && !sareeInput.value && match) {
-        sareeInput.value = saree;
-      }
     } else {
       if (eq2Status) eq2Status.innerHTML = 'Assign letters to compute';
     }
@@ -760,16 +792,21 @@ class Track2Manager {
     if (s3Icon) s3Icon.textContent = data.stageBreakdown?.stage3?.valid ? 'Passed (1500 pts)' : `${data.stageBreakdown?.stage3?.score || 0} pts`;
 
     modal.style.display = 'flex';
+    requestAnimationFrame(() => modal.classList.add('open'));
   }
 
   // Single 30-Minute Round Timer (Resilient to Page Refresh)
   startRoundTimer(savedStartTime = null) {
     if (this.timerInterval) clearInterval(this.timerInterval);
+    if (window.track1Manager?.timerInterval) {
+      clearInterval(window.track1Manager.timerInterval);
+      window.track1Manager.timerInterval = null;
+    }
     const totalSeconds = 1800; // 30 minutes
     const startTime = savedStartTime || this.startTime || Date.now();
     this.startTime = startTime;
 
-    this.timerInterval = setInterval(() => {
+    const updateTick = () => {
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
       this.elapsedSeconds = elapsed;
       const remaining = Math.max(0, totalSeconds - elapsed);
@@ -783,20 +820,28 @@ class Track2Manager {
         clockEl.textContent = str;
         if (remaining <= 300) {
           clockEl.style.color = 'var(--rose-500)';
+        } else {
+          clockEl.style.color = '';
         }
       }
       if (headerTimer) {
         headerTimer.textContent = str;
         if (remaining <= 300) {
           headerTimer.style.color = 'var(--rose-500)';
+        } else {
+          headerTimer.style.color = '';
         }
       }
 
       if (remaining <= 0) {
         clearInterval(this.timerInterval);
+        this.timerInterval = null;
         window.app?.showToast('Time is up for Round 2! Please review and submit your power-ups.', 'warning');
       }
-    }, 1000);
+    };
+
+    updateTick();
+    this.timerInterval = setInterval(updateTick, 1000);
   }
 
   updateStudentHeader(name, id, batch, lab) {
