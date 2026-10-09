@@ -141,7 +141,7 @@ function validateHashiSolution(puzzle, bridges) {
     if (curDeg !== isl.number) {
       return {
         valid: false,
-        reason: `Island ${isl.id} has ${curDeg} bridges, but needs ${isl.number}`
+        reason: `Island ${isl.id} at (Row ${isl.r + 1}, Col ${isl.c + 1}) [value ${isl.number}] currently has ${curDeg} bridges, but needs ${isl.number}`
       };
     }
   }

@@ -363,7 +363,14 @@ class PowerupsManager {
   }
 }
 
-// Instantiate on load
-window.addEventListener('DOMContentLoaded', () => {
-  window.powerupsManager = new PowerupsManager();
-});
+// Reliable bootstrap on load
+function bootstrapPowerups() {
+  if (!window.powerupsManager) {
+    window.powerupsManager = new PowerupsManager();
+  }
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootstrapPowerups);
+} else {
+  bootstrapPowerups();
+}

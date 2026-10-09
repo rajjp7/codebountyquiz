@@ -162,6 +162,7 @@ class Track1Manager {
     });
 
     this.updateStepperUI();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
     if (stageNum === 1) {
       if (!this.hashiEngine || !this.hashiEngine.svg || !document.contains(this.hashiEngine.svg)) {
@@ -169,6 +170,10 @@ class Track1Manager {
       } else {
         setTimeout(() => this.hashiEngine.updateVisualState(), 50);
       }
+    } else if (stageNum === 2) {
+      this.initStage2UI();
+    } else if (stageNum === 3) {
+      this.initStage3Board();
     }
   }
 
@@ -243,79 +248,105 @@ class Track1Manager {
   }
 
   async verifyStage1() {
-    if (!this.hashiEngine) return;
-    const localEval = this.hashiEngine.evaluateState ? this.hashiEngine.evaluateState() : { isSolved: false };
-    const bridges = (typeof this.hashiEngine.exportBridges === 'function')
-      ? this.hashiEngine.exportBridges()
-      : Array.from(this.hashiEngine.bridgeState.entries()).map(([k, cnt]) => {
-          const [u, v] = k.split('-').map(Number);
-          return { u, v, count: cnt };
-        });
+    // If already verified and completed, directly advance to Stage 2
+    if (this.stagesCompleted[1]) {
+      this.switchStage(2);
+      return;
+    }
 
-    let data = null;
+    if (!this.hashiEngine) {
+      window.app?.showToast('Board engine is initializing, please wait a moment...', 'info');
+      return;
+    }
+
+    const btn = document.getElementById('tr1-btn-verify-stage1');
+    const originalContent = btn ? btn.innerHTML : null;
+    if (btn) {
+      btn.disabled = true;
+      btn.style.opacity = '0.7';
+      btn.innerHTML = '<span>Verifying...</span>';
+    }
+
     try {
-      const res = await fetch('/api/round2/validate-stage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          attempt_id: this.attempt?.id,
-          track: 'track1',
-          stage: 1,
-          data: { bridges }
-        })
-      });
-      if (res.ok) {
-        data = await res.json();
-      }
-    } catch (err) {
-      console.warn('Server validation request issue, falling back to local Nikoli engine:', err);
-    }
+      const localEval = this.hashiEngine.evaluateState ? this.hashiEngine.evaluateState() : { isSolved: false };
+      const bridges = (typeof this.hashiEngine.exportBridges === 'function')
+        ? this.hashiEngine.exportBridges()
+        : Array.from(this.hashiEngine.bridgeState.entries()).map(([k, cnt]) => {
+            const [u, v] = k.split('-').map(Number);
+            return { u, v, count: cnt };
+          });
 
-    // Graceful Fallback: If server is offline or request timed out, validate via client-side Nikoli solver
-    if (!data) {
-      if (localEval.isSolved) {
-        data = {
-          valid: true,
-          questions_solved: 1,
-          unlocked_powerups: ['time_cracker', 'topic_finder']
-        };
-      } else {
-        let reason = 'Bridges do not satisfy all island rules.';
-        if (!localEval.isFullyConnected) {
-          reason = 'All islands must form a single unified network (found disconnected island groups).';
-        } else if (localEval.completedCount < localEval.totalCount) {
-          reason = `Only ${localEval.completedCount} of ${localEval.totalCount} islands are satisfied. Check bridge counts!`;
+      let data = null;
+      try {
+        const res = await fetch('/api/round2/validate-stage', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            attempt_id: this.attempt?.id,
+            track: 'track1',
+            stage: 1,
+            data: { bridges }
+          })
+        });
+        if (res.ok) {
+          data = await res.json();
         }
-        data = { valid: false, reason };
+      } catch (err) {
+        console.warn('Server validation request issue, falling back to local Nikoli engine:', err);
       }
-    }
 
-    if (data.valid) {
-      this.stagesCompleted[1] = true;
-      this.stagesUnlocked[2] = true;
-      this.updateStepperUI();
-      this.saveProgress();
+      // Graceful Fallback: If server is offline or request timed out, validate via client-side Nikoli solver
+      if (!data) {
+        if (localEval.isSolved) {
+          data = {
+            valid: true,
+            questions_solved: 1,
+            unlocked_powerups: ['time_cracker', 'topic_finder']
+          };
+        } else {
+          let reason = 'Bridges do not satisfy all island rules.';
+          if (!localEval.isFullyConnected) {
+            reason = 'All islands must form a single unified network (found disconnected island groups).';
+          } else if (localEval.completedCount < localEval.totalCount) {
+            reason = `Only ${localEval.completedCount} of ${localEval.totalCount} islands are satisfied. Check bridge counts!`;
+          }
+          data = { valid: false, reason };
+        }
+      }
 
-      window.soundManager?.playFanfare();
-      window.app?.triggerConfetti();
-      window.powerupsManager?.updatePool(data.questions_solved || 1, data.unlocked_powerups);
+      if (data.valid) {
+        this.stagesCompleted[1] = true;
+        this.stagesUnlocked[2] = true;
+        this.updateStepperUI();
+        this.saveProgress();
 
-      window.app?.showStageConfirmation({
-        isCorrect: true,
-        title: 'Correct Answer! Stage 1 Verified',
-        message: 'All 24 islands are correctly connected into a single unified network according to Nikoli rules.',
-        reward: '<strong>Rewards Earned:</strong> +500 Points • <strong>Time Cracker</strong> & <strong>Topic Finder</strong> added to power-up pool (2 of 5 available).',
-        buttonText: 'Continue to Stage 2: Pig Fortress →',
-        onAction: () => this.switchStage(2)
-      });
-    } else {
-      window.soundManager?.playError();
-      window.app?.showStageConfirmation({
-        isCorrect: false,
-        title: 'Incorrect Answer',
-        message: data.reason || 'Bridges do not satisfy all island rules or network is disconnected.',
-        buttonText: 'Review & Try Again'
-      });
+        window.soundManager?.playFanfare();
+        window.app?.triggerConfetti();
+        window.powerupsManager?.updatePool(data.questions_solved || 1, data.unlocked_powerups);
+
+        window.app?.showStageConfirmation({
+          isCorrect: true,
+          title: 'Correct Answer! Stage 1 Verified',
+          message: 'All 24 islands are correctly connected into a single unified network according to Nikoli rules.',
+          reward: '<strong>Rewards Earned:</strong> +500 Points • <strong>Time Cracker</strong> & <strong>Topic Finder</strong> added to power-up pool (2 of 5 available).',
+          buttonText: 'Continue to Stage 2: Pig Fortress →',
+          onAction: () => this.switchStage(2)
+        });
+      } else {
+        window.soundManager?.playError();
+        window.app?.showStageConfirmation({
+          isCorrect: false,
+          title: 'Incorrect Answer',
+          message: data.reason || 'Bridges do not satisfy all island rules or network is disconnected.',
+          buttonText: 'Review & Try Again'
+        });
+      }
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        if (originalContent) btn.innerHTML = originalContent;
+      }
     }
   }
 
@@ -958,7 +989,14 @@ class Track1Manager {
   }
 }
 
-// Instantiate on load
-window.addEventListener('DOMContentLoaded', () => {
-  window.track1Manager = new Track1Manager();
-});
+// Reliable bootstrap on load
+function bootstrapTrack1() {
+  if (!window.track1Manager) {
+    window.track1Manager = new Track1Manager();
+  }
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootstrapTrack1);
+} else {
+  bootstrapTrack1();
+}

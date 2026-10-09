@@ -590,11 +590,16 @@ class App {
   }
 }
 
-// Bootstrap once DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-  window.app = new App();
-  window.studentQuiz = new StudentQuiz();
-  window.leaderboardManager = new LeaderboardManager();
-  window.datasetManager = new DatasetManager();
-  window.adminControls = new AdminControls();
-});
+// Bootstrap reliably once DOM is ready
+function bootstrapApp() {
+  if (!window.app) window.app = new App();
+  if (!window.studentQuiz) window.studentQuiz = new StudentQuiz();
+  if (!window.leaderboardManager) window.leaderboardManager = new LeaderboardManager();
+  if (!window.datasetManager) window.datasetManager = new DatasetManager();
+  if (!window.adminControls) window.adminControls = new AdminControls();
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootstrapApp);
+} else {
+  bootstrapApp();
+}
