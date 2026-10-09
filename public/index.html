@@ -458,9 +458,14 @@
           </div>
 
           <div class="stage-actions-row">
-            <button class="btn-secondary" id="tr1-btn-back-to-stage1" onclick="window.track1Manager?.switchStage(1)">
-              <span>Back to Stage 1</span>
-            </button>
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="btn-secondary" id="tr1-btn-back-to-stage1" onclick="window.track1Manager?.switchStage(1)">
+                <span>Back to Stage 1</span>
+              </button>
+              <button type="button" class="btn-secondary" id="tr1-btn-demo-solve-s2" onclick="window.track1Manager?.solvePigFortressDemo()" style="color: #38bdf8;">
+                <span>Test Solution</span>
+              </button>
+            </div>
             <button class="btn-primary" id="tr1-btn-verify-stage2" onclick="if(window.track1Manager){window.track1Manager.verifyStage2()}else{console.warn('Track 1 manager not ready')}">
               <span>Verify & Unlock Stage 3 →</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
@@ -528,7 +533,10 @@
                 <input type="text" id="tr1-input-officer-passcode" class="form-control mono">
               </div>
 
-              <div>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button type="button" class="btn-secondary" id="tr1-btn-demo-solve-s3" style="padding: 0.65rem 1rem; color: #38bdf8;" onclick="window.track1Manager?.solveOfficersDemo()">
+                  <span>Test Solution</span>
+                </button>
                 <button type="button" class="btn-primary" id="tr1-btn-verify-stage3" style="padding: 0.65rem 1.25rem;" onclick="if(window.track1Manager){window.track1Manager.verifyStage3()}else{console.warn('Track 1 manager not ready')}">
                   <span>Verify & Unlock Final Power-Up →</span>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
@@ -964,9 +972,14 @@
           </div>
 
           <div class="stage-actions-row">
-            <button class="btn-secondary" id="tr2-btn-back-to-stage1" onclick="window.track2Manager?.switchStage(1)">
-              <span>Back to Stage 1</span>
-            </button>
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="btn-secondary" id="tr2-btn-back-to-stage1" onclick="window.track2Manager?.switchStage(1)">
+                <span>Back to Stage 1</span>
+              </button>
+              <button type="button" class="btn-secondary" id="tr2-btn-demo-solve-s2" onclick="window.track2Manager?.solveDeepfakeDemo()" style="color: #38bdf8;">
+                <span>Test Solution</span>
+              </button>
+            </div>
             <button class="btn-primary" id="tr2-btn-verify-stage2" onclick="if(window.track2Manager){window.track2Manager.verifyStage2()}else{console.warn('Track 2 manager not ready')}">
               <span>Verify & Unlock Stage 3 →</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
@@ -1106,9 +1119,14 @@
           </div>
 
           <div class="stage-actions-row">
-            <button class="btn-secondary" id="tr2-btn-back-to-stage2" onclick="window.track2Manager?.switchStage(2)">
-              <span>Back to Stage 2</span>
-            </button>
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="btn-secondary" id="tr2-btn-back-to-stage2" onclick="window.track2Manager?.switchStage(2)">
+                <span>Back to Stage 2</span>
+              </button>
+              <button type="button" class="btn-secondary" id="tr2-btn-demo-solve-s3" onclick="window.track2Manager?.solveZeroToCroreDemo()" style="color: #38bdf8;">
+                <span>Test Solution</span>
+              </button>
+            </div>
             <button class="btn-primary" id="tr2-btn-verify-stage3" onclick="if(window.track2Manager){window.track2Manager.verifyStage3()}else{console.warn('Track 2 manager not ready')}">
               <span>Verify & Unlock Final Power-Up →</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
@@ -1847,14 +1865,14 @@
 
   <!-- Scripts -->
   <script src="js/audio.js"></script>
-  <script src="js/bridges-engine.js?v=20261009_v12"></script>
-  <script src="js/powerups-manager.js?v=20261009_v12"></script>
-  <script src="js/track1-manager.js?v=20261009_v12"></script>
-  <script src="js/track2-manager.js?v=20261009_v12"></script>
-  <script src="js/student-quiz.js?v=20261009_v12"></script>
-  <script src="js/leaderboard.js?v=20261009_v12"></script>
-  <script src="js/dataset-view.js?v=20261009_v12"></script>
-  <script src="js/admin-controls.js?v=20261009_v12"></script>
-  <script src="js/app.js?v=20261009_v12"></script>
+  <script src="js/bridges-engine.js?v=20261009_v13"></script>
+  <script src="js/powerups-manager.js?v=20261009_v13"></script>
+  <script src="js/track1-manager.js?v=20261009_v13"></script>
+  <script src="js/track2-manager.js?v=20261009_v13"></script>
+  <script src="js/student-quiz.js?v=20261009_v13"></script>
+  <script src="js/leaderboard.js?v=20261009_v13"></script>
+  <script src="js/dataset-view.js?v=20261009_v13"></script>
+  <script src="js/admin-controls.js?v=20261009_v13"></script>
+  <script src="js/app.js?v=20261009_v13"></script>
 </body>
 </html>

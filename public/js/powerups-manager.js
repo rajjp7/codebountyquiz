@@ -177,20 +177,21 @@ class PowerupsManager {
   // Update pool when student solves questions
   updatePool(solvedCount, unlockedIds = null) {
     const prevSolved = this.questionsSolved;
-    this.questionsSolved = Math.max(this.questionsSolved, solvedCount);
+    const count = Math.max(this.questionsSolved, parseInt(solvedCount, 10) || 0);
+    this.questionsSolved = count;
 
-    if (unlockedIds && Array.isArray(unlockedIds) && unlockedIds.length > 0) {
-      this.unlockedPool = unlockedIds;
+    if (count >= 3) {
+      this.unlockedPool = ['time_cracker', 'topic_finder', 'penalty_sweeper', 'jumper_points', 'sweet_sabotage'];
+    } else if (count >= 2) {
+      this.unlockedPool = ['time_cracker', 'topic_finder', 'penalty_sweeper', 'jumper_points'];
+    } else if (count >= 1) {
+      this.unlockedPool = ['time_cracker', 'topic_finder'];
     } else {
-      if (this.questionsSolved >= 3) {
-        this.unlockedPool = this.allPowerups.map(p => p.id);
-      } else if (this.questionsSolved >= 2) {
-        this.unlockedPool = ['time_cracker', 'topic_finder', 'penalty_sweeper', 'jumper_points'];
-      } else if (this.questionsSolved >= 1) {
-        this.unlockedPool = ['time_cracker', 'topic_finder'];
-      } else {
-        this.unlockedPool = [];
-      }
+      this.unlockedPool = [];
+    }
+
+    if (unlockedIds && Array.isArray(unlockedIds) && unlockedIds.length > this.unlockedPool.length) {
+      this.unlockedPool = Array.from(new Set([...this.unlockedPool, ...unlockedIds]));
     }
 
     this.saveState();

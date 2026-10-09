@@ -781,6 +781,43 @@ class Track2Manager {
       stepIndicator.textContent = isComplete ? '✓' : '2';
       stepIndicator.classList.toggle('completed', isComplete);
     }
+    const cleanOrder = (this.uploadOrder || []).join('').toUpperCase();
+    if (this.selectedDeepfake === 'C' && cleanOrder === 'BACED') {
+      if (window.powerupsManager) {
+        window.powerupsManager.updatePool(2);
+      }
+    }
+  }
+
+  solveDeepfakeDemo() {
+    this.selectDeepfake('C');
+    this.uploadOrder = ['B', 'A', 'C', 'E', 'D'];
+    this.renderVideoOrderSlots();
+    this.checkStage2Progress();
+    this.saveProgress();
+    if (window.powerupsManager) {
+      window.powerupsManager.updatePool(2);
+    }
+    window.app?.showToast('Stage 2 Deepfake C & Order B→A→C→E→D loaded! 4 Power-Ups Unlocked in Real Time.', 'success');
+  }
+
+  solveZeroToCroreDemo() {
+    this.letterMapping = {
+      R: '3', A: '4', J: '6', Z: '9', E: '5', O: '0', C: '1', G: '7', N: '8', S: '2'
+    };
+    this.renderLetterKeypad();
+    const sareeInput = document.getElementById('tr2-input-saree');
+    const quotientInput = document.getElementById('tr2-input-quotient');
+    const wordInput = document.getElementById('tr2-input-word');
+    if (sareeInput) sareeInput.value = '75288';
+    if (quotientInput) quotientInput.value = '12548';
+    if (wordInput) wordInput.value = 'CRANE';
+    this.updateCryptarithmDisplays();
+    this.saveProgress();
+    if (window.powerupsManager) {
+      window.powerupsManager.updatePool(3);
+    }
+    window.app?.showToast('Stage 3 word CRANE & values loaded! All 5 Power-Ups Unlocked in Real Time.', 'success');
   }
 
   async checkStage2Deduction() {
@@ -809,7 +846,10 @@ class Track2Manager {
       });
       const data = await res.json();
       if (data.valid) {
-        window.app?.showToast(data.reason, 'success');
+        if (window.powerupsManager) {
+          window.powerupsManager.updatePool(2);
+        }
+        window.app?.showToast('🎉 Question 2 Verified! 4 Power-Ups Unlocked in Real Time (+Penalty Sweeper 🛡️ + Jumper Points 🚀)!', 'success');
         if (window.soundManager) window.soundManager.playVictory();
       } else {
         window.app?.showToast(data.reason, 'error');
@@ -905,6 +945,12 @@ class Track2Manager {
     const wordInput = document.getElementById('tr2-input-word');
     const wordClean = (wordInput?.value || '').trim().toUpperCase();
     const isComplete = wordClean.length >= 4;
+
+    if (wordClean === 'CRANE') {
+      if (window.powerupsManager) {
+        window.powerupsManager.updatePool(3);
+      }
+    }
 
     const stepIndicator = document.getElementById('tr2-step-3-status');
     if (stepIndicator) {

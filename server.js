@@ -824,6 +824,17 @@ app.post('/api/round2/validate-stage', (req, res) => {
             reason: result.reason
           };
 
+          // If stage 2 is completed, ensure stage 1 is also completed
+          if (stageNum >= 2 && att.stages.stage1) {
+            att.stages.stage1.status = 'COMPLETED';
+            att.stages.stage1.valid = true;
+          }
+          // If stage 3 is completed, ensure stages 1 & 2 are completed
+          if (stageNum >= 3) {
+            if (att.stages.stage1) { att.stages.stage1.status = 'COMPLETED'; att.stages.stage1.valid = true; }
+            if (att.stages.stage2) { att.stages.stage2.status = 'COMPLETED'; att.stages.stage2.valid = true; }
+          }
+
           // Unlock next stage sequentially
           if (stageNum === 1 && att.stages.stage2 && att.stages.stage2.status === 'LOCKED') {
             att.stages.stage2.status = 'PENDING';
@@ -832,11 +843,11 @@ app.post('/api/round2/validate-stage', (req, res) => {
             att.stages.stage3.status = 'PENDING';
           }
 
-          // Recompute questions solved
-          let solvedCount = 0;
-          if (att.stages.stage1?.status === 'COMPLETED') solvedCount++;
-          if (att.stages.stage2?.status === 'COMPLETED') solvedCount++;
-          if (att.stages.stage3?.status === 'COMPLETED') solvedCount++;
+          // Recompute questions solved accurately
+          let solvedCount = stageNum;
+          if (att.stages.stage1?.status === 'COMPLETED' || att.stages.stage1?.valid) solvedCount = Math.max(solvedCount, 1);
+          if (att.stages.stage2?.status === 'COMPLETED' || att.stages.stage2?.valid) solvedCount = Math.max(solvedCount, 2);
+          if (att.stages.stage3?.status === 'COMPLETED' || att.stages.stage3?.valid) solvedCount = Math.max(solvedCount, 3);
 
           att.questions_solved = solvedCount;
           att.unlocked_powerups = getUnlockedPowerups(solvedCount);
@@ -848,7 +859,7 @@ app.post('/api/round2/validate-stage', (req, res) => {
       }
     }
 
-    const currentSolved = updatedAttempt ? updatedAttempt.questions_solved : (result.valid ? stageNum : stageNum - 1);
+    const currentSolved = updatedAttempt ? updatedAttempt.questions_solved : (result.valid ? Math.max(stageNum, 1) : Math.max(0, stageNum - 1));
     const unlockedPowerups = getUnlockedPowerups(currentSolved);
 
     res.json({

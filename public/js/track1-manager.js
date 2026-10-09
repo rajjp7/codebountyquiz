@@ -535,7 +535,11 @@ class Track1Manager {
     const dmgInput = document.getElementById('tr1-input-damage');
     const pinInput = document.getElementById('tr1-input-vault-pin');
     if (dmgInput && (!dmgInput.value || dmgInput.value === '0')) dmgInput.value = totalDamage;
-    if (pinInput && (!pinInput.value || pinInput.value === '0')) pinInput.value = calculatedPin;
+    if (calculatedPin === 1788 && this.launchOrder.length === 5) {
+      if (window.powerupsManager) {
+        window.powerupsManager.updatePool(2);
+      }
+    }
 
     breakdownEl.innerHTML = `
       <div style="font-size: 0.8rem; line-height: 1.5; color: var(--text-secondary);">
@@ -545,6 +549,42 @@ class Track1Manager {
         <strong>Calculated PIN:</strong> <span class="mono" style="color: var(--text-primary); font-weight: 700; font-size: 1rem;">${calculatedPin > 0 ? calculatedPin : '—'}</span>
       </div>
     `;
+  }
+
+  solvePigFortressDemo() {
+    this.pigsClassification = {
+      Minion: 'Honest',
+      Corporal: 'Liar',
+      Foreman: 'Liar',
+      King: 'Honest',
+      Helmet: 'Honest'
+    };
+    document.querySelectorAll('.pig-toggle-btn').forEach(btn => {
+      const pig = btn.getAttribute('data-pig');
+      const type = btn.getAttribute('data-type');
+      btn.classList.toggle('active', this.pigsClassification[pig] === type);
+    });
+    this.launchOrder = ['red', 'chuck', 'matilda', 'bomb', 'hal'];
+    this.renderBirdPool();
+    this.renderLaunchSlots();
+    const dmgInput = document.getElementById('tr1-input-damage');
+    const pinInput = document.getElementById('tr1-input-vault-pin');
+    if (dmgInput) dmgInput.value = '298';
+    if (pinInput) pinInput.value = '1788';
+    this.recalculateScoring();
+    if (window.powerupsManager) {
+      window.powerupsManager.updatePool(2);
+    }
+    window.app?.showToast('Stage 2 Pig Fortress solution loaded! 4 Power-Ups Unlocked in Real Time.', 'success');
+  }
+
+  solveOfficersDemo() {
+    const input = document.getElementById('tr1-input-officer-passcode');
+    if (input) input.value = 'tuhaikon@codestars';
+    if (window.powerupsManager) {
+      window.powerupsManager.updatePool(3);
+    }
+    window.app?.showToast('Stage 3 passcode loaded! All 5 Power-Ups Unlocked in Real Time.', 'success');
   }
 
   async verifyStage2() {
