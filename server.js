@@ -13,7 +13,7 @@ app.use(morgan('dev'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Paths
-const DATA_DIR = path.join(__dirname, 'data');
+const DATA_DIR = process.env.CODEBOUNTY_DATA_DIR || path.join(__dirname, 'data');
 const PUZZLES_FILE = path.join(DATA_DIR, 'puzzles.json');
 const ROOM_FILE = path.join(DATA_DIR, 'room_config.json');
 const DATASET_FILE = path.join(DATA_DIR, 'dataset.json');
@@ -59,6 +59,7 @@ function computeScore(durationSeconds, mistakesCount, islandsCount) {
 
 // Hashi Solution Validator
 function validateHashiSolution(puzzle, bridges) {
+  if (!puzzle || !Array.isArray(bridges)) return { valid: false, reason: 'Invalid bridge submission' };
   // puzzle: { islands: [{ id, r, c, number }] }
   // bridges: array of { u, v, count } or map
   const islands = puzzle.islands;
@@ -70,11 +71,18 @@ function validateHashiSolution(puzzle, bridges) {
   islands.forEach(isl => degrees.set(isl.id, 0));
 
   const cleanBridges = [];
+  const seenPairs = new Set();
 
   for (const b of bridges) {
-    if (!b || b.count <= 0) continue;
+    if (!b) return { valid: false, reason: 'Invalid bridge submission' };
     const u = Math.min(b.u, b.v);
     const v = Math.max(b.u, b.v);
+    if (u === v || !Number.isInteger(b.count) || b.count < 1 || b.count > 2) {
+      return { valid: false, reason: 'Invalid bridge pair or count' };
+    }
+    const pairKey = `${u}-${v}`;
+    if (seenPairs.has(pairKey)) return { valid: false, reason: 'Duplicate bridge pair' };
+    seenPairs.add(pairKey);
     const uIsl = islandMap.get(u);
     const vIsl = islandMap.get(v);
 
@@ -102,11 +110,6 @@ function validateHashiSolution(puzzle, bridges) {
           return { valid: false, reason: `Bridge crosses through island ${other.id}` };
         }
       }
-    }
-
-    // Bridge count max 2
-    if (b.count > 2 || b.count < 1) {
-      return { valid: false, reason: `Invalid bridge count: ${b.count}` };
     }
 
     cleanBridges.push({ u, v, count: b.count, uIsl, vIsl, isHorizontal });
@@ -180,7 +183,7 @@ function validateHashiSolution(puzzle, bridges) {
     }
   }
 
-  return { valid: true };
+  return { valid: true, score: puzzle.id === 'puzzle-fy-10x10' ? 1000 : 800 };
 }
 
 // ----------------------------------------------------
@@ -223,21 +226,10 @@ const ALL_POWERUPS = [
     badge: '1.5x Multiplier',
     description: 'A multiplier power-up. The points for the question you select are multiplied by 1.5x.'
   },
-  {
-    id: 'sweet_sabotage',
-    name: 'Sweet Sabotage',
-    tier: 3,
-    unlocked_at_solved: 3,
-    icon: '💣',
-    badge: 'Ultimate Debuff',
-    description: 'Use it on any one participant sitting in your lab. That contestant\'s final team points are reduced by 10%.'
-  }
 ];
 
 function getUnlockedPowerups(questionsSolved) {
-  if (questionsSolved >= 3) {
-    return ALL_POWERUPS.map(p => p.id); // 5 power-ups
-  } else if (questionsSolved >= 2) {
+  if (questionsSolved >= 2) {
     return ['time_cracker', 'topic_finder', 'penalty_sweeper', 'jumper_points']; // 4 power-ups
   } else if (questionsSolved >= 1) {
     return ['time_cracker', 'topic_finder']; // 2 power-ups
@@ -346,7 +338,7 @@ function validatePigFortressSolution(answer) {
   if (isPinCorrect) score += 500;
   if (isDamageCorrect) score += 100;
 
-  const valid = isPinCorrect || (isOrderCorrect && pigsAllCorrect);
+  const valid = pigsAllCorrect && isOrderCorrect && isDamageCorrect && isPinCorrect;
 
   return {
     valid,
@@ -358,8 +350,10 @@ function validatePigFortressSolution(answer) {
     vault_pin: pin,
     total_damage: damage,
     reason: valid
-      ? 'Outstanding logic deduction! Pigs identified (3 Honest, 2 Liars), Launch Order: Red → Chuck → Matilda → Bomb → Hal, Total Damage: 298, Vault PIN: 1788.'
-      : (!isPinCorrect ? 'Vault PIN is incorrect. Verify bird launch order and damage calculation.' : 'Incomplete solution.')
+      ? 'Pig roles, launch order, total damage, and Vault PIN verified.'
+      : (!pigsAllCorrect ? 'Pig Honest/Liar classifications are incorrect.'
+        : (!isOrderCorrect ? 'Launch sequence order is incorrect.'
+          : (!isDamageCorrect ? 'Total damage is incorrect.' : 'Vault PIN is incorrect.')))
   };
 }
 
@@ -566,12 +560,15 @@ function validateZeroToCroreSolution(answer) {
   let mappingValid = false;
   if (answer.mapping && typeof answer.mapping === 'object') {
     const m = answer.mapping;
+    const digits = ['R', 'A', 'J', 'Z', 'E', 'O', 'C', 'G', 'N', 'S'].map(k => String(m[k] ?? ''));
+    const distinctDigits = digits.every(d => /^[0-9]$/.test(d)) && new Set(digits).size === 10;
+    const leadingDigits = ['R', 'Z', 'C', 'G', 'S'].every(k => String(m[k]) !== '0');
     const raja = Number(m.R) * 1000 + Number(m.A) * 100 + Number(m.J) * 10 + Number(m.A);
     const zero = Number(m.Z) * 1000 + Number(m.E) * 100 + Number(m.R) * 10 + Number(m.O);
     const crore = Number(m.C) * 10000 + Number(m.R) * 1000 + Number(m.O) * 100 + Number(m.R) * 10 + Number(m.E);
     const ganga = Number(m.G) * 10000 + Number(m.A) * 1000 + Number(m.N) * 100 + Number(m.G) * 10 + Number(m.A);
     const saree = Number(m.S) * 10000 + Number(m.A) * 1000 + Number(m.R) * 100 + Number(m.E) * 10 + Number(m.E);
-    if (raja + zero === crore && ganga + zero === saree) {
+    if (distinctDigits && leadingDigits && raja + zero === crore && ganga + zero === saree) {
       mappingValid = true;
     }
   }
@@ -586,7 +583,7 @@ function validateZeroToCroreSolution(answer) {
   if (isQuotCorrect) score += 200;
   if (isWordCorrect) score += 500;
 
-  const valid = isWordCorrect && (isSareeCorrect || mappingValid);
+  const valid = mappingValid && isSareeCorrect && isQuotCorrect && isWordCorrect;
   return {
     valid,
     mappingValid,
@@ -597,10 +594,10 @@ function validateZeroToCroreSolution(answer) {
     final_word: finalWordClean,
     saree_value: sareeVal,
     reason: valid
-      ? 'Flawless cryptarithm deciphering! Decoded word is CRANE (SAREE = 75288, Quotient = 12548).'
-      : (isWordCorrect
-        ? 'Secret word CRANE is correct!'
-        : 'Incorrect deciphering. Check equation sums and division.')
+      ? 'Cryptarithm mapping, SAREE value, quotient, and decoded word verified.'
+      : (!mappingValid ? 'Letter-to-digit mapping or equation sums are incorrect.'
+        : (!isSareeCorrect ? 'SAREE value is incorrect.'
+          : (!isQuotCorrect ? 'Division quotient is incorrect.' : 'Decoded word is incorrect.')))
   };
 }
 
@@ -674,7 +671,7 @@ app.get('/api/powerups', (req, res) => {
     pool_rules: [
       { questions_solved: 1, pool_size: 2, unlocked: ['time_cracker', 'topic_finder'] },
       { questions_solved: 2, pool_size: 4, unlocked: ['time_cracker', 'topic_finder', 'penalty_sweeper', 'jumper_points'] },
-      { questions_solved: 3, pool_size: 5, unlocked: ['time_cracker', 'topic_finder', 'penalty_sweeper', 'jumper_points', 'sweet_sabotage'] }
+      { questions_solved: 3, pool_size: 4, unlocked: ['time_cracker', 'topic_finder', 'penalty_sweeper', 'jumper_points'] }
     ]
   });
 });
@@ -728,7 +725,6 @@ app.post('/api/round2/start', (req, res) => {
     powerups_selected: [],
     powerups_confirmed: false,
     powerups_locked_at: null,
-    sabotage_target: null,
     current_stage: 1,
     stages: {
       stage1: { status: 'PENDING', valid: false, score: 0 },
@@ -777,7 +773,20 @@ app.post('/api/round2/validate-stage', (req, res) => {
   try {
     const { attempt_id, track, stage, data } = req.body || {};
     const targetTrack = (track === 'track1') ? 'track1' : 'track2';
-    const stageNum = parseInt(stage, 10) || 1;
+    const stageNum = Number(stage);
+    const dataset = readJSON(DATASET_FILE, []);
+    const idx = dataset.findIndex(a => a.id === attempt_id);
+    if (idx === -1) return res.status(404).json({ valid: false, reason: 'Attempt not found' });
+    const att = dataset[idx];
+    if (att.track !== targetTrack) return res.status(400).json({ valid: false, reason: 'Attempt track does not match' });
+    if (![1, 2, 3].includes(stageNum)) return res.status(400).json({ valid: false, reason: 'Invalid stage' });
+    if (att.status !== 'IN_PROGRESS') return res.status(409).json({ valid: false, reason: 'Round already submitted' });
+    if (Date.now() - Date.parse(att.start_time) >= 1800000) {
+      return res.status(403).json({ valid: false, reason: 'The 30-minute round has expired' });
+    }
+    if (stageNum > 1 && att.stages?.[`stage${stageNum - 1}`]?.status !== 'COMPLETED') {
+      return res.status(409).json({ valid: false, reason: 'Complete the previous stage first' });
+    }
 
     const puzzles = readJSON(PUZZLES_FILE, []);
     let result = { valid: false, reason: 'Invalid validation request' };
@@ -802,20 +811,14 @@ app.post('/api/round2/validate-stage', (req, res) => {
       }
     }
 
-    // If valid, update attempt in dataset if attempt_id supplied
-    let updatedAttempt = null;
-    if (attempt_id) {
-      const dataset = readJSON(DATASET_FILE, []);
-      const idx = dataset.findIndex(a => a.id === attempt_id);
-      if (idx !== -1) {
-        const att = dataset[idx];
+    // Record a verified stage only for the active attempt.
+    if (result.valid) {
         att.stages = att.stages || {
           stage1: { status: 'PENDING' },
           stage2: { status: 'LOCKED' },
           stage3: { status: 'LOCKED' }
         };
 
-        if (result.valid) {
           att.stages[`stage${stageNum}`] = {
             status: 'COMPLETED',
             valid: true,
@@ -823,17 +826,6 @@ app.post('/api/round2/validate-stage', (req, res) => {
             completed_at: new Date().toISOString(),
             reason: result.reason
           };
-
-          // If stage 2 is completed, ensure stage 1 is also completed
-          if (stageNum >= 2 && att.stages.stage1) {
-            att.stages.stage1.status = 'COMPLETED';
-            att.stages.stage1.valid = true;
-          }
-          // If stage 3 is completed, ensure stages 1 & 2 are completed
-          if (stageNum >= 3) {
-            if (att.stages.stage1) { att.stages.stage1.status = 'COMPLETED'; att.stages.stage1.valid = true; }
-            if (att.stages.stage2) { att.stages.stage2.status = 'COMPLETED'; att.stages.stage2.valid = true; }
-          }
 
           // Unlock next stage sequentially
           if (stageNum === 1 && att.stages.stage2 && att.stages.stage2.status === 'LOCKED') {
@@ -853,13 +845,12 @@ app.post('/api/round2/validate-stage', (req, res) => {
           att.unlocked_powerups = getUnlockedPowerups(solvedCount);
           att.pool_size = att.unlocked_powerups.length;
           dataset[idx] = att;
-          writeJSON(DATASET_FILE, dataset);
-          updatedAttempt = att;
-        }
-      }
+          if (!writeJSON(DATASET_FILE, dataset)) {
+            return res.status(500).json({ valid: false, reason: 'Could not save stage verification. Please retry.' });
+          }
     }
 
-    const currentSolved = updatedAttempt ? updatedAttempt.questions_solved : (result.valid ? Math.max(stageNum, 1) : Math.max(0, stageNum - 1));
+    const currentSolved = att.questions_solved || 0;
     const unlockedPowerups = getUnlockedPowerups(currentSolved);
 
     res.json({
@@ -887,7 +878,22 @@ app.post('/api/round2/validate-stage', (req, res) => {
 });
 
 // Submit Complete Round 2 Attempt
-app.post('/api/round2/submit', (req, res) => {
+function round2SubmissionResult(attempt) {
+  const unlocked = getUnlockedPowerups(attempt.questions_solved || 0);
+  return {
+    success: true,
+    allPassed: attempt.questions_solved === 3,
+    attempt,
+    stageBreakdown: attempt.stages,
+    questions_solved: attempt.questions_solved || 0,
+    pool_size: unlocked.length,
+    unlocked_powerups: unlocked,
+    totalScore: attempt.score || 0,
+    ready_for_powerup_selection: true
+  };
+}
+
+app.post(['/api/round2/submit', '/api/track2/submit'], (req, res) => {
   const {
     attempt_id,
     track,
@@ -908,6 +914,13 @@ app.post('/api/round2/submit', (req, res) => {
   }
 
   const attempt = dataset[attemptIndex];
+  // A retry retrieves the saved result without changing scores or finish time.
+  if (attempt.finish_time && ['COMPLETED', 'PARTIAL', 'FAILED'].includes(attempt.status)) {
+    return res.json(round2SubmissionResult(attempt));
+  }
+  if (attempt.status !== 'IN_PROGRESS') {
+    return res.status(409).json({ error: 'Round already submitted' });
+  }
   const puzzles = readJSON(PUZZLES_FILE, []);
   const targetTrack = attempt.track || track || 'track1';
 
@@ -915,18 +928,26 @@ app.post('/api/round2/submit', (req, res) => {
 
   if (targetTrack === 'track1') {
     const puzzle = puzzles.find(p => p.id === 'puzzle-fy-10x10') || puzzles[0];
-    val1 = validateHashiSolution(puzzle, stage1?.bridges || []);
-    val2 = validatePigFortressSolution(stage2);
-    val3 = validateOfficersSolution(stage3);
+    val1 = attempt.stages?.stage1?.valid ? attempt.stages.stage1 : validateHashiSolution(puzzle, stage1?.bridges || []);
+    val2 = attempt.stages?.stage2?.valid ? attempt.stages.stage2 : validatePigFortressSolution(stage2);
+    val3 = attempt.stages?.stage3?.valid ? attempt.stages.stage3 : validateOfficersSolution(stage3);
   } else {
     const puzzle = puzzles.find(p => p.id === 'puzzle-10x10-pro') || puzzles[0];
-    val1 = validateHashiSolution(puzzle, stage1?.bridges || []);
-    val2 = validateDeepfakeSolution(stage2);
-    val3 = validateZeroToCroreSolution(stage3);
+    val1 = attempt.stages?.stage1?.valid ? attempt.stages.stage1 : validateHashiSolution(puzzle, stage1?.bridges || []);
+    val2 = attempt.stages?.stage2?.valid ? attempt.stages.stage2 : validateDeepfakeSolution(stage2);
+    val3 = attempt.stages?.stage3?.valid ? attempt.stages.stage3 : validateZeroToCroreSolution(stage3);
+  }
+
+  // A final submission may grade the current stage at timeout, but cannot skip earlier stages.
+  if (attempt.stages?.stage1?.status !== 'COMPLETED') {
+    val2 = { valid: false, score: 0, reason: 'Stage 1 was not verified' };
+    val3 = { valid: false, score: 0, reason: 'Stage 2 was not verified' };
+  } else if (attempt.stages?.stage2?.status !== 'COMPLETED') {
+    val3 = { valid: false, score: 0, reason: 'Stage 2 was not verified' };
   }
 
   const finishTime = new Date().toISOString();
-  const finalDuration = Math.max(1, parseFloat(duration_seconds) || 1);
+  const finalDuration = Math.max(1, Math.floor((Date.now() - Date.parse(attempt.start_time)) / 1000));
 
   let solvedCount = 0;
   let totalScore = 0;
@@ -948,29 +969,39 @@ app.post('/api/round2/submit', (req, res) => {
   attempt.unlocked_powerups = getUnlockedPowerups(solvedCount);
   attempt.pool_size = attempt.unlocked_powerups.length;
   attempt.stages = {
-    stage1: { valid: val1.valid, score: val1.score || 0, reason: val1.reason },
-    stage2: { valid: val2.valid, score: val2.score || 0, reason: val2.reason },
-    stage3: { valid: val3.valid, score: val3.score || 0, reason: val3.reason }
+    stage1: { status: val1.valid ? 'COMPLETED' : 'FAILED', valid: val1.valid, score: val1.score || 0, reason: val1.reason },
+    stage2: { status: val2.valid ? 'COMPLETED' : 'FAILED', valid: val2.valid, score: val2.score || 0, reason: val2.reason },
+    stage3: { status: val3.valid ? 'COMPLETED' : 'FAILED', valid: val3.valid, score: val3.score || 0, reason: val3.reason }
   };
 
   dataset[attemptIndex] = attempt;
-  writeJSON(DATASET_FILE, dataset);
+  if (!writeJSON(DATASET_FILE, dataset)) {
+    return res.status(500).json({ error: 'Could not save your round. Please retry submission.' });
+  }
 
-  res.json({
-    success: true,
-    allPassed,
-    attempt,
-    questions_solved: solvedCount,
-    pool_size: attempt.pool_size,
-    unlocked_powerups: attempt.unlocked_powerups,
-    totalScore,
-    ready_for_powerup_selection: true
-  });
+  res.json(round2SubmissionResult(attempt));
 });
 
 // Select exactly 2 Power-Ups (Post-Round Selection)
+app.get('/api/round2/attempt/:attemptId/powerups', (req, res) => {
+  const attempt = readJSON(DATASET_FILE, []).find(a => a.id === req.params.attemptId);
+  if (!attempt) return res.status(404).json({ error: 'Attempt not found' });
+  const unlocked = getUnlockedPowerups(attempt.questions_solved || 0);
+  const selected = [...new Set(attempt.powerups_selected || [])].filter(id => unlocked.includes(id));
+  res.set('Cache-Control', 'no-store');
+  res.json({
+    attempt_id: attempt.id,
+    round_submitted: !!attempt.finish_time && ['COMPLETED', 'PARTIAL', 'FAILED'].includes(attempt.status),
+    questions_solved: attempt.questions_solved || 0,
+    unlocked_powerups: unlocked,
+    selected_powerups: selected,
+    confirmed: !!attempt.powerups_confirmed && selected.length === 2,
+    locked_at: attempt.powerups_locked_at
+  });
+});
+
 app.post('/api/round2/select-powerups', (req, res) => {
-  const { attempt_id, selected_powerups, sabotage_target } = req.body;
+  const { attempt_id, selected_powerups } = req.body;
   if (!attempt_id) return res.status(400).json({ error: 'attempt_id required' });
 
   const dataset = readJSON(DATASET_FILE, []);
@@ -980,7 +1011,16 @@ app.post('/api/round2/select-powerups', (req, res) => {
   }
 
   const attempt = dataset[attemptIndex];
-  if (attempt.powerups_confirmed) {
+  if (!attempt.finish_time || attempt.status === 'IN_PROGRESS') {
+    return res.status(409).json({ error: 'Submit the round before selecting power-ups' });
+  }
+  const existingChoices = attempt.powerups_selected || [];
+  const existingChoicesValid = existingChoices.length === 2 && existingChoices.every(id => ALL_POWERUPS.some(p => p.id === id));
+  if (attempt.powerups_confirmed && existingChoicesValid) {
+    if (Array.isArray(selected_powerups) && selected_powerups.length === 2 &&
+        new Set(selected_powerups).size === 2 && selected_powerups.every(id => existingChoices.includes(id))) {
+      return res.json({ success: true, locked: true, powerups_selected: existingChoices, locked_at: attempt.powerups_locked_at });
+    }
     return res.status(400).json({
       error: 'Power-up choices are already locked for this attempt and cannot be changed',
       choices: attempt.powerups_selected,
@@ -988,8 +1028,9 @@ app.post('/api/round2/select-powerups', (req, res) => {
     });
   }
 
-  const availablePool = attempt.unlocked_powerups || getUnlockedPowerups(attempt.questions_solved || 0);
+  const availablePool = getUnlockedPowerups(attempt.questions_solved || 0);
   const selected = Array.isArray(selected_powerups) ? selected_powerups : [];
+  if (availablePool.length < 2) return res.status(400).json({ error: 'No power-ups are available for this attempt' });
 
   // Validation: exactly 2 power-ups required if pool size >= 2
   const requiredCount = Math.min(2, availablePool.length);
@@ -1007,18 +1048,18 @@ app.post('/api/round2/select-powerups', (req, res) => {
       });
     }
   }
-
-  // If Sweet Sabotage is chosen, save target
-  const chosenSweetSabotage = selected.includes('sweet_sabotage');
-  const target = chosenSweetSabotage ? (sabotage_target || 'Target Participant in Lab') : null;
+  if (new Set(selected).size !== selected.length) {
+    return res.status(400).json({ error: 'Choose two different power-ups' });
+  }
 
   attempt.powerups_selected = selected;
   attempt.powerups_confirmed = true;
   attempt.powerups_locked_at = new Date().toISOString();
-  attempt.sabotage_target = target;
 
   dataset[attemptIndex] = attempt;
-  writeJSON(DATASET_FILE, dataset);
+  if (!writeJSON(DATASET_FILE, dataset)) {
+    return res.status(500).json({ error: 'Could not save power-up choices. Please retry.' });
+  }
 
   // Get friendly names for chosen power-ups
   const selectedDetails = selected.map(id => ALL_POWERUPS.find(p => p.id === id) || { id, name: id });
@@ -1029,7 +1070,6 @@ app.post('/api/round2/select-powerups', (req, res) => {
     message: 'Choices successfully confirmed and permanently locked for Round 3!',
     powerups_selected: selected,
     selected_details: selectedDetails,
-    sabotage_target: target,
     locked_at: attempt.powerups_locked_at
   });
 });
@@ -1053,13 +1093,12 @@ app.get('/api/admin/powerups', (req, res) => {
   // Statistics breakdown
   const stats = {
     total: filtered.length,
-    confirmed_powerups_count: filtered.filter(r => r.powerups_confirmed).length,
+    confirmed_powerups_count: filtered.filter(r => r.powerups_confirmed && (r.powerups_selected || []).filter(id => ALL_POWERUPS.some(p => p.id === id)).length === 2).length,
     powerup_counts: {
       time_cracker: 0,
       topic_finder: 0,
       penalty_sweeper: 0,
-      jumper_points: 0,
-      sweet_sabotage: 0
+      jumper_points: 0
     },
     solved_distribution: {
       zero: filtered.filter(r => (r.questions_solved || 0) === 0).length,
@@ -1080,8 +1119,9 @@ app.get('/api/admin/powerups', (req, res) => {
   });
 
   const records = filtered.map(r => {
-    const p1 = r.powerups_selected?.[0];
-    const p2 = r.powerups_selected?.[1];
+    const selected = (r.powerups_selected || []).filter(id => ALL_POWERUPS.some(p => p.id === id));
+    const p1 = selected[0];
+    const p2 = selected[1];
     const p1Info = ALL_POWERUPS.find(p => p.id === p1);
     const p2Info = ALL_POWERUPS.find(p => p.id === p2);
 
@@ -1096,12 +1136,11 @@ app.get('/api/admin/powerups', (req, res) => {
       batch: r.batch,
       lab: r.lab || 'Lab 1',
       questions_solved: r.questions_solved || (r.status === 'COMPLETED' ? 3 : (r.status === 'PARTIAL' ? 1 : 0)),
-      pool_size: r.pool_size || (r.questions_solved === 3 ? 5 : (r.questions_solved === 2 ? 4 : (r.questions_solved === 1 ? 2 : 0))),
-      unlocked_powerups: r.unlocked_powerups || getUnlockedPowerups(r.questions_solved || (r.status === 'COMPLETED' ? 3 : 0)),
+      pool_size: getUnlockedPowerups(r.questions_solved || 0).length,
+      unlocked_powerups: getUnlockedPowerups(r.questions_solved || 0),
       powerup_1: p1Info ? p1Info.name : (p1 || 'Not Selected'),
       powerup_2: p2Info ? p2Info.name : (p2 || 'Not Selected'),
-      sabotage_target: r.sabotage_target || '-',
-      powerups_confirmed: !!r.powerups_confirmed,
+      powerups_confirmed: !!r.powerups_confirmed && selected.length === 2,
       powerups_locked_at: r.powerups_locked_at,
       score: r.score || 0,
       duration_seconds: r.duration_seconds,
@@ -1146,7 +1185,6 @@ app.get('/api/admin/export/excel', (req, res) => {
     'Unlocked Power-Ups Pool',
     'Selected Power-Up 1',
     'Selected Power-Up 2',
-    'Sabotage Target',
     'Total Score',
     'Duration',
     'Status',
@@ -1154,12 +1192,13 @@ app.get('/api/admin/export/excel', (req, res) => {
   ];
 
   const rows = filtered.map((r, idx) => {
-    const p1 = r.powerups_selected?.[0];
-    const p2 = r.powerups_selected?.[1];
+    const selected = (r.powerups_selected || []).filter(id => ALL_POWERUPS.some(p => p.id === id));
+    const p1 = selected[0];
+    const p2 = selected[1];
     const p1Name = ALL_POWERUPS.find(p => p.id === p1)?.name || (p1 || 'None');
     const p2Name = ALL_POWERUPS.find(p => p.id === p2)?.name || (p2 || 'None');
     const qSolved = r.questions_solved !== undefined ? r.questions_solved : (r.status === 'COMPLETED' ? 3 : (r.status === 'PARTIAL' ? 1 : 0));
-    const poolSize = r.pool_size !== undefined ? r.pool_size : (qSolved === 3 ? 5 : (qSolved === 2 ? 4 : (qSolved === 1 ? 2 : 0)));
+    const poolSize = getUnlockedPowerups(qSolved).length;
     const trackName = (r.track === 'track1') ? 'Track 1 (FY Track)' : 'Track 2 (Other Years)';
 
     // Solved breakdown
@@ -1174,9 +1213,7 @@ app.get('/api/admin/export/excel', (req, res) => {
     const questionsBreakdown = solvedQuestionsList.length > 0 ? solvedQuestionsList.join('; ') : 'None';
 
     // Unlocked pool names
-    const unlockedPoolList = (r.unlocked_powerups && r.unlocked_powerups.length > 0)
-      ? r.unlocked_powerups
-      : getUnlockedPowerups(qSolved);
+    const unlockedPoolList = getUnlockedPowerups(qSolved);
     const unlockedPoolNames = unlockedPoolList
       .map(id => ALL_POWERUPS.find(p => p.id === id)?.name || id)
       .join('; ');
@@ -1193,7 +1230,6 @@ app.get('/api/admin/export/excel', (req, res) => {
       `"${unlockedPoolNames || 'None'}"`,
       `"${p1Name}"`,
       `"${p2Name}"`,
-      `"${(r.sabotage_target || '-').replace(/"/g, '""')}"`,
       r.score || 0,
       `"${r.formatted_time || ''}"`,
       `"${r.status}"`,
@@ -1543,83 +1579,6 @@ app.post('/api/track2/validate-stage', (req, res) => {
 });
 
 // Final Track 2 Multi-Stage Submission
-app.post('/api/track2/submit', (req, res) => {
-  const {
-    attempt_id,
-    duration_seconds,
-    stage1,
-    stage2,
-    stage3,
-    moves_count,
-    mistakes_count,
-    undos_count,
-    tab_switches
-  } = req.body;
-
-  const dataset = readJSON(DATASET_FILE, []);
-  const attemptIndex = dataset.findIndex(a => a.id === attempt_id);
-  if (attemptIndex === -1) {
-    return res.status(404).json({ error: 'Attempt not found' });
-  }
-
-  const attempt = dataset[attemptIndex];
-  const puzzles = readJSON(PUZZLES_FILE, []);
-  const puzzle = puzzles.find(p => p.id === 'puzzle-10x10-pro') || puzzles[0];
-
-  // 1. Stage 1 Validation (Hashi 10x10 Hard)
-  const valStage1 = validateHashiSolution(puzzle, stage1?.bridges || []);
-  const stage1Score = valStage1.valid ? computeScore(duration_seconds || 300, mistakes_count || 0, puzzle.islands.length) : 0;
-
-  // 2. Stage 2 Validation (Who is the Deepfake?)
-  const valStage2 = validateDeepfakeSolution(stage2);
-
-  // 3. Stage 3 Validation (Zero to Crore Alphametic)
-  const valStage3 = validateZeroToCroreSolution(stage3);
-
-  const totalScore = stage1Score + (valStage2.score || 0) + (valStage3.score || 0);
-  const finishTime = new Date().toISOString();
-  const finalDuration = duration_seconds || 0;
-  const allPassed = valStage1.valid && valStage2.valid && valStage3.valid;
-
-  attempt.status = allPassed ? 'COMPLETED' : 'PARTIAL';
-  attempt.finish_time = finishTime;
-  attempt.duration_seconds = finalDuration;
-  attempt.formatted_time = formatDuration(finalDuration);
-  attempt.moves_count = moves_count || attempt.moves_count;
-  attempt.mistakes_count = mistakes_count || attempt.mistakes_count;
-  attempt.undos_count = undos_count || attempt.undos_count;
-  attempt.tab_switches = tab_switches || attempt.tab_switches;
-  attempt.score = totalScore;
-  attempt.stages = {
-    stage1: { valid: valStage1.valid, score: stage1Score, reason: valStage1.reason },
-    stage2: { valid: valStage2.valid, score: valStage2.score, deepfake: valStage2.deepfake, upload_order: valStage2.upload_order, reason: valStage2.reason },
-    stage3: { valid: valStage3.valid, score: valStage3.score, final_word: valStage3.final_word, saree_value: valStage3.saree_value, reason: valStage3.reason }
-  };
-
-  dataset[attemptIndex] = attempt;
-  writeJSON(DATASET_FILE, dataset);
-
-  // Calculate rank in batch for Track 2
-  const batchTrack2 = dataset
-    .filter(a => a.batch === attempt.batch && a.track === 'track2' && a.status === 'COMPLETED')
-    .sort((a, b) => b.score - a.score || a.duration_seconds - b.duration_seconds);
-  const rank = batchTrack2.findIndex(a => a.id === attempt.id) + 1;
-
-  res.json({
-    success: true,
-    allPassed,
-    attempt,
-    totalScore,
-    rank: rank > 0 ? rank : null,
-    total_in_batch: batchTrack2.length,
-    stageBreakdown: {
-      stage1: { valid: valStage1.valid, score: stage1Score, reason: valStage1.reason },
-      stage2: { valid: valStage2.valid, score: valStage2.score, reason: valStage2.reason },
-      stage3: { valid: valStage3.valid, score: valStage3.score, reason: valStage3.reason }
-    }
-  });
-});
-
 // 7. Leaderboard API
 app.get('/api/leaderboard', (req, res) => {
   const { batch, track } = req.query;
@@ -1759,7 +1718,6 @@ app.get('/api/dataset/export/csv', (req, res) => {
     'Pool Size',
     'Power-Up 1',
     'Power-Up 2',
-    'Sabotage Target',
     'Puzzle / Event',
     'Status',
     'Duration (Seconds)',
@@ -1773,12 +1731,13 @@ app.get('/api/dataset/export/csv', (req, res) => {
   ];
 
   const rows = filtered.map((r, i) => {
-    const p1 = r.powerups_selected?.[0];
-    const p2 = r.powerups_selected?.[1];
+    const selected = (r.powerups_selected || []).filter(id => ALL_POWERUPS.some(p => p.id === id));
+    const p1 = selected[0];
+    const p2 = selected[1];
     const p1Name = ALL_POWERUPS.find(p => p.id === p1)?.name || (p1 || '-');
     const p2Name = ALL_POWERUPS.find(p => p.id === p2)?.name || (p2 || '-');
     const qSolved = r.questions_solved || (r.status === 'COMPLETED' ? 3 : (r.status === 'PARTIAL' ? 1 : 0));
-    const poolSize = r.pool_size || (qSolved === 3 ? 5 : (qSolved === 2 ? 4 : (qSolved === 1 ? 2 : 0)));
+    const poolSize = getUnlockedPowerups(qSolved).length;
 
     return [
       r.status === 'COMPLETED' ? i + 1 : 'N/A',
@@ -1791,7 +1750,6 @@ app.get('/api/dataset/export/csv', (req, res) => {
       poolSize,
       `"${p1Name}"`,
       `"${p2Name}"`,
-      `"${(r.sabotage_target || '-').replace(/"/g, '""')}"`,
       `"${r.track === 'track2' ? 'Codestars Tri-Challenge' : (r.puzzle_name || 'FY Track Challenge')}"`,
       r.status,
       r.duration_seconds ? r.duration_seconds.toFixed(1) : '',

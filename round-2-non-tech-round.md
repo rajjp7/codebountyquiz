@@ -2,7 +2,7 @@
 
 > Solve. Unlock. Fight for power-ups that decide the next round.
 
-Round 2 follows **Round 1 (Speedforces)**. It is a non-tech round of **3 questions** in **30 minutes**. Every question you solve adds power-ups to your pool. After the round ends, you pick **2** of them to carry into the next round.
+Round 2 follows **Round 1 (Speedforces)**. It is a non-tech round of **3 questions** in **30 minutes**. Solving the first two questions unlocks power-ups. After submitting the round, you pick **2** unlocked power-ups to carry into the next round.
 
 ---
 
@@ -31,13 +31,13 @@ Both tracks follow the same format, rules and power-ups. Only the questions diff
 
 ## Power-Up System
 
-Every question you solve unlocks new power-ups. You can see your unlocked power-ups on the website as soon as you earn them.
+The first two questions unlock power-ups. You can see your unlocked power-ups on the website as soon as you earn them.
 
 | Questions solved | Power-ups unlocked | Pool size |
 |------------------|--------------------|-----------|
 | 1 | Time Cracker, Topic Finder | **2** |
 | 2 | + Penalty Sweeper, Jumper Points | **4** |
-| 3 | + Sweet Sabotage | **5** |
+| 3 | No additional power-up; complete the round | **4** |
 
 ### Power-Up Details
 
@@ -51,17 +51,13 @@ Every question you solve unlocks new power-ups. You can see your unlocked power-
 - **Penalty Sweeper**: Removes **all penalties** on a question.
 - **Jumper Points**: A multiplier power-up. The points for the question you select are multiplied by **1.5x**.
 
-#### Unlocked after Question 3 (Ultimate)
-
-- **Sweet Sabotage**: Use it on **any one participant sitting in your lab**. That contestant's **final team points are reduced by 10%**.
-
 ---
 
 ## Choosing Your Power-Ups
 
 1. **Solve questions** during the 30 minutes to build your pool.
-2. **Wait for the round to end.** Selection is not available during the round.
-3. **Log in to the website** and open the power-up selection page.
+2. **Submit the round.** Selection opens after submission or when the timer expires.
+3. **Open the power-up selection page.**
 4. **Choose exactly 2 power-ups** from your pool.
 5. **Confirm your choice.**
 
@@ -69,7 +65,7 @@ Key rules:
 
 - You can choose only **2** power-ups, whatever your pool size.
 - A bigger pool means more options, so solving more questions matters.
-- Selection is done **only on the website** and **only after the round ends**.
+- Selection is done **only on the website** and **only after submitting the round**.
 
 ---
 
@@ -90,9 +86,9 @@ This round is about fighting for the right power-ups to carry forward.
 | Questions | 3, unlocked one at a time |
 | Time | 30 minutes |
 | Tracks | Track 1 (first years), Track 2 (others) |
-| Pool size | 2, 4 or 5, depending on questions solved |
+| Pool size | 0, 2 or 4, depending on questions solved |
 | Power-ups you can pick | 2 |
-| Selection | On the website, after the round ends |
+| Selection | On the website, after round submission |
 | Usable in | Next round only |
 
 ---

@@ -102,21 +102,7 @@ class App {
         this.applyContestantSession(profile);
         this.showToast(`Welcome ${name}! Track locked to ${track === 'track1' ? 'FY Track' : 'Track 2'}.`, 'success');
       } catch (err) {
-        console.warn('Network issue during round2 start, activating offline session:', err);
-        const fallbackAttemptId = `att_offline_${Date.now()}`;
-        const fallbackStudentId = `stu_offline_${Date.now()}`;
-        const profile = {
-          role: 'contestant',
-          name,
-          college,
-          lab,
-          track,
-          student_id: fallbackStudentId,
-          attempt_id: fallbackAttemptId
-        };
-        localStorage.setItem('round2_auth', JSON.stringify(profile));
-        this.applyContestantSession(profile);
-        this.showToast(`Welcome ${name}! Session active (Progress auto-saved in browser).`, 'info');
+        this.showToast(`Could not start a recorded attempt: ${err.message}. Please retry.`, 'error');
       }
     });
 
@@ -167,7 +153,7 @@ class App {
         if (auth.role === 'admin') {
           this.applyAdminSession();
           return;
-        } else if (auth.role === 'contestant') {
+        } else if (auth.role === 'contestant' && auth.attempt_id && !auth.attempt_id.startsWith('att_offline_')) {
           this.applyContestantSession(auth);
           return;
         }
@@ -248,24 +234,20 @@ class App {
     const initAttempt = (retries = 20) => {
       if (window.powerupsManager) {
         window.powerupsManager.attemptId = profile.attempt_id;
-        window.powerupsManager.restoreState(profile.attempt_id);
+        window.powerupsManager.resetForNewAttempt(profile.attempt_id);
       }
 
       if (profile.track === 'track1') {
         if (window.track1Manager) {
           window.track1Manager.startOrResumeAttempt(profile.name, profile.student_id, profile.college, profile.lab, profile.attempt_id);
-          if (window.track2Manager?.resetForNewAttempt) {
-            window.track2Manager.resetForNewAttempt('', '', '', '', null);
-          }
+          if (window.track2Manager) window.track2Manager.attempt = null;
         } else if (retries > 0) {
           setTimeout(() => initAttempt(retries - 1), 50);
         }
       } else {
         if (window.track2Manager) {
           window.track2Manager.startOrResumeAttempt(profile.name, profile.student_id, profile.college, profile.lab, profile.attempt_id);
-          if (window.track1Manager?.resetForNewAttempt) {
-            window.track1Manager.resetForNewAttempt('', '', '', '', null);
-          }
+          if (window.track1Manager) window.track1Manager.attempt = null;
         } else if (retries > 0) {
           setTimeout(() => initAttempt(retries - 1), 50);
         }
@@ -342,13 +324,8 @@ class App {
     this.currentRole = null;
     this.contestantProfile = null;
 
-    // Reset boards and state so previous user's bridges or answers do not persist
-    if (window.track1Manager?.resetForNewAttempt) {
-      window.track1Manager.resetForNewAttempt('', '', '', '', null);
-    }
-    if (window.track2Manager?.resetForNewAttempt) {
-      window.track2Manager.resetForNewAttempt('', '', '', '', null);
-    }
+    if (window.track1Manager) window.track1Manager.attempt = null;
+    if (window.track2Manager) window.track2Manager.attempt = null;
     if (window.powerupsManager?.resetForNewAttempt) {
       window.powerupsManager.resetForNewAttempt(null);
     }
@@ -449,6 +426,7 @@ class App {
       window.datasetManager.loadDataset();
     } else if (tabId === 'powerups' && window.powerupsManager) {
       window.powerupsManager.renderPowerupsUI();
+      window.powerupsManager.refreshSubmissionStatus();
     } else if (tabId === 'admin' && window.adminControls) {
       window.adminControls.loadPowerupsData();
     }
@@ -512,7 +490,6 @@ class App {
 
   showAcceptedToast(stageNumber, powerupNames = [], poolSize = '') {
     const pStr = Array.isArray(powerupNames) && powerupNames.length > 0 ? powerupNames.join(' & ') : '';
-    const isLast = stageNumber === 3;
     const msg = `
       <div style="display: flex; flex-direction: column; gap: 3px;">
         <div style="display: flex; align-items: center; gap: 8px;">
@@ -520,7 +497,7 @@ class App {
           <strong style="color: #10b981; font-size: 0.875rem;">Stage ${stageNumber} Verified!</strong>
         </div>
         ${pStr ? `<div style="font-size: 0.775rem; color: var(--text-secondary); margin-top: 1px;">
-          ${isLast ? '💣' : '✨'} Unlocked: <strong style="color: #facc15;">${pStr}</strong> (${poolSize} in pool)
+          ✨ Unlocked: <strong style="color: #facc15;">${pStr}</strong> (${poolSize} in pool)
         </div>` : ''}
       </div>
     `;
@@ -555,16 +532,15 @@ class App {
         time_cracker: { name: 'Time Cracker', icon: '⚡', tag: 'TIME', desc: 'Deducts 20% of your total solve time in Round 3.' },
         topic_finder: { name: 'Topic Finder', icon: '🔍', tag: 'INTEL', desc: 'Reveals the concept and algorithm needed for the question.' },
         penalty_sweeper: { name: 'Penalty Sweeper', icon: '🛡️', tag: 'SHIELD', desc: 'Removes all penalty points on a question in the next round.' },
-        jumper_points: { name: 'Jumper Points', icon: '🚀', tag: 'BOOST', desc: 'Multiplies points for the selected question by 1.5x.' },
-        sweet_sabotage: { name: 'Sweet Sabotage', icon: '💣', tag: 'ULTIMATE', desc: 'Use on any one participant sitting in your lab. Reduces their points by 10%!' }
+        jumper_points: { name: 'Jumper Points', icon: '🚀', tag: 'BOOST', desc: 'Multiplies points for the selected question by 1.5x.' }
       };
 
-      const pList = unlockedPowerups || (stageNumber === 1 ? ['time_cracker', 'topic_finder'] : (stageNumber === 2 ? ['penalty_sweeper', 'jumper_points'] : (stageNumber === 3 ? ['sweet_sabotage'] : [])));
-      const pCount = poolSize || (stageNumber === 1 ? '2/5' : (stageNumber === 2 ? '4/5' : (stageNumber === 3 ? '5/5 (Full Pool)' : '')));
+      const pList = unlockedPowerups || (stageNumber === 1 ? ['time_cracker', 'topic_finder'] : (stageNumber === 2 ? ['penalty_sweeper', 'jumper_points'] : []));
+      const pCount = poolSize || (stageNumber === 1 ? '2/4' : (stageNumber === 2 ? '4/4' : (stageNumber === 3 ? '4/4 (Full Pool)' : '')));
 
       let powerupsHtml = '';
       if (pList.length > 0) {
-        const headline = (stageNumber === 3) ? '💣 Ultimate Power-Up Unlocked!' : `✨ ${pList.length} Power-Ups Unlocked for Round 3!`;
+        const headline = `✨ ${pList.length} Power-Ups Unlocked for Round 3!`;
         powerupsHtml = `
           <div class="modal-powerups-unlock-block">
             <div class="mpu-headline">
@@ -575,12 +551,11 @@ class App {
               ${pList.map(pid => {
                 const info = powerupMeta[pid];
                 if (!info) return '';
-                const isUlt = pid === 'sweet_sabotage';
                 return `
-                  <div class="mpu-card ${isUlt ? 'mpu-card-ultimate' : ''}">
+                  <div class="mpu-card">
                     <span class="mpu-icon">${info.icon}</span>
                     <div class="mpu-details">
-                      <div class="mpu-name">${info.name} <span class="mpu-badge ${isUlt ? 'mpu-badge-ultimate' : ''}">${info.tag}</span></div>
+                      <div class="mpu-name">${info.name} <span class="mpu-badge">${info.tag}</span></div>
                       <div class="mpu-desc">${info.desc}</div>
                     </div>
                   </div>
@@ -643,7 +618,13 @@ class App {
       modal.classList.remove('open');
       modal.style.display = 'none';
     }
-    this.switchTab('powerups');
+    const manager = this.contestantProfile?.track === 'track1' ? window.track1Manager : window.track2Manager;
+    if (!manager?.isSubmitted) {
+      if (this.contestantProfile?.track === 'track1') manager?.submitRound(true);
+      else manager?.submitTrack2(true);
+    } else {
+      this.switchTab('powerups');
+    }
   }
 
   initConfetti() {

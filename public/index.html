@@ -6,7 +6,7 @@
   <title>Hashi • Cohort Quiz Platform</title>
   <meta name="description" content="Minimalist, real-time Hashiwokakero (Bridges) quiz platform for 30-student cohorts with live leaderboards and dataset export.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%2318181b' stroke='%233f3f46' stroke-width='2'/><text x='16' y='21' font-size='15' font-weight='600' text-anchor='middle' fill='%23f4f4f5' font-family='sans-serif'>橋</text></svg>">
-  <link rel="stylesheet" href="css/style.css?v=20261009_v9">
+  <link rel="stylesheet" href="css/style.css?v=20261010_v1">
   <link rel="stylesheet" href="css/animations.css?v=20261009_v9">
 </head>
 <body>
@@ -59,7 +59,7 @@
       <button class="header-powerup-capsule btn-open-powerups" id="header-powerup-capsule" title="View Unlocked Power-Ups Pool">
         <span class="powerup-capsule-icon">⚡</span>
         <span class="powerup-capsule-label" id="header-capsule-text">Power-Ups:</span>
-        <span class="live-powerup-pool-count mono">0/5</span>
+        <span class="live-powerup-pool-count mono">0/4</span>
         <span class="header-capsule-badges" id="header-capsule-badges"></span>
       </button>
 
@@ -111,7 +111,7 @@
             <div class="timer-clock mono" id="tr1-timer-clock">30:00.0</div>
           </div>
           <div class="progress-capsule">
-            <span class="live-powerup-pool-count mono">0/5</span>
+            <span class="live-powerup-pool-count mono">0/4</span>
             <span class="live-solved-count mono">0/3</span>
           </div>
         </div>
@@ -141,9 +141,9 @@
           <div class="qps-header">
             <div class="qps-title">
               <span class="qps-bolt">⚡</span>
-              <span>Power-Up Pool: <strong class="live-powerup-pool-count" style="color: #facc15;">0/5</strong> Unlocked</span>
+              <span>Power-Up Pool: <strong class="live-powerup-pool-count" style="color: #facc15;">0/4</strong> Unlocked</span>
             </div>
-            <div class="qps-rule">Solve Q1 (+2) • Q2 (+2) • Q3 (+1) to unlock all 5 for Round 3</div>
+            <div class="qps-rule">Solve Q1 (+2) and Q2 (+2) to unlock all 4 choices for Round 3</div>
           </div>
           <div class="qps-chips-grid">
             <div class="qps-chip chip-locked" data-powerup="time_cracker">
@@ -177,14 +177,6 @@
                 <div class="qps-chip-desc">1.5x Multiplier</div>
               </div>
               <span class="qps-chip-badge">🔒 Q2</span>
-            </div>
-            <div class="qps-chip chip-locked chip-ultimate" data-powerup="sweet_sabotage">
-              <div class="qps-chip-icon">💣</div>
-              <div class="qps-chip-info">
-                <div class="qps-chip-name">Sweet Sabotage</div>
-                <div class="qps-chip-desc">-10% Debuff Opponent</div>
-              </div>
-              <span class="qps-chip-badge">🔒 Q3</span>
             </div>
           </div>
         </div>
@@ -440,21 +432,21 @@
                 <label style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-tertiary); display: block; margin-bottom: 0.35rem;">
                   Total Damage
                 </label>
-                <input type="number" id="tr1-input-damage" class="form-control mono">
+                <input type="number" id="tr1-input-damage" class="form-control mono" readonly>
               </div>
 
               <div>
                 <label style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-tertiary); display: block; margin-bottom: 0.35rem;">
                   Vault PIN
                 </label>
-                <input type="number" id="tr1-input-vault-pin" class="form-control mono" style="font-weight: 600;">
+                <input type="number" id="tr1-input-vault-pin" class="form-control mono" style="font-weight: 600;" readonly>
               </div>
             </div>
           </div>
 
           <div class="live-stage-powerup-status" id="tr1-stage2-powerup-status">
             <span class="live-stage-powerup-icon">⚡</span>
-            <span>Solving Stage 2 unlocks <strong>2 More Power-Ups</strong> (Penalty Sweeper + Jumper Points, 4/5 total)</span>
+            <span>Solving Stage 2 unlocks <strong>2 More Power-Ups</strong> (Penalty Sweeper + Jumper Points, 4/4 total)</span>
           </div>
 
           <div class="stage-actions-row">
@@ -538,7 +530,7 @@
                   <span>Test Solution</span>
                 </button>
                 <button type="button" class="btn-primary" id="tr1-btn-verify-stage3" style="padding: 0.65rem 1.25rem;" onclick="if(window.track1Manager){window.track1Manager.verifyStage3()}else{console.warn('Track 1 manager not ready')}">
-                  <span>Verify & Unlock Final Power-Up →</span>
+                  <span>Verify Final Stage →</span>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </button>
               </div>
@@ -546,8 +538,8 @@
           </div>
 
           <div class="live-stage-powerup-status" id="tr1-stage3-powerup-status">
-            <span class="live-stage-powerup-icon">💣</span>
-            <span>Solving Stage 3 unlocks the <strong>5th & Final Power-Up</strong> (Sweet Sabotage, full 5/5 pool)</span>
+            <span class="live-stage-powerup-icon">✓</span>
+            <span>After Stage 3, submit your round and choose 2 of the 4 unlocked power-ups.</span>
           </div>
 
           <div class="stage-actions-row">
@@ -562,7 +554,7 @@
           <div class="tr2-hero-header">
             <h2>All 3 Challenges Conquered</h2>
             <p>
-              You have completed Hashi (10×10), The Pig Fortress Problem, and the 25 Officer Puzzle! All 5 power-ups are unlocked in your pool.
+              You have completed all three FY challenges. Submit the round before choosing power-ups.
             </p>
           </div>
 
@@ -573,22 +565,22 @@
             </div>
             <div class="tr2-summary-card">
               <h4>Stage 2: The Pig Fortress Problem</h4>
-              <div class="val">Vault PIN 1788 & Launch Order Verified (1200 pts)</div>
+              <div class="val">Pig Roles, Damage, Vault PIN & Launch Order Verified (1300 pts)</div>
             </div>
             <div class="tr2-summary-card">
               <h4>Stage 3: The 25 Officer Puzzle</h4>
-              <div class="val">5×5 Graeco-Latin Square Solved (1500 pts)</div>
+              <div class="val">5×5 Graeco-Latin Square Solved (1000 pts)</div>
             </div>
 
             <div style="background: var(--bg-surface); border: 1px solid var(--border-hairline); border-radius: var(--radius-md); padding: 1.5rem; text-align: center; margin: 1.5rem 0;">
               <h3 style="font-size: 1.15rem; color: var(--text-primary); margin-bottom: 0.35rem;">
-                Power-Up Pool: All 5 Unlocked
+                Power-Up Pool: All 4 Unlocked
               </h3>
               <p style="font-size: 0.8125rem; color: var(--text-secondary); max-width: 440px; margin: 0 auto 1.25rem auto;">
-                Proceed to the Power-Up selection page to choose your <b>2 power-ups</b> to carry into Round 3.
+                Submit your round, then choose <b>2 power-ups</b> to carry into Round 3.
               </p>
-              <button class="btn-primary" id="tr1-btn-to-powerups" style="padding: 0.65rem 1.5rem;" onclick="window.app?.switchTab('powerups')">
-                <span>Select 2 Power-Ups</span>
+              <button class="btn-primary" id="tr1-btn-to-powerups" style="padding: 0.65rem 1.5rem;" onclick="window.track1Manager?.submitRound()">
+                <span>Submit Round & Choose 2 Power-Ups</span>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
               </button>
             </div>
@@ -647,9 +639,9 @@
           <div class="qps-header">
             <div class="qps-title">
               <span class="qps-bolt">⚡</span>
-              <span>Power-Up Pool: <strong class="live-powerup-pool-count" style="color: #facc15;">0/5</strong> Unlocked</span>
+              <span>Power-Up Pool: <strong class="live-powerup-pool-count" style="color: #facc15;">0/4</strong> Unlocked</span>
             </div>
-            <div class="qps-rule">Solve Q1 (+2) • Q2 (+2) • Q3 (+1) to unlock all 5 for Round 3</div>
+            <div class="qps-rule">Solve Q1 (+2) and Q2 (+2) to unlock all 4 choices for Round 3</div>
           </div>
           <div class="qps-chips-grid">
             <div class="qps-chip chip-locked" data-powerup="time_cracker">
@@ -683,14 +675,6 @@
                 <div class="qps-chip-desc">1.5x Multiplier</div>
               </div>
               <span class="qps-chip-badge">🔒 Q2</span>
-            </div>
-            <div class="qps-chip chip-locked chip-ultimate" data-powerup="sweet_sabotage">
-              <div class="qps-chip-icon">💣</div>
-              <div class="qps-chip-info">
-                <div class="qps-chip-name">Sweet Sabotage</div>
-                <div class="qps-chip-desc">-10% Debuff Opponent</div>
-              </div>
-              <span class="qps-chip-badge">🔒 Q3</span>
             </div>
           </div>
         </div>
@@ -953,7 +937,7 @@
               <!-- Available video chips pool -->
               <div style="margin-top: 0.75rem;">
                 <span style="font-size: 0.75rem; color: var(--text-tertiary); font-family: var(--font-mono); margin-right: 0.5rem;">
-                  Click to place next:
+                  Click a video to append, or select a slot first to insert or move it:
                 </span>
                 <span class="video-pool-row" id="tr2-video-pool" style="display: inline-flex;"></span>
               </div>
@@ -968,7 +952,7 @@
 
           <div class="live-stage-powerup-status" id="tr2-stage2-powerup-status">
             <span class="live-stage-powerup-icon">⚡</span>
-            <span>Solving Stage 2 unlocks <strong>2 More Power-Ups</strong> (Penalty Sweeper + Jumper Points, 4/5 total)</span>
+            <span>Solving Stage 2 unlocks <strong>2 More Power-Ups</strong> (Penalty Sweeper + Jumper Points, 4/4 total)</span>
           </div>
 
           <div class="stage-actions-row">
@@ -1114,8 +1098,8 @@
           </div>
 
           <div class="live-stage-powerup-status" id="tr2-stage3-powerup-status">
-            <span class="live-stage-powerup-icon">💣</span>
-            <span>Solving Stage 3 unlocks the <strong>5th & Final Power-Up</strong> (Sweet Sabotage, full 5/5 pool)</span>
+            <span class="live-stage-powerup-icon">✓</span>
+            <span>After Stage 3, submit your round and choose 2 of the 4 unlocked power-ups.</span>
           </div>
 
           <div class="stage-actions-row">
@@ -1128,7 +1112,7 @@
               </button>
             </div>
             <button class="btn-primary" id="tr2-btn-verify-stage3" onclick="if(window.track2Manager){window.track2Manager.verifyStage3()}else{console.warn('Track 2 manager not ready')}">
-              <span>Verify & Unlock Final Power-Up →</span>
+              <span>Verify Final Stage →</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </button>
           </div>
@@ -1164,15 +1148,11 @@
 
             <div style="background: var(--bg-surface); border: 1px solid var(--border-hairline); border-radius: var(--radius-md); padding: 1.5rem; text-align: center; margin: 1.5rem 0;">
               <h3 style="font-size: 1.15rem; color: var(--text-primary); margin-bottom: 0.35rem;">
-                Power-Up Pool: All 5 Unlocked
+                Power-Up Pool: All 4 Unlocked
               </h3>
               <p style="font-size: 0.8125rem; color: var(--text-secondary); max-width: 440px; margin: 0 auto 1.25rem auto;">
-                Proceed to the Power-Up selection page to choose your <b>2 power-ups</b> to carry into Round 3.
+                Submit your round, then choose <b>2 power-ups</b> to carry into Round 3.
               </p>
-              <button class="btn-primary" id="tr2-btn-to-powerups" style="padding: 0.65rem 1.5rem;" onclick="window.app?.switchTab('powerups')">
-                <span>Select 2 Power-Ups</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-              </button>
             </div>
 
             <div class="stage-actions-row" style="margin-top: 1.5rem;">
@@ -1203,7 +1183,7 @@
         <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
           <div class="powerup-status-capsule">
             <span>Pool Unlocked:</span>
-            <span class="live-powerup-pool-count mono" style="font-weight: 600;">0/5</span>
+            <span class="live-powerup-pool-count mono" style="font-weight: 600;">0/4</span>
           </div>
           <div class="powerup-status-capsule">
             <span>Selection:</span>
@@ -1223,8 +1203,8 @@
           <div class="pool-tier-desc">+ Penalty Sweeper & Jumper Points (Pool of 4)</div>
         </div>
         <div class="pool-tier-step highlight">
-          <div class="pool-tier-num">Stage 3 Solved</div>
-          <div class="pool-tier-desc">+ Sweet Sabotage (Full Pool of 5)</div>
+          <div class="pool-tier-num">After the Round</div>
+          <div class="pool-tier-desc">Submit your entry, then choose 2 unlocked power-ups</div>
         </div>
       </div>
 
@@ -1236,19 +1216,8 @@
         </p>
       </div>
 
-      <!-- 5 Power-Up Cards Grid -->
+      <!-- Power-Up Cards Grid -->
       <div id="powerups-selection-grid" class="powerups-selection-grid"></div>
-
-      <!-- Optional Target for Sweet Sabotage -->
-      <div id="sabotage-input-box" style="display: none; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.25rem; margin-top: 1.5rem;">
-        <h4 style="color: var(--text-primary); font-size: 0.9rem; margin-bottom: 0.35rem;">
-          Sweet Sabotage Target Selection
-        </h4>
-        <p style="font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
-          Enter the participant / team roll number sitting in your lab whose final points will be debuffed by 10%:
-        </p>
-        <input type="text" class="form-control mono" id="input-sabotage-target" placeholder="e.g. STU-042 or Team Alpha (Lab 1)" style="max-width: 400px;">
-      </div>
 
       <!-- Action Footer -->
       <div style="display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-top: 1.75rem; flex-wrap: wrap;">
@@ -1505,13 +1474,12 @@
                 <th>Unlocked Power-Ups</th>
                 <th>Power-Up 1</th>
                 <th>Power-Up 2</th>
-                <th>Sabotage</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody id="admin-powerups-tbody">
               <tr>
-                <td colspan="11" style="text-align: center; color: var(--text-tertiary); padding: 1.5rem;">
+                <td colspan="10" style="text-align: center; color: var(--text-tertiary); padding: 1.5rem;">
                   Loading participant power-up selections...
                 </td>
               </tr>
@@ -1800,7 +1768,7 @@
       <div class="drawer-header">
         <div>
           <h3 style="font-size: 1.1rem; color: var(--text-primary); margin-bottom: 0.2rem;">Round 2 Power-Ups Pool</h3>
-          <span style="font-size: 0.75rem; color: var(--text-secondary);">Pool Size: <strong class="live-powerup-pool-count mono">0/5</strong></span>
+          <span style="font-size: 0.75rem; color: var(--text-secondary);">Pool Size: <strong class="live-powerup-pool-count mono">0/4</strong></span>
         </div>
         <button class="btn-icon" id="btn-close-powerups-modal" title="Close Drawer">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -1852,10 +1820,10 @@
       </p>
       <div style="background: var(--bg-surface-elevated); border: 1px solid var(--border-hairline); border-radius: var(--radius-sm); padding: 0.85rem 1rem; margin-bottom: 1.5rem; font-size: 0.8125rem; color: var(--text-primary); text-align: left;">
         <div><strong>Status:</strong> <span style="color: var(--rose-500, #ef4444); font-weight: 600;">Time's Up • Answers Permanently Locked</span></div>
-        <div style="margin-top: 0.35rem;"><strong>Next Step:</strong> Open the Power-Ups page and select your 2 power-ups to carry into Round 3.</div>
+        <div style="margin-top: 0.35rem;"><strong>Next Step:</strong> Retry submitting your round to open the available power-ups.</div>
       </div>
       <button class="btn-primary" id="btn-time-up-action" style="width: 100%; padding: 0.75rem 1.5rem; font-weight: 600;" onclick="window.app?.closeTimeUpModalAndGoPowerups()">
-        <span>Go to Power-Up Selection →</span>
+        <span>Retry Submission →</span>
       </button>
     </div>
   </div>
@@ -1864,15 +1832,15 @@
   <div class="toast-container" id="toast-container"></div>
 
   <!-- Scripts -->
-  <script src="js/audio.js"></script>
+  <script src="js/audio.js?v=20261010_v4"></script>
   <script src="js/bridges-engine.js?v=20261009_v13"></script>
-  <script src="js/powerups-manager.js?v=20261009_v13"></script>
-  <script src="js/track1-manager.js?v=20261009_v13"></script>
-  <script src="js/track2-manager.js?v=20261009_v13"></script>
+  <script src="js/powerups-manager.js?v=20261010_v4"></script>
+  <script src="js/track1-manager.js?v=20261010_v2"></script>
+  <script src="js/track2-manager.js?v=20261010_v2"></script>
   <script src="js/student-quiz.js?v=20261009_v13"></script>
   <script src="js/leaderboard.js?v=20261009_v13"></script>
   <script src="js/dataset-view.js?v=20261009_v13"></script>
   <script src="js/admin-controls.js?v=20261009_v13"></script>
-  <script src="js/app.js?v=20261009_v13"></script>
+  <script src="js/app.js?v=20261010_v3"></script>
 </body>
 </html>
