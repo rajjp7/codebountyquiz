@@ -565,21 +565,27 @@ class Track2Manager {
     const sareeInput = document.getElementById('tr2-input-saree');
     const quotientInput = document.getElementById('tr2-input-quotient');
 
-    const m = this.letterMapping;
-    // Auto-calculate SAREE if not typed manually
-    let calculatedSaree = '';
-    if (['S', 'A', 'R', 'E'].every(k => m[k] !== '')) {
-      calculatedSaree = `${m.S}${m.A}${m.R}${m.E}${m.E}`;
-    }
-    const sareeVal = parseInt(sareeInput?.value || calculatedSaree || '0', 10);
-    const calculatedQuotient = sareeVal ? Math.floor(sareeVal / 6) : 0;
-    const quotientVal = parseInt(quotientInput?.value || calculatedQuotient || '0', 10);
+    const sareeRaw = String(sareeInput?.value || '').trim();
+    const quotientRaw = String(quotientInput?.value || '').trim();
     const wordVal = String(wordInput?.value || '').trim().toUpperCase();
 
-    if (!wordVal) {
-      window.app?.showToast('Please enter the decoded secret word!', 'warning');
+    if (!sareeRaw) {
+      window.app?.showToast('Please enter the numerical value of SAREE (Field 1)!', 'warning');
       return;
     }
+
+    if (!quotientRaw) {
+      window.app?.showToast('Please enter the quotient (SAREE ÷ 6) (Field 2)!', 'warning');
+      return;
+    }
+
+    if (!wordVal) {
+      window.app?.showToast('Please enter the decoded secret word (Field 3)!', 'warning');
+      return;
+    }
+
+    const sareeVal = parseInt(sareeRaw, 10);
+    const quotientVal = parseInt(quotientRaw, 10);
 
     const btn = document.getElementById('tr2-btn-verify-stage3');
     const originalContent = btn ? btn.innerHTML : null;
@@ -617,13 +623,13 @@ class Track2Manager {
       console.warn('Network issue during Stage 3 validation, checking cryptarithm locally:', err);
     }
 
-    // Client-side fallback check: word === 'CRANE', SAREE === 75288, quotient === 12548
+    // Client-side fallback check: word === 'CRANE', SAREE === 75288, quotient === 12548 (ALL 3 REQUIRED)
     if (!result) {
       const isWordCorrect = wordVal === 'CRANE';
       const isSareeCorrect = sareeVal === 75288;
       const isQuotCorrect = quotientVal === 12548;
 
-      if (isWordCorrect && (isSareeCorrect || isQuotCorrect)) {
+      if (isWordCorrect && isSareeCorrect && isQuotCorrect) {
         result = {
           valid: true,
           questions_solved: 3,
@@ -631,11 +637,17 @@ class Track2Manager {
           reason: 'Flawless cryptarithm deciphering! Decoded word is CRANE (SAREE = 75288, Quotient = 12548).'
         };
       } else {
+        let reason = 'Incorrect cryptarithm solution.';
+        if (!isSareeCorrect) {
+          reason = 'Numerical value of SAREE is incorrect (Equation 2: GANGA + ZERO = SAREE).';
+        } else if (!isQuotCorrect) {
+          reason = 'Quotient calculation (SAREE ÷ 6) is incorrect.';
+        } else if (!isWordCorrect) {
+          reason = 'Decoded secret word is incorrect.';
+        }
         result = {
           valid: false,
-          reason: !isWordCorrect
-            ? 'Decoded word is incorrect. Review your letter-digit mapping and division by 6.'
-            : 'SAREE value or quotient calculation is incorrect.'
+          reason
         };
       }
     }

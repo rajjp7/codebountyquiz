@@ -560,19 +560,41 @@ function validateZeroToCroreSolution(answer) {
   if (!answer) return { valid: false, reason: 'No answer provided for Zero to Crore puzzle', score: 0 };
 
   const finalWordClean = String(answer.final_word || '').trim().toUpperCase();
-  const sareeVal = parseInt(answer.saree_value, 10);
-  const quotVal = parseInt(answer.quotient_value, 10);
+  const sareeRaw = answer.saree_value !== undefined && answer.saree_value !== null ? String(answer.saree_value).trim() : '';
+  const quotRaw = answer.quotient_value !== undefined && answer.quotient_value !== null ? String(answer.quotient_value).trim() : '';
+
+  if (!sareeRaw || !quotRaw || !finalWordClean) {
+    return {
+      valid: false,
+      reason: 'All three fields are required: SAREE value, Quotient (SAREE ÷ 6), and Decoded Secret Word.',
+      score: 0
+    };
+  }
+
+  const sareeVal = parseInt(sareeRaw, 10);
+  const quotVal = parseInt(quotRaw, 10);
 
   let mappingValid = false;
+  const letters = ['R', 'A', 'J', 'Z', 'E', 'O', 'C', 'G', 'N', 'S'];
   if (answer.mapping && typeof answer.mapping === 'object') {
     const m = answer.mapping;
-    const raja = Number(m.R) * 1000 + Number(m.A) * 100 + Number(m.J) * 10 + Number(m.A);
-    const zero = Number(m.Z) * 1000 + Number(m.E) * 100 + Number(m.R) * 10 + Number(m.O);
-    const crore = Number(m.C) * 10000 + Number(m.R) * 1000 + Number(m.O) * 100 + Number(m.R) * 10 + Number(m.E);
-    const ganga = Number(m.G) * 10000 + Number(m.A) * 1000 + Number(m.N) * 100 + Number(m.G) * 10 + Number(m.A);
-    const saree = Number(m.S) * 10000 + Number(m.A) * 1000 + Number(m.R) * 100 + Number(m.E) * 10 + Number(m.E);
-    if (raja + zero === crore && ganga + zero === saree) {
-      mappingValid = true;
+    const allFilled = letters.every(l => m[l] !== undefined && m[l] !== null && String(m[l]).trim() !== '');
+    if (allFilled) {
+      const digits = letters.map(l => Number(m[l]));
+      const allValidDigits = digits.every(d => !isNaN(d) && d >= 0 && d <= 9);
+      const uniqueDigits = new Set(digits).size === 10;
+      const noLeadingZero = Number(m.R) !== 0 && Number(m.Z) !== 0 && Number(m.C) !== 0 && Number(m.G) !== 0 && Number(m.S) !== 0;
+
+      if (allValidDigits && uniqueDigits && noLeadingZero) {
+        const raja = Number(m.R) * 1000 + Number(m.A) * 100 + Number(m.J) * 10 + Number(m.A);
+        const zero = Number(m.Z) * 1000 + Number(m.E) * 100 + Number(m.R) * 10 + Number(m.O);
+        const crore = Number(m.C) * 10000 + Number(m.R) * 1000 + Number(m.O) * 100 + Number(m.R) * 10 + Number(m.E);
+        const ganga = Number(m.G) * 10000 + Number(m.A) * 1000 + Number(m.N) * 100 + Number(m.G) * 10 + Number(m.A);
+        const saree = Number(m.S) * 10000 + Number(m.A) * 1000 + Number(m.R) * 100 + Number(m.E) * 10 + Number(m.E);
+        if (raja + zero === crore && ganga + zero === saree) {
+          mappingValid = true;
+        }
+      }
     }
   }
 
@@ -581,12 +603,25 @@ function validateZeroToCroreSolution(answer) {
   const isWordCorrect = finalWordClean === 'CRANE';
 
   let score = 0;
-  if (mappingValid) score += 500;
   if (isSareeCorrect) score += 300;
   if (isQuotCorrect) score += 200;
   if (isWordCorrect) score += 500;
+  if (mappingValid) score += 500;
 
-  const valid = isWordCorrect && (isSareeCorrect || mappingValid);
+  // ALL THREE MANDATORY FIELDS MUST BE CORRECT
+  const valid = isWordCorrect && isSareeCorrect && isQuotCorrect;
+
+  let reason = 'Flawless cryptarithm deciphering! Decoded word is CRANE (SAREE = 75288, Quotient = 12548).';
+  if (!valid) {
+    if (!isSareeCorrect) {
+      reason = 'Numerical value of SAREE is incorrect (Equation 2: GANGA + ZERO = SAREE).';
+    } else if (!isQuotCorrect) {
+      reason = 'Quotient value is incorrect (must be SAREE ÷ 6 = 12548).';
+    } else if (!isWordCorrect) {
+      reason = 'Decoded secret word is incorrect.';
+    }
+  }
+
   return {
     valid,
     mappingValid,
@@ -596,11 +631,7 @@ function validateZeroToCroreSolution(answer) {
     score,
     final_word: finalWordClean,
     saree_value: sareeVal,
-    reason: valid
-      ? 'Flawless cryptarithm deciphering! Decoded word is CRANE (SAREE = 75288, Quotient = 12548).'
-      : (isWordCorrect
-        ? 'Secret word CRANE is correct!'
-        : 'Incorrect deciphering. Check equation sums and division.')
+    reason
   };
 }
 
