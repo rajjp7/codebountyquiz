@@ -475,11 +475,11 @@ const TRACK2_CONFIG = {
         'Every genuine video contains exactly ONE false claim.'
       ],
       videos: [
-        { id: 'A', claim1: 'B was uploaded before me.', claim2: 'A is the deepfake.' },
-        { id: 'B', claim1: 'C is genuine.', claim2: 'D was uploaded after E.' },
-        { id: 'C', claim1: 'B and E have different authenticity: one is genuine and the other is fake.', claim2: 'C was uploaded before A.' },
-        { id: 'D', claim1: 'D was uploaded before A.', claim2: 'B is genuine.' },
-        { id: 'E', claim1: "D's claim that B is genuine is false.", claim2: 'E was uploaded before D.' }
+        { id: 'A', claim1: 'B was uploaded before me.', claim2: 'C is genuine.' },
+        { id: 'B', claim1: 'A is the deepfake', claim2: 'D was uploaded after E.' },
+        { id: 'C', claim1: 'B and E have different authenticity: one is genuine and the other is fake.', claim2: 'D was uploaded before A.' },
+        { id: 'D', claim1: 'C was uploaded before A.', claim2: 'B is genuine.' },
+        { id: 'E', claim1: "D's claim that B is genuine is false.", claim2: 'E was uploaded after C.' }
       ],
       evidence: [
         '1. The upload order was not alphabetical.',
