@@ -1,9 +1,4 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
-  "functions": {
-    "api/[...path].js": {
-      "includeFiles": "data/*.json"
-    }
-  }
+  "buildCommand": "npm run build"
 }
