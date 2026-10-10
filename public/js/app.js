@@ -194,6 +194,10 @@ class App {
   applyContestantSession(profile) {
     this.currentRole = 'contestant';
     this.contestantProfile = profile;
+    document.body.classList.remove('role-admin');
+    document.querySelectorAll('.admin-test-solution-btn').forEach(btn => {
+      btn.style.display = 'none';
+    });
 
     // 1. Permanently lock track: Hide switcher, show static locked pill
     const trackSwitcher = document.getElementById('main-track-switcher');
@@ -277,6 +281,10 @@ class App {
   applyAdminSession() {
     this.currentRole = 'admin';
     this.contestantProfile = null;
+    document.body.classList.add('role-admin');
+    document.querySelectorAll('.admin-test-solution-btn').forEach(btn => {
+      btn.style.display = 'inline-flex';
+    });
 
     // 1. Enable track switcher for Admin inspection
     const trackSwitcher = document.getElementById('main-track-switcher');
@@ -361,6 +369,10 @@ class App {
     localStorage.removeItem('round2_auth');
     this.currentRole = null;
     this.contestantProfile = null;
+    document.body.classList.remove('role-admin');
+    document.querySelectorAll('.admin-test-solution-btn').forEach(btn => {
+      btn.style.display = 'none';
+    });
 
     // Reset boards and state so previous user's bridges or answers do not persist
     if (window.track1Manager?.resetForNewAttempt) {

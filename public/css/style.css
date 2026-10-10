@@ -3297,3 +3297,12 @@ body {
   width: 22px;
   height: 22px;
 }
+
+/* Admin-only test solution buttons: hidden for contestants, visible only for admin */
+.admin-test-solution-btn {
+  display: none !important;
+}
+
+body.role-admin .admin-test-solution-btn {
+  display: inline-flex !important;
+}

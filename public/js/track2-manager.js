@@ -175,6 +175,10 @@ class Track2Manager {
   }
 
   solveHashiDemo() {
+    if (window.app?.currentRole !== 'admin') {
+      window.app?.showToast('Test solution is restricted to administrators.', 'warning');
+      return;
+    }
     if (!this.hashiEngine || !this.puzzle10x10 || !this.puzzle10x10.solutionEdges) return;
     this.hashiEngine.loadBridges(this.puzzle10x10.solutionEdges);
     if (window.powerupsManager) {
@@ -795,6 +799,10 @@ class Track2Manager {
   }
 
   solveDeepfakeDemo() {
+    if (window.app?.currentRole !== 'admin') {
+      window.app?.showToast('Test solution is restricted to administrators.', 'warning');
+      return;
+    }
     this.selectDeepfake('C');
     this.uploadOrder = ['B', 'A', 'C', 'E', 'D'];
     this.renderVideoOrderSlots();
@@ -807,6 +815,10 @@ class Track2Manager {
   }
 
   solveZeroToCroreDemo() {
+    if (window.app?.currentRole !== 'admin') {
+      window.app?.showToast('Test solution is restricted to administrators.', 'warning');
+      return;
+    }
     this.letterMapping = {
       R: '3', A: '4', J: '6', Z: '9', E: '5', O: '0', C: '1', G: '7', N: '8', S: '2'
     };

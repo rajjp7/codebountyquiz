@@ -272,6 +272,10 @@ class Track1Manager {
   }
 
   solveHashiDemo() {
+    if (window.app?.currentRole !== 'admin') {
+      window.app?.showToast('Test solution is restricted to administrators.', 'warning');
+      return;
+    }
     if (!this.hashiEngine || !this.puzzleFY || !this.puzzleFY.solutionEdges) return;
     this.hashiEngine.loadBridges(this.puzzleFY.solutionEdges);
     if (window.powerupsManager) {
@@ -568,6 +572,10 @@ class Track1Manager {
   }
 
   solvePigFortressDemo() {
+    if (window.app?.currentRole !== 'admin') {
+      window.app?.showToast('Test solution is restricted to administrators.', 'warning');
+      return;
+    }
     this.pigsClassification = {
       Minion: 'Honest',
       Corporal: 'Liar',
@@ -595,6 +603,10 @@ class Track1Manager {
   }
 
   solveOfficersDemo() {
+    if (window.app?.currentRole !== 'admin') {
+      window.app?.showToast('Test solution is restricted to administrators.', 'warning');
+      return;
+    }
     const input = document.getElementById('tr1-input-officer-passcode');
     if (input) input.value = 'tuhaikon@codestars';
     if (window.powerupsManager) {
