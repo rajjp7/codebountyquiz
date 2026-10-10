@@ -4,7 +4,10 @@
   "outputDirectory": "dist",
   "functions": {
     "api/[...path].js": {
-      "runtime": "nodejs20.x"
+      "runtime": "nodejs20.x",
+      "includeFiles": [
+        "data/*.json"
+      ]
     }
   }
 }
