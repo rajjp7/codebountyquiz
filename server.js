@@ -15,12 +15,13 @@ if (process.env.NODE_ENV !== 'test') app.use(morgan('dev'));
 app.use(express.static(path.join(__dirname, 'dist')));
 
 // Paths
-const DATA_DIR = process.env.VERCEL ? path.join('/tmp', 'codebountyquiz-data') : (process.env.DATA_DIR || path.join(__dirname, 'data'));
+const isVercelRuntime = process.env.VERCEL === '1' || process.env.VERCEL === 'true' || __dirname.startsWith('/var/task');
+const DATA_DIR = isVercelRuntime ? path.join('/tmp', 'codebountyquiz-data') : (process.env.DATA_DIR || path.join(__dirname, 'data'));
 const PUZZLES_FILE = path.join(DATA_DIR, 'puzzles.json');
 const ROOM_FILE = path.join(DATA_DIR, 'room_config.json');
 const DATASET_FILE = path.join(DATA_DIR, 'dataset.json');
 
-if (process.env.VERCEL) {
+if (isVercelRuntime) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
   for (const name of ['puzzles.json', 'room_config.json', 'dataset.json']) {
     const source = path.join(__dirname, 'data', name);
