@@ -27,11 +27,11 @@ class Track1Manager {
     };
     this.launchOrder = []; // Ordered bird IDs: ['red', 'chuck', 'matilda', 'bomb', 'hal']
     this.availableBirds = [
-      { id: 'red', name: 'Red', power: 7, color: '#ef4444' },
       { id: 'chuck', name: 'Chuck', power: 12, color: '#eab308' },
-      { id: 'matilda', name: 'Matilda', power: 9, color: '#f43f5e' },
       { id: 'bomb', name: 'Bomb', power: 25, color: '#18181b' },
-      { id: 'hal', name: 'Hal', power: 14, color: '#10b981' }
+      { id: 'red', name: 'Red', power: 7, color: '#ef4444' },
+      { id: 'hal', name: 'Hal', power: 14, color: '#10b981' },
+      { id: 'matilda', name: 'Matilda', power: 9, color: '#f43f5e' }
     ];
 
     // Stage 3: The 25 Officer Puzzle state
