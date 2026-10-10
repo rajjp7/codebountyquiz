@@ -400,5 +400,119 @@
     "tab_switches": 0,
     "score": 0,
     "bridges": []
+  },
+  {
+    "id": "att_r2_1791605922632_o7wk8",
+    "track": "track1",
+    "batch": "Cohort 1",
+    "lab": "Lab 1",
+    "college": "asdlpfj",
+    "student_id": "CST-188",
+    "student_name": "virajs`",
+    "puzzle_id": "puzzle-fy-10x10",
+    "puzzle_name": "FY Track Challenge",
+    "difficulty": "Classic",
+    "status": "IN_PROGRESS",
+    "time_limit_seconds": 1800,
+    "questions_solved": 3,
+    "pool_size": 5,
+    "unlocked_powerups": [
+      "time_cracker",
+      "topic_finder",
+      "penalty_sweeper",
+      "jumper_points",
+      "sweet_sabotage"
+    ],
+    "powerups_selected": [
+      "sweet_sabotage",
+      "penalty_sweeper"
+    ],
+    "powerups_confirmed": true,
+    "powerups_locked_at": "2026-10-10T04:21:18.633Z",
+    "sabotage_target": null,
+    "current_stage": 1,
+    "stages": {
+      "stage1": {
+        "status": "COMPLETED",
+        "valid": true,
+        "score": 500,
+        "completed_at": "2026-10-10T04:20:13.943Z"
+      },
+      "stage2": {
+        "status": "COMPLETED",
+        "valid": true,
+        "score": 1200,
+        "completed_at": "2026-10-10T04:21:02.107Z",
+        "reason": "Outstanding logic deduction! Pigs identified (3 Honest, 2 Liars), Launch Order: Red → Chuck → Matilda → Bomb → Hal, Total Damage: 298, Vault PIN: 1788."
+      },
+      "stage3": {
+        "status": "COMPLETED",
+        "valid": true,
+        "score": 1000,
+        "completed_at": "2026-10-10T04:21:09.645Z",
+        "reason": "25 Officer Puzzle verified! Secret passcode tuhaikon@codestars confirmed."
+      }
+    },
+    "start_time": "2026-10-10T04:18:42.632Z",
+    "finish_time": null,
+    "duration_seconds": null,
+    "formatted_time": "--:--",
+    "moves_count": 0,
+    "mistakes_count": 0,
+    "undos_count": 0,
+    "tab_switches": 0,
+    "score": 0,
+    "bridges": []
+  },
+  {
+    "id": "att_r2_5ee1349e-6b5e-4921-bab3-7274ddbf6fc4",
+    "session_hash": "eb3854fc249bff1b0be4e3f8c4dbcc75fe5fc9179fc0dc549ad976208137b974",
+    "validation_version": 2,
+    "track": "track1",
+    "student_id": "CST-762A41D8",
+    "student_name": "asdf",
+    "college": "asdf",
+    "lab": "Lab 1",
+    "batch": "Cohort 1",
+    "puzzle_id": "puzzle-fy-10x10",
+    "puzzle_name": "Track 1: FY Track (First Years)",
+    "difficulty": "Classic",
+    "status": "IN_PROGRESS",
+    "time_limit_seconds": 1800,
+    "start_time": "2026-10-10T07:35:15.432Z",
+    "finish_time": null,
+    "duration_seconds": null,
+    "formatted_time": "--:--",
+    "stages": {
+      "stage1": {
+        "status": "PENDING",
+        "valid": false,
+        "score": 0
+      },
+      "stage2": {
+        "status": "LOCKED",
+        "valid": false,
+        "score": 0
+      },
+      "stage3": {
+        "status": "LOCKED",
+        "valid": false,
+        "score": 0
+      }
+    },
+    "answers": {},
+    "powerups_selected": [],
+    "powerups_confirmed": false,
+    "powerups_locked_at": null,
+    "sabotage_target": null,
+    "moves_count": 0,
+    "mistakes_count": 0,
+    "undos_count": 0,
+    "tab_switches": 0,
+    "questions_solved": 0,
+    "score": 0,
+    "unlocked_powerups": [],
+    "pool_size": 0,
+    "current_stage": 1
   }
 ]

@@ -4,7 +4,11 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "seed": "node scripts/seed_cohorts.js"
+    "seed": "node scripts/seed_cohorts.js",
+    "build": "node scripts/build.cjs",
+    "prestart": "npm run build",
+    "dev": "node scripts/dev.cjs",
+    "test": "node --test tests/*.test.cjs"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -16,6 +20,11 @@
   "dependencies": {
     "cors": "^2.8.6",
     "express": "^5.2.1",
-    "morgan": "^1.12.1"
+    "morgan": "^1.12.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
   }
 }

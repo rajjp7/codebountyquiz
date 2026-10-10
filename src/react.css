@@ -1,0 +1,47 @@
+button, input, select { font: inherit; }
+button { cursor: pointer; border: 1px solid var(--border-subtle); border-radius: 6px; background: var(--bg-surface); color: var(--text-primary); padding: .55rem .8rem; }
+button:disabled, input:disabled, select:disabled { cursor: not-allowed; opacity: .5; }
+button:focus-visible, select:focus-visible, input:focus-visible, [role=button]:focus-visible { outline: 3px solid #facc15; outline-offset: 3px; }
+fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+fieldset:disabled { opacity: .8; }
+h1 { font-size: 1.6rem; margin-bottom: 1rem; } h2 { margin: 1rem 0; } h3 { margin: .8rem 0; font-size: 1rem; }
+p { line-height: 1.65; margin: .6rem 0 1rem; color: var(--text-secondary); }
+.react-main { padding-bottom: 5rem; }
+.auth-page { min-height: 100vh; display: grid; place-items: center; padding: 2rem 1rem; }
+.auth-card { width: min(100%, 540px); border: 1px solid var(--border-subtle); border-radius: 16px; overflow: hidden; background: var(--bg-surface); }
+.auth-card form { padding: 1.5rem; }
+.auth-card .track-select-card { display: block; margin: .8rem 0; padding: 1rem; }
+.auth-card .track-select-card input { margin-right: .5rem; }
+.auth-card .btn-primary { width: 100%; margin-top: 1rem; }
+.form-group { display: block; min-width: 0; }
+.form-control { width: 100%; }
+.answer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; margin: 1rem 0; }
+.mapping-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: .8rem; }
+.challenge-rules { margin: 1rem 0 1.5rem; padding-left: 1.5rem; color: var(--text-secondary); line-height: 1.8; }
+.dossier-card { margin: 1rem 0; padding: 1.2rem; }
+.answer-grid .dossier-card { margin: 0; }
+.feedback { margin: 1rem 0; padding: 1rem; border: 1px solid var(--border-subtle); border-radius: 8px; line-height: 1.6; }
+.feedback.error { border-color: #ef4444; color: #fca5a5; }
+.feedback.success { border-color: #10b981; color: #6ee7b7; }
+.feedback button { margin-left: .8rem; }
+.react-hashi { display: block; width: min(100%, 650px); margin: 1rem auto; touch-action: none; user-select: none; }
+.react-hashi [role=button] { cursor: pointer; }
+.board-footer-bar { flex-wrap: wrap; padding: 1rem; }
+.board-toolbar, .stage-actions-row, .toolbar-segmented { flex-wrap: wrap; gap: .5rem; }
+.stage-actions-row { display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; }
+.officer-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 1rem 0; }
+.officer-board, .officer-palette { display: grid; grid-template-columns: repeat(5, 1fr); gap: .4rem; }
+.officer-board button, .officer-palette button { font-size: 2rem; padding: .5rem .1rem; min-width: 0; }
+.officer-palette button[aria-pressed=true] { outline: 2px solid #facc15; }
+.officer-board small, .officer-palette small { display: block; font-size: .6rem; }
+.equations { display: flex; gap: 2rem; flex-wrap: wrap; padding: 1.5rem; background: var(--bg-surface); font-size: 1.2rem; line-height: 1.8; }
+details summary { cursor: pointer; }
+.powerup-option input { margin-right: .75rem; }
+.powerup-option.unearned { opacity: .5; }
+.admin-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: .8rem; }
+.table-scroll { overflow-x: auto; margin: 1rem 0; }
+.table-scroll table { border-collapse: collapse; width: 100%; font-size: .8rem; }
+.table-scroll th, .table-scroll td { text-align: left; border-bottom: 1px solid var(--border-subtle); padding: .8rem; min-width: 80px; }
+.table-scroll small { display: block; color: var(--text-secondary); }
+.timer { white-space: nowrap; }
+@media (max-width: 720px) { .navbar { flex-wrap: wrap; height: auto; gap: .7rem; padding: 1rem; } .nav-tabs { order: 3; overflow: auto; width: 100%; } .nav-actions { flex-wrap: wrap; margin-left: auto; } .officer-layout { grid-template-columns: 1fr; gap: .5rem; } .mapping-grid { grid-template-columns: repeat(2, 1fr); } .stage-actions-row { align-items: stretch; flex-direction: column; } .tr1-stepper { overflow: auto; } .react-main { padding: 1rem 1rem 4rem; } }

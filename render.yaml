@@ -3,7 +3,7 @@ services:
     name: hashi-cohort-quiz
     env: node
     plan: free
-    buildCommand: npm install
+    buildCommand: npm ci && npm run build
     startCommand: node server.js
     envVars:
       - key: NODE_ENV
