@@ -5,11 +5,5 @@
     "api/[...path].js": {
       "includeFiles": "data/*.json"
     }
-  },
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/dist/$1"
-    }
-  ]
+  }
 }
