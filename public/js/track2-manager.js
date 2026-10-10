@@ -88,18 +88,25 @@ class Track2Manager {
     });
 
     // Stage 3: Word, Saree, Quotient inputs
-    document.getElementById('tr2-input-saree')?.addEventListener('input', () => {
+    const handleStage3InputChange = () => {
+      const s = String(document.getElementById('tr2-input-saree')?.value || '').trim();
+      const q = String(document.getElementById('tr2-input-quotient')?.value || '').trim();
+      const w = String(document.getElementById('tr2-input-word')?.value || '').trim().toUpperCase();
+      if (s !== '75288' || q !== '12548' || w !== 'CRANE') {
+        if (this.stagesCompleted[3]) {
+          this.stagesCompleted[3] = false;
+          this.stagesUnlocked[4] = false;
+          this.syncButtonStates();
+          this.updateStepperUI();
+        }
+      }
       this.updateCryptarithmDisplays();
       this.saveProgress();
-    });
-    document.getElementById('tr2-input-quotient')?.addEventListener('input', () => {
-      this.updateCryptarithmDisplays();
-      this.saveProgress();
-    });
-    document.getElementById('tr2-input-word')?.addEventListener('input', () => {
-      this.updateCryptarithmDisplays();
-      this.saveProgress();
-    });
+    };
+
+    document.getElementById('tr2-input-saree')?.addEventListener('input', handleStage3InputChange);
+    document.getElementById('tr2-input-quotient')?.addEventListener('input', handleStage3InputChange);
+    document.getElementById('tr2-input-word')?.addEventListener('input', handleStage3InputChange);
   }
 
   async loadTrackData() {
@@ -554,13 +561,6 @@ class Track2Manager {
       return;
     }
 
-    if (this.stagesCompleted[3]) {
-      window.powerupsManager?.updatePool(3);
-      this.switchStage(4);
-      window.app?.switchTab('powerups');
-      return;
-    }
-
     const wordInput = document.getElementById('tr2-input-word');
     const sareeInput = document.getElementById('tr2-input-saree');
     const quotientInput = document.getElementById('tr2-input-quotient');
@@ -570,18 +570,45 @@ class Track2Manager {
     const wordVal = String(wordInput?.value || '').trim().toUpperCase();
 
     if (!sareeRaw) {
+      this.stagesCompleted[3] = false;
+      this.stagesUnlocked[4] = false;
+      this.syncButtonStates();
+      this.updateStepperUI();
       window.app?.showToast('Please enter the numerical value of SAREE (Field 1)!', 'warning');
       return;
     }
 
     if (!quotientRaw) {
+      this.stagesCompleted[3] = false;
+      this.stagesUnlocked[4] = false;
+      this.syncButtonStates();
+      this.updateStepperUI();
       window.app?.showToast('Please enter the quotient (SAREE ÷ 6) (Field 2)!', 'warning');
       return;
     }
 
     if (!wordVal) {
+      this.stagesCompleted[3] = false;
+      this.stagesUnlocked[4] = false;
+      this.syncButtonStates();
+      this.updateStepperUI();
       window.app?.showToast('Please enter the decoded secret word (Field 3)!', 'warning');
       return;
+    }
+
+    // Only skip if already legitimately completed with all 3 correct answers
+    if (this.stagesCompleted[3] && sareeRaw === '75288' && quotientRaw === '12548' && wordVal === 'CRANE') {
+      window.powerupsManager?.updatePool(3);
+      this.switchStage(4);
+      window.app?.switchTab('powerups');
+      return;
+    }
+
+    if (sareeRaw !== '75288' || quotientRaw !== '12548' || wordVal !== 'CRANE') {
+      this.stagesCompleted[3] = false;
+      this.stagesUnlocked[4] = false;
+      this.syncButtonStates();
+      this.updateStepperUI();
     }
 
     const sareeVal = parseInt(sareeRaw, 10);
@@ -682,6 +709,11 @@ class Track2Manager {
           }
         });
       } else {
+        this.stagesCompleted[3] = false;
+        this.stagesUnlocked[4] = false;
+        this.syncButtonStates();
+        this.updateStepperUI();
+        this.saveProgress();
         window.soundManager?.playError();
         window.app?.showStageConfirmation({
           isCorrect: false,
@@ -971,20 +1003,26 @@ class Track2Manager {
       if (eq2Status) eq2Status.innerHTML = 'Assign letters to compute';
     }
 
+    const sareeInput = document.getElementById('tr2-input-saree');
+    const quotientInput = document.getElementById('tr2-input-quotient');
     const wordInput = document.getElementById('tr2-input-word');
+    const sareeClean = (sareeInput?.value || '').trim();
+    const quotClean = (quotientInput?.value || '').trim();
     const wordClean = (wordInput?.value || '').trim().toUpperCase();
-    const isComplete = wordClean.length >= 4;
 
-    if (wordClean === 'CRANE') {
-      if (window.powerupsManager) {
-        window.powerupsManager.updatePool(3);
-      }
+    // Invalidate Stage 3 completed status if any field is missing or incorrect
+    if (this.stagesCompleted[3] && (sareeClean !== '75288' || quotClean !== '12548' || wordClean !== 'CRANE')) {
+      this.stagesCompleted[3] = false;
+      this.stagesUnlocked[4] = false;
+      this.syncButtonStates();
+      this.updateStepperUI();
     }
 
+    const isStage3Solved = Boolean(this.stagesCompleted[3]);
     const stepIndicator = document.getElementById('tr2-step-3-status');
     if (stepIndicator) {
-      stepIndicator.textContent = isComplete ? '✓' : '3';
-      stepIndicator.classList.toggle('completed', isComplete);
+      stepIndicator.textContent = isStage3Solved ? '✓' : '3';
+      stepIndicator.classList.toggle('completed', isStage3Solved);
     }
   }
 
@@ -1271,6 +1309,15 @@ class Track2Manager {
       this.startTime = data.startTime || Date.now();
       this.stagesUnlocked = data.stagesUnlocked || { 1: true, 2: false, 3: false, 4: false };
       this.stagesCompleted = data.stagesCompleted || { 1: false, 2: false, 3: false };
+
+      // State integrity check: Stage 3 cannot be marked completed if fields are missing or wrong
+      const s3Saree = String(data.saree_value || '').trim();
+      const s3Quot = String(data.quotient_value || '').trim();
+      const s3Word = String(data.final_word || '').trim().toUpperCase();
+      if (this.stagesCompleted[3] && (s3Saree !== '75288' || s3Quot !== '12548' || s3Word !== 'CRANE')) {
+        this.stagesCompleted[3] = false;
+        this.stagesUnlocked[4] = false;
+      }
       this.currentStage = data.currentStage || 1;
       this.isTimeUp = false;
 
