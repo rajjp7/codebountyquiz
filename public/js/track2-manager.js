@@ -21,7 +21,6 @@ class Track2Manager {
     // Stage 2 state
     this.selectedDeepfake = null;
     this.uploadOrder = [];
-    this.selectedOrderSlot = null;
     this.availableVideos = ['A', 'B', 'C', 'D', 'E'];
 
     // Stage 3 state
@@ -178,7 +177,10 @@ class Track2Manager {
   solveHashiDemo() {
     if (!this.hashiEngine || !this.puzzle10x10 || !this.puzzle10x10.solutionEdges) return;
     this.hashiEngine.loadBridges(this.puzzle10x10.solutionEdges);
-    window.app?.showToast('Championship solution loaded. Verify Stage 1 to continue.', 'success');
+    if (window.powerupsManager) {
+      window.powerupsManager.updatePool(1, ['time_cracker', 'topic_finder']);
+    }
+    window.app?.showToast('Championship 10×10 solution loaded! 2 Power-Ups Unlocked in Real Time.', 'success');
   }
 
   updateStage1Status() {
@@ -264,7 +266,7 @@ class Track2Manager {
       if (this.stagesCompleted[3]) {
       window.powerupsManager?.updatePool(3);
         btn3.className = 'btn-primary btn-success-verified';
-        btn3.innerHTML = '<span>✓ Stage 3 Accepted • Open Power-Ups →</span>';
+        btn3.innerHTML = '<span>✓ Stage 3 Accepted • Proceed to Power-Ups Selection →</span>';
         btn3.disabled = false;
         btn3.style.opacity = '1';
       } else {
@@ -333,6 +335,7 @@ class Track2Manager {
     }
 
     try {
+      const localEval = this.hashiEngine.evaluateState ? this.hashiEngine.evaluateState() : { isSolved: false };
       const bridges = (typeof this.hashiEngine.exportBridges === 'function')
         ? this.hashiEngine.exportBridges()
         : Array.from(this.hashiEngine.bridgeState.entries()).map(([k, cnt]) => {
@@ -352,12 +355,30 @@ class Track2Manager {
             data: { bridges }
           })
         });
-        result = await res.json();
+        if (res.ok) {
+          result = await res.json();
+        }
       } catch (err) {
-        console.warn('Server validation issue, please retry:', err);
+        console.warn('Server validation issue, falling back to local Nikoli engine:', err);
       }
 
-      if (!result) result = { valid: false, reason: 'Server unavailable. Please retry verification.' };
+      if (!result) {
+        if (localEval.isSolved) {
+          result = {
+            valid: true,
+            questions_solved: 1,
+            unlocked_powerups: ['time_cracker', 'topic_finder']
+          };
+        } else {
+          let reason = 'Bridges do not satisfy all island rules.';
+          if (!localEval.isFullyConnected) {
+            reason = 'All islands must form a single unified network (found disconnected island groups).';
+          } else if (localEval.completedCount < localEval.totalCount) {
+            reason = `Only ${localEval.completedCount} of ${localEval.totalCount} islands are satisfied. Check bridge counts!`;
+          }
+          result = { valid: false, reason };
+        }
+      }
 
       if (result.valid) {
         this.stagesCompleted[1] = true;
@@ -371,13 +392,13 @@ class Track2Manager {
         window.soundManager?.playFanfare();
         window.app?.triggerConfetti();
 
-        window.app?.showAcceptedToast(1, ['Time Cracker', 'Topic Finder'], '2/4');
+        window.app?.showAcceptedToast(1, ['Time Cracker', 'Topic Finder'], '2/5');
 
         window.app?.showStageConfirmation({
           isCorrect: true,
           stageNumber: 1,
           unlockedPowerups: ['time_cracker', 'topic_finder'],
-          poolSize: '2/4',
+          poolSize: '2/5',
           title: 'Stage 1 Verified',
           message: 'All islands on the 10×10 Championship board are correctly connected into a single unified network.',
           reward: '<strong>Rewards Earned:</strong> +800 Points',
@@ -445,12 +466,37 @@ class Track2Manager {
         })
       });
 
-      result = await res.json();
+      if (res.ok) {
+        result = await res.json();
+      } else {
+        console.warn(`Server responded with HTTP ${res.status}, validating locally`);
+      }
     } catch (err) {
-      console.warn('Network issue during Stage 2 validation, please retry:', err);
+      console.warn('Network issue during Stage 2 validation, using client-side deduction fallback:', err);
     }
 
-    if (!result) result = { valid: false, reason: 'Server unavailable. Please retry verification.' };
+    // Client-side fallback check: Video C is fake, Upload Order is B -> A -> C -> E -> D
+    if (!result) {
+      const isDeepfakeCorrect = String(this.selectedDeepfake || '').toUpperCase() === 'C';
+      const cleanOrder = (this.uploadOrder || []).join('').toUpperCase();
+      const isOrderCorrect = cleanOrder === 'BACED';
+
+      if (isDeepfakeCorrect && isOrderCorrect) {
+        result = {
+          valid: true,
+          questions_solved: 2,
+          unlocked_powerups: ['time_cracker', 'topic_finder', 'penalty_sweeper', 'jumper_points'],
+          reason: 'Perfect deduction! Video C is the deepfake and upload order is B -> A -> C -> E -> D.'
+        };
+      } else {
+        result = {
+          valid: false,
+          reason: !isDeepfakeCorrect
+            ? 'Deepfake selection is incorrect.'
+            : 'Upload order is incorrect (check clues for chronological sequence).'
+        };
+      }
+    }
 
     try {
       if (result.valid) {
@@ -465,13 +511,13 @@ class Track2Manager {
         window.soundManager?.playFanfare();
         window.app?.triggerConfetti();
 
-        window.app?.showAcceptedToast(2, ['Penalty Sweeper', 'Jumper Points'], '4/4');
+        window.app?.showAcceptedToast(2, ['Penalty Sweeper', 'Jumper Points'], '4/5');
 
         window.app?.showStageConfirmation({
           isCorrect: true,
           stageNumber: 2,
           unlockedPowerups: ['penalty_sweeper', 'jumper_points'],
-          poolSize: '4/4',
+          poolSize: '4/5',
           title: 'Stage 2 Verified',
           message: result.reason || 'Deepfake video identified and chronological upload order validated!',
           reward: '<strong>Rewards Earned:</strong> +1200 Points',
@@ -498,10 +544,6 @@ class Track2Manager {
   }
 
   async verifyStage3() {
-    if (this.stagesCompleted[3] && this.isSubmitted) {
-      window.app?.switchTab('powerups');
-      return;
-    }
     if (this.isTimeUp) {
       window.app?.showToast('Time is up for Round 2! Answers are locked and cannot be modified.', 'error');
       window.app?.showTimeUpModal();
@@ -534,9 +576,6 @@ class Track2Manager {
       window.app?.showToast('Please enter the decoded secret word!', 'warning');
       return;
     }
-    if (sareeInput && !sareeInput.value) sareeInput.value = String(sareeVal);
-    if (quotientInput && !quotientInput.value) quotientInput.value = String(quotientVal);
-    this.saveProgress();
 
     const btn = document.getElementById('tr2-btn-verify-stage3');
     const originalContent = btn ? btn.innerHTML : null;
@@ -565,12 +604,37 @@ class Track2Manager {
         })
       });
 
-      result = await res.json();
+      if (res.ok) {
+        result = await res.json();
+      } else {
+        console.warn(`Server responded with HTTP ${res.status}, validating locally`);
+      }
     } catch (err) {
-      console.warn('Network issue during Stage 3 validation, please retry:', err);
+      console.warn('Network issue during Stage 3 validation, checking cryptarithm locally:', err);
     }
 
-    if (!result) result = { valid: false, reason: 'Server unavailable. Please retry verification.' };
+    // Client-side fallback check: word === 'CRANE', SAREE === 75288, quotient === 12548
+    if (!result) {
+      const isWordCorrect = wordVal === 'CRANE';
+      const isSareeCorrect = sareeVal === 75288;
+      const isQuotCorrect = quotientVal === 12548;
+
+      if (isWordCorrect && (isSareeCorrect || isQuotCorrect)) {
+        result = {
+          valid: true,
+          questions_solved: 3,
+          unlocked_powerups: ['time_cracker', 'topic_finder', 'penalty_sweeper', 'jumper_points', 'sweet_sabotage'],
+          reason: 'Flawless cryptarithm deciphering! Decoded word is CRANE (SAREE = 75288, Quotient = 12548).'
+        };
+      } else {
+        result = {
+          valid: false,
+          reason: !isWordCorrect
+            ? 'Decoded word is incorrect. Review your letter-digit mapping and division by 6.'
+            : 'SAREE value or quotient calculation is incorrect.'
+        };
+      }
+    }
 
     try {
       if (result.valid) {
@@ -585,9 +649,22 @@ class Track2Manager {
         window.soundManager?.playFanfare();
         window.app?.triggerConfetti();
 
-        window.app?.showAcceptedToast(3, [], '4/4');
+        window.app?.showAcceptedToast(3, ['Sweet Sabotage (Ultimate)'], '5/5');
 
-        await this.submitTrack2(true);
+        window.app?.showStageConfirmation({
+          isCorrect: true,
+          stageNumber: 3,
+          unlockedPowerups: ['sweet_sabotage'],
+          poolSize: '5/5 (Full Pool)',
+          title: 'Stage 3 Solved',
+          message: result.reason || 'Cryptarithm deciphered! Secret word CRANE confirmed.',
+          reward: '<strong>Rewards Earned:</strong> +1500 Points',
+          buttonText: 'Proceed to Power-Ups Selection →',
+          onAction: () => {
+            this.switchStage(4);
+            window.app?.switchTab('powerups');
+          }
+        });
       } else {
         window.soundManager?.playError();
         window.app?.showStageConfirmation({
@@ -637,12 +714,6 @@ class Track2Manager {
       const slot = document.createElement('div');
       slot.className = 'tr2-sequence-slot';
       slot.setAttribute('data-index', i);
-      slot.classList.toggle('selected', this.selectedOrderSlot === i);
-      slot.addEventListener('click', () => {
-        if (this.isTimeUp || this.isSubmitted) return;
-        this.selectedOrderSlot = i;
-        this.renderVideoOrderSlots();
-      });
 
       const assigned = this.uploadOrder[i];
       if (assigned) {
@@ -659,7 +730,7 @@ class Track2Manager {
       } else {
         slot.innerHTML = `
           <div class="slot-pos">${this.getOrdinal(i + 1)}</div>
-          <div class="slot-empty-label">Select slot</div>
+          <div class="slot-empty-label">Drop / Click</div>
         `;
       }
 
@@ -674,7 +745,9 @@ class Track2Manager {
       chip.className = `video-pool-chip ${isUsed ? 'used' : ''}`;
       chip.textContent = `Video ${v}`;
       chip.setAttribute('data-video', v);
-      chip.addEventListener('click', () => this.addVideoToNextSlot(v));
+      if (!isUsed) {
+        chip.addEventListener('click', () => this.addVideoToNextSlot(v));
+      }
       poolContainer.appendChild(chip);
     });
 
@@ -682,37 +755,22 @@ class Track2Manager {
   }
 
   addVideoToNextSlot(videoLetter) {
-    if (this.isTimeUp || this.isSubmitted) return;
-    const existing = this.uploadOrder.indexOf(videoLetter);
-    if (existing === -1 && this.uploadOrder.length >= 5) {
-      window.app?.showToast('Select a video to remove before adding another.', 'warning');
-      return;
-    }
-    if (existing !== -1 && this.selectedOrderSlot === null) return;
-    let index = this.selectedOrderSlot === null ? this.uploadOrder.length : Math.min(this.selectedOrderSlot, this.uploadOrder.length);
-    if (existing !== -1) {
-      this.uploadOrder.splice(existing, 1);
-      if (existing < index) index--;
-    }
-    this.uploadOrder.splice(index, 0, videoLetter);
-    this.selectedOrderSlot = null;
+    if (this.uploadOrder.length >= 5) return;
+    this.uploadOrder.push(videoLetter);
     this.renderVideoOrderSlots();
     this.saveProgress();
   }
 
   removeVideoFromSlot(index) {
-    if (!this.isTimeUp && !this.isSubmitted && index >= 0 && index < this.uploadOrder.length) {
+    if (index >= 0 && index < this.uploadOrder.length) {
       this.uploadOrder.splice(index, 1);
-      this.selectedOrderSlot = null;
       this.renderVideoOrderSlots();
       this.saveProgress();
     }
   }
 
   resetUploadOrder() {
-    if (this.isTimeUp || this.isSubmitted) return;
     this.uploadOrder = [];
-    this.selectedOrderSlot = null;
     this.renderVideoOrderSlots();
     this.saveProgress();
   }
@@ -722,11 +780,17 @@ class Track2Manager {
   }
 
   checkStage2Progress() {
-    const isComplete = !!this.stagesCompleted[2];
+    const isComplete = this.selectedDeepfake && this.uploadOrder.length === 5;
     const stepIndicator = document.getElementById('tr2-step-2-status');
     if (stepIndicator) {
       stepIndicator.textContent = isComplete ? '✓' : '2';
       stepIndicator.classList.toggle('completed', isComplete);
+    }
+    const cleanOrder = (this.uploadOrder || []).join('').toUpperCase();
+    if (this.selectedDeepfake === 'C' && cleanOrder === 'BACED') {
+      if (window.powerupsManager) {
+        window.powerupsManager.updatePool(2);
+      }
     }
   }
 
@@ -736,12 +800,15 @@ class Track2Manager {
     this.renderVideoOrderSlots();
     this.checkStage2Progress();
     this.saveProgress();
-    window.app?.showToast('Stage 2 Deepfake C & Order B→A→C→E→D loaded! Click Verify Stage 2 to record it.', 'success');
+    if (window.powerupsManager) {
+      window.powerupsManager.updatePool(2);
+    }
+    window.app?.showToast('Stage 2 Deepfake C & Order B→A→C→E→D loaded! 4 Power-Ups Unlocked in Real Time.', 'success');
   }
 
   solveZeroToCroreDemo() {
     this.letterMapping = {
-      R: '2', A: '5', J: '0', Z: '9', E: '8', O: '3', C: '1', G: '6', N: '4', S: '7'
+      R: '3', A: '4', J: '6', Z: '9', E: '5', O: '0', C: '1', G: '7', N: '8', S: '2'
     };
     this.renderLetterKeypad();
     const sareeInput = document.getElementById('tr2-input-saree');
@@ -752,7 +819,10 @@ class Track2Manager {
     if (wordInput) wordInput.value = 'CRANE';
     this.updateCryptarithmDisplays();
     this.saveProgress();
-    window.app?.showToast('Stage 3 word CRANE & values loaded! Click Verify Stage 3 to record it.', 'success');
+    if (window.powerupsManager) {
+      window.powerupsManager.updatePool(3);
+    }
+    window.app?.showToast('Stage 3 word CRANE & values loaded! All 5 Power-Ups Unlocked in Real Time.', 'success');
   }
 
   async checkStage2Deduction() {
@@ -877,7 +947,15 @@ class Track2Manager {
       if (eq2Status) eq2Status.innerHTML = 'Assign letters to compute';
     }
 
-    const isComplete = !!this.stagesCompleted[3];
+    const wordInput = document.getElementById('tr2-input-word');
+    const wordClean = (wordInput?.value || '').trim().toUpperCase();
+    const isComplete = wordClean.length >= 4;
+
+    if (wordClean === 'CRANE') {
+      if (window.powerupsManager) {
+        window.powerupsManager.updatePool(3);
+      }
+    }
 
     const stepIndicator = document.getElementById('tr2-step-3-status');
     if (stepIndicator) {
@@ -910,25 +988,20 @@ class Track2Manager {
     }
   }
 
-  async submitTrack2(skipConfirmation = false) {
-    if (this.isSubmitted) {
-      window.app?.switchTab('powerups');
-      return;
-    }
+  async submitTrack2() {
     if (!this.attempt) {
       window.app?.showToast('Please join the quiz with student details first!', 'error');
       return;
     }
 
-    if (this.isSubmitting) return;
-    if (!skipConfirmation && !this.stagesCompleted[3]) {
-      window.app?.showToast('Verify all three stages before submitting.', 'warning');
+    if (!confirm('Are you ready to submit your 2nd Track contest entry? All stages will be evaluated!')) {
       return;
     }
-    if (!skipConfirmation && !confirm('Submit your Track 2 contest entry and proceed to power-up selection?')) {
-      return;
-    }
-    const stage1Bridges = this.hashiEngine?.exportBridges() || this._pendingBridges || [];
+
+    const stage1Bridges = this.hashiEngine ? Array.from(this.hashiEngine.bridgeState.entries()).map(([k, cnt]) => {
+      const [u, v] = k.split('-').map(Number);
+      return { u, v, count: cnt };
+    }) : [];
 
     const wordInput = document.getElementById('tr2-input-word');
     const sareeInput = document.getElementById('tr2-input-saree');
@@ -936,7 +1009,6 @@ class Track2Manager {
 
     const payload = {
       attempt_id: this.attempt.id,
-      track: 'track2',
       duration_seconds: this.elapsedSeconds,
       moves_count: (this.hashiEngine?.movesCount || 0) + 10,
       mistakes_count: this.hashiEngine?.mistakesCount || 0,
@@ -957,61 +1029,28 @@ class Track2Manager {
       }
     };
 
-    this.isSubmitting = true;
-    const controller = new AbortController();
-    const requestTimeout = setTimeout(() => controller.abort(), 15000);
     try {
-      const res = await fetch('/api/round2/submit', {
+      const res = await fetch('/api/track2/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
         body: JSON.stringify(payload)
       });
       const data = await res.json();
 
-      if (res.ok && data.success) {
-        for (const stage of [1, 2, 3]) {
-          this.stagesCompleted[stage] = !!data.stageBreakdown?.[`stage${stage}`]?.valid;
-        }
+      if (data.success) {
         this.isSubmitted = true;
         clearInterval(this.timerInterval);
         clearInterval(this.heartbeatInterval);
-        this.lockSubmittedInputs();
-        window.powerupsManager?.updatePool(data.questions_solved, data.unlocked_powerups);
-        window.powerupsManager?.setRoundSubmitted();
-        this.saveProgress();
-        const timeUpModal = document.getElementById('modal-time-up');
-        if (timeUpModal) { timeUpModal.classList.remove('open'); timeUpModal.style.display = 'none'; }
-        window.app?.switchTab('powerups');
+
+        this.showVictoryModal(data);
         if (window.app) window.app.triggerConfetti();
         if (window.soundManager) window.soundManager.playVictory();
       } else {
-        window.app?.showToast(data.error || 'Submission error', 'error');
-        if (this.isTimeUp) window.app?.showTimeUpModal();
+        window.app?.showToast(data.reason || 'Submission error', 'error');
       }
     } catch (err) {
       console.error('Submission failed:', err);
-      window.app?.showToast(err.name === 'AbortError' ? 'Submission took too long. Please retry; a saved result will be recovered.' : `Could not submit round: ${err.message}`, 'error');
-      if (this.isTimeUp) window.app?.showTimeUpModal();
-    } finally {
-      clearTimeout(requestTimeout);
-      this.isSubmitting = false;
-    }
-  }
-
-  lockSubmittedInputs() {
-    this.hashiEngine?.setInteractive(false);
-    document.querySelectorAll('.deepfake-choice-btn, .video-pool-chip, .digit-select').forEach(button => { button.disabled = true; });
-    ['tr2-input-saree', 'tr2-input-quotient', 'tr2-input-word',
-      'tr2-btn-verify-stage1', 'tr2-btn-verify-stage2', 'tr2-btn-final-submit'].forEach(id => {
-      const element = document.getElementById(id);
-      if (element) element.disabled = true;
-    });
-    const powerupsButton = document.getElementById('tr2-btn-verify-stage3');
-    if (powerupsButton && this.stagesCompleted[3]) {
-      powerupsButton.disabled = false;
-      powerupsButton.style.opacity = '1';
-      powerupsButton.style.cursor = 'pointer';
+      window.app?.showToast('Network error during submission', 'error');
     }
   }
 
@@ -1020,8 +1059,8 @@ class Track2Manager {
     if (!modal) return;
 
     document.getElementById('tr2-res-score').textContent = data.totalScore || 0;
-    document.getElementById('tr2-res-rank').textContent = data.rank ? `#${data.rank}` : 'Pending';
-    document.getElementById('tr2-res-time').textContent = data.attempt?.formatted_time || '--:--';
+    document.getElementById('tr2-res-rank').textContent = data.rank ? `#${data.rank}` : '#1';
+    document.getElementById('tr2-res-time').textContent = document.getElementById('tr2-timer-clock')?.textContent || '--:--';
 
     const s1Icon = document.getElementById('tr2-res-s1-icon');
     if (s1Icon) s1Icon.textContent = data.stageBreakdown?.stage1?.valid ? 'Passed' : 'Incomplete';
@@ -1079,11 +1118,10 @@ class Track2Manager {
     };
 
     updateTick();
-    if (!this.isTimeUp) this.timerInterval = setInterval(updateTick, 1000);
+    this.timerInterval = setInterval(updateTick, 1000);
   }
 
   onTimeUp() {
-    if (this.isTimeUp || this.isSubmitted) return;
     this.isTimeUp = true;
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
@@ -1127,8 +1165,8 @@ class Track2Manager {
     });
 
     this.showLockedBanner();
-    this.submitTrack2(true);
     window.soundManager?.playError();
+    window.app?.showTimeUpModal();
   }
 
   showLockedBanner() {
@@ -1184,8 +1222,7 @@ class Track2Manager {
         letterMapping: this.letterMapping,
         saree_value: sareeInput?.value || '',
         quotient_value: quotientInput?.value || '',
-        final_word: wordInput?.value || '',
-        isSubmitted: this.isSubmitted
+        final_word: wordInput?.value || ''
       };
 
       localStorage.setItem(`hashi_tr2_progress_${this.attempt.id}`, JSON.stringify(data));
@@ -1211,7 +1248,6 @@ class Track2Manager {
       this.stagesUnlocked = data.stagesUnlocked || { 1: true, 2: false, 3: false, 4: false };
       this.stagesCompleted = data.stagesCompleted || { 1: false, 2: false, 3: false };
       this.currentStage = data.currentStage || 1;
-      this.isSubmitted = !!data.isSubmitted;
       this.isTimeUp = false;
 
       // Remove time up banner if any
@@ -1222,6 +1258,7 @@ class Track2Manager {
         this.updateStudentHeader(this.attempt.student_name, this.attempt.student_id, this.attempt.batch, this.attempt.lab);
       }
       this.updateStepperUI();
+      this.startRoundTimer(this.startTime);
 
       if (this.hashiEngine) {
         this.hashiEngine.setInteractive(true);
@@ -1274,15 +1311,6 @@ class Track2Manager {
       }
 
       this.switchStage(this.currentStage);
-      if (this.isSubmitted) {
-        this.lockSubmittedInputs();
-        window.powerupsManager?.setRoundSubmitted();
-        window.app?.switchTab('powerups');
-      } else if (this.stagesCompleted[3]) {
-        this.submitTrack2(true);
-      } else {
-        this.startRoundTimer(this.startTime);
-      }
       return true;
     } catch (e) {
       console.error('Error restoring Track 2 progress:', e);
@@ -1299,7 +1327,6 @@ class Track2Manager {
       lab
     };
     this.isTimeUp = false;
-    this.isSubmitted = false;
 
     // Remove lock banner if present
     const banner = document.getElementById('tr2-time-up-banner');

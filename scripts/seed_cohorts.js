@@ -9,10 +9,12 @@ const ALL_POWERUPS = [
   'time_cracker',
   'topic_finder',
   'penalty_sweeper',
-  'jumper_points'
+  'jumper_points',
+  'sweet_sabotage'
 ];
 
 function getUnlockedPowerups(solved) {
+  if (solved >= 3) return ALL_POWERUPS.slice();
   if (solved >= 2) return ALL_POWERUPS.slice(0, 4);
   if (solved >= 1) return ALL_POWERUPS.slice(0, 2);
   return [];
@@ -68,10 +70,16 @@ function seedCohortData() {
 
       // Power-up selections (pick 2 if unlocked >= 2)
       let selectedPowerups = [];
+      let sabotageTarget = null;
       let powerupsConfirmed = false;
 
-      if (unlocked.length >= 2 && finishTimestamp) {
-        selectedPowerups = [unlocked[0], unlocked[Math.min(unlocked.length - 1, 1 + (i % (unlocked.length - 1)))]];
+      if (unlocked.length >= 2) {
+        if (unlocked.includes('sweet_sabotage') && i % 3 === 0) {
+          selectedPowerups = ['sweet_sabotage', unlocked[i % (unlocked.length - 1)]];
+          sabotageTarget = `${labs[(i + 1) % labs.length]} - Seat ${(i * 3) % 30 + 1}`;
+        } else {
+          selectedPowerups = [unlocked[0], unlocked[Math.min(unlocked.length - 1, 1 + (i % (unlocked.length - 1)))]];
+        }
         powerupsConfirmed = true;
       }
 
@@ -97,6 +105,7 @@ function seedCohortData() {
         powerups_selected: selectedPowerups,
         powerups_confirmed: powerupsConfirmed,
         powerups_locked_at: powerupsConfirmed ? finishTimestamp : null,
+        sabotage_target: sabotageTarget,
         start_time: startTimestamp,
         finish_time: finishTimestamp,
         duration_seconds: durationSeconds,
@@ -142,10 +151,16 @@ function seedCohortData() {
       const finishTimestamp = (isCompleted || isPartial) ? new Date(new Date(startTimestamp).getTime() + durationSeconds * 1000).toISOString() : null;
 
       let selectedPowerups = [];
+      let sabotageTarget = null;
       let powerupsConfirmed = false;
 
-      if (unlocked.length >= 2 && finishTimestamp) {
-        selectedPowerups = [unlocked[0], unlocked[Math.min(unlocked.length - 1, 1 + (i % 3))]];
+      if (unlocked.length >= 2) {
+        if (unlocked.includes('sweet_sabotage') && i % 2 === 0) {
+          selectedPowerups = ['sweet_sabotage', 'jumper_points'];
+          sabotageTarget = `${labs[(i + 1) % labs.length]} - Seat ${(i * 4) % 30 + 1}`;
+        } else {
+          selectedPowerups = [unlocked[0], unlocked[Math.min(unlocked.length - 1, 1 + (i % 3))]];
+        }
         powerupsConfirmed = true;
       }
 
@@ -171,6 +186,7 @@ function seedCohortData() {
         powerups_selected: selectedPowerups,
         powerups_confirmed: powerupsConfirmed,
         powerups_locked_at: powerupsConfirmed ? finishTimestamp : null,
+        sabotage_target: sabotageTarget,
         start_time: startTimestamp,
         finish_time: finishTimestamp,
         duration_seconds: durationSeconds,

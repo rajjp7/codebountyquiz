@@ -59,7 +59,7 @@
       <button class="header-powerup-capsule btn-open-powerups" id="header-powerup-capsule" title="View Unlocked Power-Ups Pool">
         <span class="powerup-capsule-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
         <span class="powerup-capsule-label" id="header-capsule-text">Power-Ups:</span>
-        <span class="live-powerup-pool-count mono">0/4</span>
+        <span class="live-powerup-pool-count mono">0/5</span>
         <span class="header-capsule-badges" id="header-capsule-badges"></span>
       </button>
 
@@ -111,7 +111,7 @@
             <div class="timer-clock mono" id="tr1-timer-clock">30:00.0</div>
           </div>
           <div class="progress-capsule">
-            <span class="live-powerup-pool-count mono">0/4</span>
+            <span class="live-powerup-pool-count mono">0/5</span>
             <span class="live-solved-count mono">0/3</span>
           </div>
         </div>
@@ -143,7 +143,7 @@
               <span class="qps-bolt"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
               <span>Power-Up Pool: <strong class="live-powerup-pool-count" style="color: #facc15;">0/5</strong> Unlocked</span>
             </div>
-            <div class="qps-rule">Solve Q1 (+2) and Q2 (+2) to unlock all 4 choices for Round 3</div>
+            <div class="qps-rule">Solve Q1 (+2) • Q2 (+2) • Q3 (+1) to unlock all 5 for Round 3</div>
           </div>
           <div class="qps-chips-grid">
             <div class="qps-chip chip-locked" data-powerup="time_cracker">
@@ -440,14 +440,14 @@
                 <label style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-tertiary); display: block; margin-bottom: 0.35rem;">
                   Total Damage
                 </label>
-                <input type="number" id="tr1-input-damage" class="form-control mono" readonly>
+                <input type="number" id="tr1-input-damage" class="form-control mono">
               </div>
 
               <div>
                 <label style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-tertiary); display: block; margin-bottom: 0.35rem;">
                   Vault PIN
                 </label>
-                <input type="number" id="tr1-input-vault-pin" class="form-control mono" style="font-weight: 600;" readonly>
+                <input type="number" id="tr1-input-vault-pin" class="form-control mono" style="font-weight: 600;">
               </div>
             </div>
           </div>
@@ -538,7 +538,7 @@
                   <span>Test Solution</span>
                 </button>
                 <button type="button" class="btn-primary" id="tr1-btn-verify-stage3" style="padding: 0.65rem 1.25rem;" onclick="if(window.track1Manager){window.track1Manager.verifyStage3()}else{console.warn('Track 1 manager not ready')}">
-                  <span>Verify Final Stage →</span>
+                  <span>Verify & Unlock Final Power-Up →</span>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </button>
               </div>
@@ -562,7 +562,7 @@
           <div class="tr2-hero-header">
             <h2>All 3 Challenges Conquered</h2>
             <p>
-              You have completed all three FY challenges. Submit the round before choosing power-ups.
+              You have completed Hashi (10×10), The Pig Fortress Problem, and the 25 Officer Puzzle! All 5 power-ups are unlocked in your pool.
             </p>
           </div>
 
@@ -573,22 +573,22 @@
             </div>
             <div class="tr2-summary-card">
               <h4>Stage 2: The Pig Fortress Problem</h4>
-              <div class="val">Pig Roles, Damage, Vault PIN & Launch Order Verified (1300 pts)</div>
+              <div class="val">Vault PIN 1788 & Launch Order Verified (1200 pts)</div>
             </div>
             <div class="tr2-summary-card">
               <h4>Stage 3: The 25 Officer Puzzle</h4>
-              <div class="val">5×5 Graeco-Latin Square Solved (1000 pts)</div>
+              <div class="val">5×5 Graeco-Latin Square Solved (1500 pts)</div>
             </div>
 
             <div style="background: var(--bg-surface); border: 1px solid var(--border-hairline); border-radius: var(--radius-md); padding: 1.5rem; text-align: center; margin: 1.5rem 0;">
               <h3 style="font-size: 1.15rem; color: var(--text-primary); margin-bottom: 0.35rem;">
-                Power-Up Pool: All 4 Unlocked
+                Power-Up Pool: All 5 Unlocked
               </h3>
               <p style="font-size: 0.8125rem; color: var(--text-secondary); max-width: 440px; margin: 0 auto 1.25rem auto;">
-                Submit your round, then choose <b>2 power-ups</b> to carry into Round 3.
+                Proceed to the Power-Up selection page to choose your <b>2 power-ups</b> to carry into Round 3.
               </p>
-              <button class="btn-primary" id="tr1-btn-to-powerups" style="padding: 0.65rem 1.5rem;" onclick="window.track1Manager?.submitRound()">
-                <span>Submit Round & Choose 2 Power-Ups</span>
+              <button class="btn-primary" id="tr1-btn-to-powerups" style="padding: 0.65rem 1.5rem;" onclick="window.app?.switchTab('powerups')">
+                <span>Select 2 Power-Ups</span>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
               </button>
             </div>
@@ -649,7 +649,7 @@
               <span class="qps-bolt"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
               <span>Power-Up Pool: <strong class="live-powerup-pool-count" style="color: #facc15;">0/5</strong> Unlocked</span>
             </div>
-            <div class="qps-rule">Solve Q1 (+2) and Q2 (+2) to unlock all 4 choices for Round 3</div>
+            <div class="qps-rule">Solve Q1 (+2) • Q2 (+2) • Q3 (+1) to unlock all 5 for Round 3</div>
           </div>
           <div class="qps-chips-grid">
             <div class="qps-chip chip-locked" data-powerup="time_cracker">
@@ -953,7 +953,7 @@
               <!-- Available video chips pool -->
               <div style="margin-top: 0.75rem;">
                 <span style="font-size: 0.75rem; color: var(--text-tertiary); font-family: var(--font-mono); margin-right: 0.5rem;">
-                  Click a video to append, or select a slot first to insert or move it:
+                  Click to place next:
                 </span>
                 <span class="video-pool-row" id="tr2-video-pool" style="display: inline-flex;"></span>
               </div>
@@ -1128,7 +1128,7 @@
               </button>
             </div>
             <button class="btn-primary" id="tr2-btn-verify-stage3" onclick="if(window.track2Manager){window.track2Manager.verifyStage3()}else{console.warn('Track 2 manager not ready')}">
-              <span>Verify Final Stage →</span>
+              <span>Verify & Unlock Final Power-Up →</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </button>
           </div>
@@ -1164,11 +1164,15 @@
 
             <div style="background: var(--bg-surface); border: 1px solid var(--border-hairline); border-radius: var(--radius-md); padding: 1.5rem; text-align: center; margin: 1.5rem 0;">
               <h3 style="font-size: 1.15rem; color: var(--text-primary); margin-bottom: 0.35rem;">
-                Power-Up Pool: All 4 Unlocked
+                Power-Up Pool: All 5 Unlocked
               </h3>
               <p style="font-size: 0.8125rem; color: var(--text-secondary); max-width: 440px; margin: 0 auto 1.25rem auto;">
-                Submit your round, then choose <b>2 power-ups</b> to carry into Round 3.
+                Proceed to the Power-Up selection page to choose your <b>2 power-ups</b> to carry into Round 3.
               </p>
+              <button class="btn-primary" id="tr2-btn-to-powerups" style="padding: 0.65rem 1.5rem;" onclick="window.app?.switchTab('powerups')">
+                <span>Select 2 Power-Ups</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </button>
             </div>
 
             <div class="stage-actions-row" style="margin-top: 1.5rem;">
@@ -1199,7 +1203,7 @@
         <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
           <div class="powerup-status-capsule">
             <span>Pool Unlocked:</span>
-            <span class="live-powerup-pool-count mono" style="font-weight: 600;">0/4</span>
+            <span class="live-powerup-pool-count mono" style="font-weight: 600;">0/5</span>
           </div>
           <div class="powerup-status-capsule">
             <span>Selection:</span>
@@ -1219,8 +1223,8 @@
           <div class="pool-tier-desc">+ Penalty Sweeper & Jumper Points (Pool of 4)</div>
         </div>
         <div class="pool-tier-step highlight">
-          <div class="pool-tier-num">After the Round</div>
-          <div class="pool-tier-desc">Submit your entry, then choose 2 unlocked power-ups</div>
+          <div class="pool-tier-num">Stage 3 Solved</div>
+          <div class="pool-tier-desc">+ Sweet Sabotage (Full Pool of 5)</div>
         </div>
       </div>
 
@@ -1232,7 +1236,7 @@
         </p>
       </div>
 
-      <!-- Power-Up Cards Grid -->
+      <!-- 5 Power-Up Cards Grid -->
       <div id="powerups-selection-grid" class="powerups-selection-grid"></div>
 
       <!-- Action Footer -->
@@ -1490,12 +1494,13 @@
                 <th>Unlocked Power-Ups</th>
                 <th>Power-Up 1</th>
                 <th>Power-Up 2</th>
+                <th>Sabotage</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody id="admin-powerups-tbody">
               <tr>
-                <td colspan="10" style="text-align: center; color: var(--text-tertiary); padding: 1.5rem;">
+                <td colspan="11" style="text-align: center; color: var(--text-tertiary); padding: 1.5rem;">
                   Loading participant power-up selections...
                 </td>
               </tr>
@@ -1784,7 +1789,7 @@
       <div class="drawer-header">
         <div>
           <h3 style="font-size: 1.1rem; color: var(--text-primary); margin-bottom: 0.2rem;">Round 2 Power-Ups Pool</h3>
-          <span style="font-size: 0.75rem; color: var(--text-secondary);">Pool Size: <strong class="live-powerup-pool-count mono">0/4</strong></span>
+          <span style="font-size: 0.75rem; color: var(--text-secondary);">Pool Size: <strong class="live-powerup-pool-count mono">0/5</strong></span>
         </div>
         <button class="btn-icon" id="btn-close-powerups-modal" title="Close Drawer">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -1836,10 +1841,10 @@
       </p>
       <div style="background: var(--bg-surface-elevated); border: 1px solid var(--border-hairline); border-radius: var(--radius-sm); padding: 0.85rem 1rem; margin-bottom: 1.5rem; font-size: 0.8125rem; color: var(--text-primary); text-align: left;">
         <div><strong>Status:</strong> <span style="color: var(--rose-500, #ef4444); font-weight: 600;">Time's Up • Answers Permanently Locked</span></div>
-        <div style="margin-top: 0.35rem;"><strong>Next Step:</strong> Retry submitting your round to open the available power-ups.</div>
+        <div style="margin-top: 0.35rem;"><strong>Next Step:</strong> Open the Power-Ups page and select your 2 power-ups to carry into Round 3.</div>
       </div>
       <button class="btn-primary" id="btn-time-up-action" style="width: 100%; padding: 0.75rem 1.5rem; font-weight: 600;" onclick="window.app?.closeTimeUpModalAndGoPowerups()">
-        <span>Retry Submission →</span>
+        <span>Go to Power-Up Selection →</span>
       </button>
     </div>
   </div>

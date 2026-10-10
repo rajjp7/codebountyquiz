@@ -43,6 +43,16 @@ class PowerupsManager {
         iconSvg: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
         badge: '1.5x Multiplier',
         description: 'Multiplier power-up: The points for the selected question are multiplied by 1.5x.'
+      },
+      {
+        id: 'sweet_sabotage',
+        name: 'Sweet Sabotage',
+        tier: 3,
+        unlocked_at: 3,
+        tag: 'SABOTAGE',
+        iconSvg: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/></svg>',
+        badge: 'Debuff Target',
+        description: 'Use on any one participant sitting in your lab. That contestant\'s final team points are reduced by 10%!'
       }
     ];
 
@@ -84,7 +94,9 @@ class PowerupsManager {
     try {
       const curId = attemptId || this.attemptId || localStorage.getItem('hashi_tr1_latest_attempt_id') || localStorage.getItem('hashi_tr2_latest_attempt_id');
       let raw = curId ? localStorage.getItem(`hashi_powerups_state_${curId}`) : null;
-      if (!raw && !curId) raw = localStorage.getItem('hashi_powerups_state');
+      if (!raw) {
+        raw = localStorage.getItem('hashi_powerups_state');
+      }
       if (!raw) return false;
       const state = JSON.parse(raw);
       if (!state) return false;
@@ -166,7 +178,7 @@ class PowerupsManager {
     this.renderPowerupsUI();
 
     // Show rich unlock banner if new power-ups unlocked
-    if (this.questionsSolved > prevSolved && this.unlockedPool.length > (prevSolved >= 2 ? 4 : prevSolved >= 1 ? 2 : 0)) {
+    if (this.questionsSolved > prevSolved) {
       this.showUnlockBanner(this.questionsSolved);
     }
   }
@@ -181,6 +193,9 @@ class PowerupsManager {
     } else if (solvedCount === 2) {
       newPowerups = this.allPowerups.filter(p => ['penalty_sweeper', 'jumper_points'].includes(p.id));
       stageLabel = 'Stage 2 Complete';
+    } else {
+      newPowerups = this.allPowerups.filter(p => p.id === 'sweet_sabotage');
+      stageLabel = 'Stage 3 Complete – Full Pool Unlocked!';
     }
 
     // Remove any existing banner
@@ -194,7 +209,7 @@ class PowerupsManager {
       <div class="pub-header">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
         <span class="pub-label">Power-Ups Unlocked!</span>
-        <span class="pub-stage">${stageLabel} • ${this.unlockedPool.length}/4 Available</span>
+        <span class="pub-stage">${stageLabel} • ${this.unlockedPool.length}/5 Available</span>
       </div>
       <div class="pub-cards">
         ${newPowerups.map(p => `
@@ -208,7 +223,7 @@ class PowerupsManager {
         `).join('')}
       </div>
       <div class="pub-footer">
-        These power-ups are in your pool. Submit the round before choosing 2 for Round 3.
+        These power-ups are now available in your pool. Select 2 to carry into Round 3!
       </div>
     `;
     document.body.appendChild(banner);
@@ -229,7 +244,7 @@ class PowerupsManager {
   renderCapsuleBadges() {
     const poolSize = this.unlockedPool.length;
     document.querySelectorAll('.live-powerup-pool-count').forEach(el => {
-      el.textContent = `${poolSize}/4`;
+      el.textContent = `${poolSize}/5`;
     });
     document.querySelectorAll('.live-solved-count').forEach(el => {
       el.textContent = `${this.questionsSolved}/3`;
@@ -297,11 +312,11 @@ class PowerupsManager {
         chip.classList.add('chip-unlocked');
         chip.style.opacity = '1';
         chip.style.filter = 'none';
-        chip.style.borderColor = '#facc15';
+        chip.style.borderColor = (pId === 'sweet_sabotage') ? '#f43f5e' : '#facc15';
         if (badge) {
-          badge.textContent = '✓ UNLOCKED';
-          badge.style.background = 'rgba(16, 185, 129, 0.2)';
-          badge.style.color = '#10b981';
+          badge.textContent = (pId === 'sweet_sabotage') ? '★ UNLOCKED' : '✓ UNLOCKED';
+          badge.style.background = (pId === 'sweet_sabotage') ? 'rgba(244, 63, 94, 0.22)' : 'rgba(16, 185, 129, 0.2)';
+          badge.style.color = (pId === 'sweet_sabotage') ? '#f43f5e' : '#10b981';
         }
       } else {
         chip.classList.add('chip-locked');
@@ -310,7 +325,7 @@ class PowerupsManager {
         chip.style.filter = 'grayscale(0.5)';
         chip.style.borderColor = 'rgba(255, 255, 255, 0.08)';
         if (badge) {
-          const reqStage = ['penalty_sweeper', 'jumper_points'].includes(pId) ? 'Q2' : 'Q1';
+          const reqStage = (pId === 'sweet_sabotage') ? 'Q3' : (['penalty_sweeper', 'jumper_points'].includes(pId) ? 'Q2' : 'Q1');
           badge.textContent = `🔒 ${reqStage}`;
           badge.style.background = 'rgba(255, 255, 255, 0.08)';
           badge.style.color = 'var(--text-tertiary, #a1a1aa)';
@@ -344,7 +359,7 @@ class PowerupsManager {
 
       const s3 = document.getElementById(`${prefix}-stage3-powerup-status`);
       if (s3) {
-        if (this.questionsSolved >= 3) {
+        if (poolSize >= 5) {
           s3.className = 'live-stage-powerup-status lsp-unlocked';
           s3.innerHTML = `<span class="lsp-icon">${this.getIconSvg('sweet_sabotage')}</span><span><strong>All 5 Power-Ups Unlocked:</strong> Sweet Sabotage Ultimate Ready!</span>`;
         } else {
@@ -362,14 +377,8 @@ class PowerupsManager {
     const selectionGrid = document.getElementById('powerups-selection-grid');
     if (selectionGrid) {
       selectionGrid.innerHTML = '';
-      const visiblePowerups = this.roundSubmitted
-        ? this.allPowerups.filter(p => this.unlockedPool.includes(p.id))
-        : this.allPowerups;
-      if (this.roundSubmitted && visiblePowerups.length === 0) {
-        selectionGrid.innerHTML = '<p class="powerup-empty-state">No power-ups were unlocked in this round.</p>';
-      }
 
-      visiblePowerups.forEach(p => {
+      this.allPowerups.forEach(p => {
         const isUnlocked = this.unlockedPool.includes(p.id);
         const isSelected = this.selectedPowerups.has(p.id);
 
@@ -396,11 +405,7 @@ class PowerupsManager {
           </div>
         `;
 
-        if (isUnlocked && this.roundSubmitted && !this.isConfirmed) {
-          card.setAttribute('role', 'checkbox');
-          card.setAttribute('aria-checked', String(isSelected));
-          card.setAttribute('aria-label', p.name);
-          card.tabIndex = 0;
+        if (isUnlocked && !this.isConfirmed) {
           card.style.cursor = 'pointer';
           card.addEventListener('click', () => this.toggleSelection(p.id));
           card.addEventListener('keydown', event => {
@@ -513,7 +518,6 @@ class PowerupsManager {
     try {
       const res = await fetch('/api/round2/select-powerups', {
         method: 'POST',
-        signal: controller.signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           attempt_id: attemptId,
