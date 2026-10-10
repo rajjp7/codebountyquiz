@@ -43,6 +43,16 @@ class PowerupsManager {
         iconSvg: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
         badge: '1.5x Multiplier',
         description: 'Multiplier power-up: The points for the selected question are multiplied by 1.5x.'
+      },
+      {
+        id: 'sweet_sabotage',
+        name: 'Sweet Sabotage',
+        tier: 3,
+        unlocked_at: 3,
+        tag: 'SABOTAGE',
+        iconSvg: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/></svg>',
+        badge: 'Debuff Target',
+        description: 'Use on any one participant sitting in your lab. That contestant\'s final team points are reduced by 10%!'
       }
     ];
 
@@ -51,7 +61,6 @@ class PowerupsManager {
     this.selectedPowerups = new Set(); // Maximum 2
     this.isConfirmed = false;
     this.lockedAt = null;
-    this.roundSubmitted = false;
 
     this.init();
   }
@@ -70,8 +79,7 @@ class PowerupsManager {
         unlockedPool: this.unlockedPool,
         selectedPowerups: Array.from(this.selectedPowerups),
         isConfirmed: this.isConfirmed,
-        lockedAt: this.lockedAt,
-        roundSubmitted: this.roundSubmitted
+        lockedAt: this.lockedAt
       };
       if (this.attemptId) {
         localStorage.setItem(`hashi_powerups_state_${this.attemptId}`, JSON.stringify(state));
@@ -86,18 +94,22 @@ class PowerupsManager {
     try {
       const curId = attemptId || this.attemptId || localStorage.getItem('hashi_tr1_latest_attempt_id') || localStorage.getItem('hashi_tr2_latest_attempt_id');
       let raw = curId ? localStorage.getItem(`hashi_powerups_state_${curId}`) : null;
-      if (!raw && !curId) raw = localStorage.getItem('hashi_powerups_state');
+      if (!raw) {
+        raw = localStorage.getItem('hashi_powerups_state');
+      }
       if (!raw) return false;
       const state = JSON.parse(raw);
       if (!state) return false;
+      if (curId && state.attemptId !== curId) return false;
 
       this.attemptId = curId || state.attemptId || this.attemptId;
-      this.questionsSolved = state.questionsSolved || 0;
-      this.unlockedPool = Array.isArray(state.unlockedPool) ? state.unlockedPool.filter(id => this.allPowerups.some(p => p.id === id)) : [];
-      this.selectedPowerups = new Set(Array.isArray(state.selectedPowerups) ? state.selectedPowerups.filter(id => this.unlockedPool.includes(id)) : []);
-      this.isConfirmed = !!state.isConfirmed && this.selectedPowerups.size === 2;
+      this.questionsSolved = Math.min(3, Math.max(0, parseInt(state.questionsSolved, 10) || 0));
+      // Rebuild rewards from progress instead of restoring a stale four-item pool.
+      this.unlockedPool = this.getUnlockedPowerups(this.questionsSolved);
+      this.selectedPowerups = new Set(Array.isArray(state.selectedPowerups) ? state.selectedPowerups : []);
+      this.isConfirmed = !!state.isConfirmed;
       this.lockedAt = state.lockedAt || null;
-      this.roundSubmitted = !!state.roundSubmitted || !!state.isConfirmed;
+
       this.renderCapsuleBadges();
       this.renderPowerupsUI();
       return true;
@@ -114,7 +126,7 @@ class PowerupsManager {
     this.selectedPowerups = new Set();
     this.isConfirmed = false;
     this.lockedAt = null;
-    this.roundSubmitted = false;
+
     const confirmBtn = document.getElementById('btn-confirm-powerups');
     if (confirmBtn) {
       confirmBtn.disabled = false;
@@ -145,50 +157,28 @@ class PowerupsManager {
 
   }
 
-  setRoundSubmitted() {
-    this.roundSubmitted = true;
-    this.selectedPowerups = new Set([...this.selectedPowerups].filter(id => this.unlockedPool.includes(id)));
-    this.saveState();
-    this.renderPowerupsUI();
+  getIconSvg(powerupId) {
+    return this.allPowerups.find(p => p.id === powerupId)?.iconSvg || '';
   }
 
-  async refreshSubmissionStatus() {
-    const attemptId = window.app?.contestantProfile?.attempt_id;
-    if (!attemptId) return;
-    const selectionRevision = this.selectionRevision || 0;
-    try {
-      const response = await fetch(`/api/round2/attempt/${encodeURIComponent(attemptId)}/powerups`, { cache: 'no-store' });
-      const state = await response.json();
-      if (!response.ok) throw new Error(state.error || 'Could not load power-ups');
-      if (window.app?.contestantProfile?.attempt_id !== attemptId) return;
-      if (this.isConfirming || selectionRevision !== (this.selectionRevision || 0)) return;
-      this.attemptId = attemptId;
-      this.roundSubmitted = state.round_submitted;
-      this.isConfirmed = state.confirmed;
-      this.lockedAt = state.locked_at || null;
-      if (state.confirmed) this.selectedPowerups = new Set(state.selected_powerups);
-      this.updatePool(state.questions_solved, state.unlocked_powerups);
-    } catch (error) {
-      window.app?.showToast(`Could not refresh power-up availability: ${error.message}`, 'error');
-    }
+  getUnlockedPowerups(solvedCount) {
+    return this.allPowerups.filter(p => p.unlocked_at <= solvedCount).map(p => p.id);
   }
 
-  // Update pool when student solves questions
+  // Update pool when student solves questions: 2, then 2, then 1.
   updatePool(solvedCount, unlockedIds = null) {
     const prevSolved = this.questionsSolved;
-    this.questionsSolved = Math.max(0, Number(solvedCount) || 0);
-    const available = this.allPowerups.filter(p => p.unlocked_at <= this.questionsSolved).map(p => p.id);
-    this.unlockedPool = Array.isArray(unlockedIds)
-      ? available.filter(id => unlockedIds.includes(id))
-      : available;
+    const count = Math.min(3, Math.max(this.questionsSolved, parseInt(solvedCount, 10) || 0));
+    this.questionsSolved = count;
 
-    this.selectedPowerups = new Set([...this.selectedPowerups].filter(id => this.unlockedPool.includes(id)));
+    this.unlockedPool = this.getUnlockedPowerups(count);
+
     this.saveState();
     this.renderCapsuleBadges();
     this.renderPowerupsUI();
 
     // Show rich unlock banner if new power-ups unlocked
-    if (this.questionsSolved > prevSolved && this.unlockedPool.length > (prevSolved >= 2 ? 4 : prevSolved >= 1 ? 2 : 0)) {
+    if (this.questionsSolved > prevSolved) {
       this.showUnlockBanner(this.questionsSolved);
     }
   }
@@ -203,6 +193,9 @@ class PowerupsManager {
     } else if (solvedCount === 2) {
       newPowerups = this.allPowerups.filter(p => ['penalty_sweeper', 'jumper_points'].includes(p.id));
       stageLabel = 'Stage 2 Complete';
+    } else {
+      newPowerups = this.allPowerups.filter(p => p.id === 'sweet_sabotage');
+      stageLabel = 'Stage 3 Complete – Full Pool Unlocked!';
     }
 
     // Remove any existing banner
@@ -216,7 +209,7 @@ class PowerupsManager {
       <div class="pub-header">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
         <span class="pub-label">Power-Ups Unlocked!</span>
-        <span class="pub-stage">${stageLabel} • ${this.unlockedPool.length}/4 Available</span>
+        <span class="pub-stage">${stageLabel} • ${this.unlockedPool.length}/5 Available</span>
       </div>
       <div class="pub-cards">
         ${newPowerups.map(p => `
@@ -230,7 +223,7 @@ class PowerupsManager {
         `).join('')}
       </div>
       <div class="pub-footer">
-        These power-ups are in your pool. Submit the round before choosing 2 for Round 3.
+        These power-ups are now available in your pool. Select 2 to carry into Round 3!
       </div>
     `;
     document.body.appendChild(banner);
@@ -251,7 +244,7 @@ class PowerupsManager {
   renderCapsuleBadges() {
     const poolSize = this.unlockedPool.length;
     document.querySelectorAll('.live-powerup-pool-count').forEach(el => {
-      el.textContent = `${poolSize}/4`;
+      el.textContent = `${poolSize}/5`;
     });
     document.querySelectorAll('.live-solved-count').forEach(el => {
       el.textContent = `${this.questionsSolved}/3`;
@@ -275,7 +268,7 @@ class PowerupsManager {
       if (badgesContainer) {
         badgesContainer.innerHTML = this.unlockedPool.map(id => {
           const item = this.allPowerups.find(p => p.id === id);
-          return `<span class="header-capsule-chip" title="${item?.name || id}" style="margin-left: 3px; font-size: 0.85rem;">${id === 'time_cracker' ? '⚡' : id === 'topic_finder' ? '🔍' : id === 'penalty_sweeper' ? '🛡️' : id === 'jumper_points' ? '🚀' : '✨'}</span>`;
+          return `<span class="header-capsule-chip" title="${item?.name || id}" style="margin-left: 3px; font-size: 0.85rem;">${this.getIconSvg(id)}</span>`;
         }).join('');
       }
     }
@@ -292,13 +285,17 @@ class PowerupsManager {
         titleBox.appendChild(rtBadge);
       }
 
-      if (poolSize >= 4) {
+      if (poolSize >= 5) {
+        rtBadge.className = 'qps-realtime-badge qps-realtime-ultimate';
+        rtBadge.innerHTML = `${this.getIconSvg('sweet_sabotage')} 5/5 Full Pool: Sweet Sabotage Ready!`;
+        rtBadge.style.display = 'inline-flex';
+      } else if (poolSize >= 4) {
         rtBadge.className = 'qps-realtime-badge';
-        rtBadge.innerHTML = '✨ 4 Unlocked: +Penalty Sweeper 🛡️ + Jumper Points 🚀';
+        rtBadge.innerHTML = `✨ 4 Unlocked: +Penalty Sweeper ${this.getIconSvg('penalty_sweeper')} + Jumper Points ${this.getIconSvg('jumper_points')}`;
         rtBadge.style.display = 'inline-flex';
       } else if (poolSize >= 2) {
         rtBadge.className = 'qps-realtime-badge';
-        rtBadge.innerHTML = '✨ 2 Unlocked: Time Cracker ⚡ + Topic Finder 🔍';
+        rtBadge.innerHTML = `✨ 2 Unlocked: Time Cracker ${this.getIconSvg('time_cracker')} + Topic Finder ${this.getIconSvg('topic_finder')}`;
         rtBadge.style.display = 'inline-flex';
       } else {
         rtBadge.style.display = 'none';
@@ -315,11 +312,11 @@ class PowerupsManager {
         chip.classList.add('chip-unlocked');
         chip.style.opacity = '1';
         chip.style.filter = 'none';
-        chip.style.borderColor = '#facc15';
+        chip.style.borderColor = (pId === 'sweet_sabotage') ? '#f43f5e' : '#facc15';
         if (badge) {
-          badge.textContent = '✓ UNLOCKED';
-          badge.style.background = 'rgba(16, 185, 129, 0.2)';
-          badge.style.color = '#10b981';
+          badge.textContent = (pId === 'sweet_sabotage') ? '★ UNLOCKED' : '✓ UNLOCKED';
+          badge.style.background = (pId === 'sweet_sabotage') ? 'rgba(244, 63, 94, 0.22)' : 'rgba(16, 185, 129, 0.2)';
+          badge.style.color = (pId === 'sweet_sabotage') ? '#f43f5e' : '#10b981';
         }
       } else {
         chip.classList.add('chip-locked');
@@ -328,7 +325,7 @@ class PowerupsManager {
         chip.style.filter = 'grayscale(0.5)';
         chip.style.borderColor = 'rgba(255, 255, 255, 0.08)';
         if (badge) {
-          const reqStage = ['penalty_sweeper', 'jumper_points'].includes(pId) ? 'Q2' : 'Q1';
+          const reqStage = (pId === 'sweet_sabotage') ? 'Q3' : (['penalty_sweeper', 'jumper_points'].includes(pId) ? 'Q2' : 'Q1');
           badge.textContent = `🔒 ${reqStage}`;
           badge.style.background = 'rgba(255, 255, 255, 0.08)';
           badge.style.color = 'var(--text-tertiary, #a1a1aa)';
@@ -342,10 +339,10 @@ class PowerupsManager {
       if (s1) {
         if (poolSize >= 2) {
           s1.className = 'live-stage-powerup-status lsp-unlocked';
-          s1.innerHTML = '<span class="lsp-icon">✅</span><span><strong>2 Power-Ups Unlocked in Real-Time:</strong> Time Cracker ⚡ + Topic Finder 🔍</span>';
+          s1.innerHTML = `<span class="lsp-icon">✅</span><span><strong>2 Power-Ups Unlocked in Real-Time:</strong> Time Cracker ${this.getIconSvg('time_cracker')} + Topic Finder ${this.getIconSvg('topic_finder')}</span>`;
         } else {
           s1.className = 'live-stage-powerup-status';
-          s1.innerHTML = '<span class="lsp-icon">⚡</span><span><strong>Reward on Solve:</strong> 2 Power-Ups Unlock into your Round 3 Pool (Time Cracker & Topic Finder)</span>';
+          s1.innerHTML = `<span class="lsp-icon">${this.getIconSvg('time_cracker')}</span><span><strong>Reward on Solve:</strong> 2 Power-Ups Unlock into your Round 3 Pool (Time Cracker & Topic Finder)</span>`;
         }
       }
 
@@ -353,21 +350,21 @@ class PowerupsManager {
       if (s2) {
         if (poolSize >= 4) {
           s2.className = 'live-stage-powerup-status lsp-unlocked';
-          s2.innerHTML = '<span class="lsp-icon">✅</span><span><strong>4 Power-Ups Unlocked:</strong> Penalty Sweeper 🛡️ + Jumper Points 🚀 (4/4 in Pool)</span>';
+          s2.innerHTML = `<span class="lsp-icon">✅</span><span><strong>4 Power-Ups Unlocked:</strong> Penalty Sweeper ${this.getIconSvg('penalty_sweeper')} + Jumper Points ${this.getIconSvg('jumper_points')} (4/5 in Pool)</span>`;
         } else {
           s2.className = 'live-stage-powerup-status';
-          s2.innerHTML = '<span class="lsp-icon">🛡️</span><span><strong>Reward on Solve:</strong> +2 Power-Ups Unlock (Penalty Sweeper & Jumper Points)</span>';
+          s2.innerHTML = `<span class="lsp-icon">${this.getIconSvg('penalty_sweeper')}</span><span><strong>Reward on Solve:</strong> +2 Power-Ups Unlock (Penalty Sweeper & Jumper Points)</span>`;
         }
       }
 
       const s3 = document.getElementById(`${prefix}-stage3-powerup-status`);
       if (s3) {
-        if (this.questionsSolved >= 3) {
+        if (poolSize >= 5) {
           s3.className = 'live-stage-powerup-status lsp-unlocked';
-          s3.innerHTML = '<span class="lsp-icon">✓</span><span><strong>Stage 3 Complete:</strong> Choose any 2 of your 4 unlocked power-ups after submitting.</span>';
+          s3.innerHTML = `<span class="lsp-icon">${this.getIconSvg('sweet_sabotage')}</span><span><strong>All 5 Power-Ups Unlocked:</strong> Sweet Sabotage Ultimate Ready!</span>`;
         } else {
           s3.className = 'live-stage-powerup-status';
-          s3.innerHTML = '<span class="lsp-icon">✓</span><span><strong>Final Step:</strong> Finish Stage 3, submit the round, then choose 2 power-ups.</span>';
+          s3.innerHTML = `<span class="lsp-icon">${this.getIconSvg('sweet_sabotage')}</span><span><strong>Reward on Solve:</strong> Final Ultimate Power-Up Unlocks: Sweet Sabotage (5/5 Pool)</span>`;
         }
       }
     });
@@ -380,20 +377,18 @@ class PowerupsManager {
     const selectionGrid = document.getElementById('powerups-selection-grid');
     if (selectionGrid) {
       selectionGrid.innerHTML = '';
-      const visiblePowerups = this.roundSubmitted
-        ? this.allPowerups.filter(p => this.unlockedPool.includes(p.id))
-        : this.allPowerups;
-      if (this.roundSubmitted && visiblePowerups.length === 0) {
-        selectionGrid.innerHTML = '<p class="powerup-empty-state">No power-ups were unlocked in this round.</p>';
-      }
 
-      visiblePowerups.forEach(p => {
+      this.allPowerups.forEach(p => {
         const isUnlocked = this.unlockedPool.includes(p.id);
         const isSelected = this.selectedPowerups.has(p.id);
 
         const card = document.createElement('div');
         card.className = `powerup-card ${isUnlocked ? 'unlocked' : 'locked'} ${isSelected ? 'selected' : ''}`;
         card.setAttribute('data-id', p.id);
+        card.setAttribute('role', 'button');
+        card.setAttribute('aria-pressed', String(isSelected));
+        card.setAttribute('aria-disabled', String(!isUnlocked || this.isConfirmed || !!this.isConfirming));
+        card.tabIndex = isUnlocked && !this.isConfirmed && !this.isConfirming ? 0 : -1;
 
         card.innerHTML = `
           <div class="powerup-header">
@@ -404,23 +399,20 @@ class PowerupsManager {
           <p class="powerup-desc">${p.description}</p>
           <div class="powerup-footer">
             ${isUnlocked
-              ? `<span class="powerup-status-label">${this.isConfirmed ? (isSelected ? '✓ Confirmed' : 'Not selected') : isSelected ? '✓ Selected — click to remove' : (this.roundSubmitted ? 'Select Power-Up' : 'Available after submission')}</span>`
+              ? `<span class="powerup-status-label">${isSelected ? (this.isConfirmed ? 'Confirmed' : '✓ Selected · Click to remove') : (this.isConfirmed ? 'Not selected' : 'Select Power-Up')}</span>`
               : `<span class="powerup-lock-label">Unlocks at Stage ${p.unlocked_at}</span>`
             }
           </div>
         `;
 
-        if (isUnlocked && this.roundSubmitted && !this.isConfirmed) {
-          card.setAttribute('role', 'checkbox');
-          card.setAttribute('aria-checked', String(isSelected));
-          card.setAttribute('aria-label', p.name);
-          card.tabIndex = 0;
+        if (isUnlocked && !this.isConfirmed) {
           card.style.cursor = 'pointer';
           card.addEventListener('click', () => this.toggleSelection(p.id));
           card.addEventListener('keydown', event => {
             if (event.key === 'Enter' || event.key === ' ') {
               event.preventDefault();
               this.toggleSelection(p.id);
+              selectionGrid.querySelector(`[data-id="${p.id}"]`)?.focus();
             }
           });
         }
@@ -455,7 +447,7 @@ class PowerupsManager {
   }
 
   toggleSelection(powerupId) {
-    if (this.isConfirmed || this.isConfirming || !this.roundSubmitted || !this.unlockedPool.includes(powerupId)) return;
+    if (this.isConfirmed || this.isConfirming || !this.unlockedPool.includes(powerupId)) return;
 
     if (this.selectedPowerups.has(powerupId)) {
       this.selectedPowerups.delete(powerupId);
@@ -486,9 +478,9 @@ class PowerupsManager {
     }
 
     if (btnConfirm) {
-      btnConfirm.disabled = (count !== required || required !== 2 || this.isConfirmed || this.isConfirming || !this.roundSubmitted);
-      btnConfirm.textContent = this.isConfirmed ? 'Power-Ups Confirmed' : this.isConfirming ? 'Saving Choices…' : 'Confirm Round 3 Power-Ups';
+      btnConfirm.disabled = (required === 0 || count !== required || this.isConfirmed || !!this.isConfirming);
     }
+
 
     // Confirmation locked banner
     const lockedBanner = document.getElementById('powerups-locked-banner');
@@ -499,15 +491,12 @@ class PowerupsManager {
 
   async confirmChoices() {
     if (this.isConfirmed || this.isConfirming) return;
-    if (!this.roundSubmitted) {
-      window.app?.showToast('Submit the round before confirming power-ups.', 'warning');
-      return;
-    }
     const required = Math.min(2, this.unlockedPool.length);
-    if (required !== 2 || this.selectedPowerups.size !== 2) {
+    if (required === 0 || this.selectedPowerups.size !== required) {
       window.app?.showToast(`Please choose exactly ${required} power-ups!`, 'warning');
       return;
     }
+
 
     const choiceNames = Array.from(this.selectedPowerups)
       .map(id => this.allPowerups.find(p => p.id === id)?.name || id)
@@ -518,32 +507,26 @@ class PowerupsManager {
     }
 
     // Send to server
-    const attemptId = window.app?.contestantProfile?.attempt_id;
+    const attemptId = this.attemptId;
     if (!attemptId) {
-      window.app?.showToast('Please sign in to save your power-ups.', 'warning');
+      window.app?.showToast('Please reopen your quiz attempt before confirming power-ups.', 'error');
       return;
     }
-    const selected = Array.from(this.selectedPowerups);
-    this.selectionRevision = (this.selectionRevision || 0) + 1;
     this.isConfirming = true;
     this.updateSelectionSummary();
-    const controller = new AbortController();
-    const requestTimeout = setTimeout(() => controller.abort(), 15000);
 
     try {
       const res = await fetch('/api/round2/select-powerups', {
         method: 'POST',
-        signal: controller.signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           attempt_id: attemptId,
-          selected_powerups: selected
+          selected_powerups: Array.from(this.selectedPowerups)
         })
       });
       const data = await res.json();
 
-      if (res.ok && data.success) {
-        this.selectedPowerups = new Set(data.powerups_selected || selected);
+      if (res.ok && (data.success || data.locked)) {
         this.isConfirmed = true;
         this.lockedAt = data.locked_at || new Date().toISOString();
         this.saveState();
@@ -558,9 +541,8 @@ class PowerupsManager {
       }
     } catch (err) {
       console.error(err);
-      window.app?.showToast('Could not save power-up choices. Please retry.', 'error');
+      window.app?.showToast('Could not save your choices. Please try confirming again.', 'error');
     } finally {
-      clearTimeout(requestTimeout);
       this.isConfirming = false;
       this.renderPowerupsUI();
     }

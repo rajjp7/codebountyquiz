@@ -23,14 +23,6 @@ class SoundManager {
   }
 
   // Tactile click on island selection
-  playPlace() {
-    this.playIslandSelect();
-  }
-
-  playFanfare() {
-    this.playVictory();
-  }
-
   playIslandSelect() {
     if (this.muted) return;
     this.init();
@@ -126,6 +118,15 @@ class SoundManager {
 
     osc.start(now);
     osc.stop(now + 0.1);
+  }
+
+  // Celebration audio must never interrupt stage completion or reward updates.
+  playFanfare() {
+    try {
+      this.playVictory();
+    } catch (err) {
+      console.warn('Completion audio unavailable:', err);
+    }
   }
 
   // Elegant warm completion chord

@@ -102,10 +102,12 @@ class AdminControls {
           time_cracker: 'Time Cracker',
           topic_finder: 'Topic Finder',
           penalty_sweeper: 'Penalty Sweeper',
-          jumper_points: 'Jumper Points'
+          jumper_points: 'Jumper Points',
+          sweet_sabotage: 'Sweet Sabotage'
         };
         const label = icons[id] || id;
-        return `<span class="pill-batch" style="font-size: 0.68rem; margin: 2px; display: inline-block;">${label}</span>`;
+        const isSabotage = id === 'sweet_sabotage';
+        return `<span class="pill-batch" style="font-size: 0.68rem; margin: 2px; display: inline-block; ${isSabotage ? 'background: rgba(239, 68, 68, 0.15); color: var(--rose-500); border-color: rgba(239, 68, 68, 0.3);' : ''}">${label}</span>`;
       }).join('');
     };
 
@@ -132,13 +134,18 @@ class AdminControls {
           <strong class="mono" style="color: var(--text-primary); font-size: 0.95rem;">${item.questions_solved}</strong>/3
         </td>
         <td style="text-align: center;">
-          <span class="mono" style="color: var(--text-secondary); font-weight: 600;">${item.pool_size}</span>/4
+          <span class="mono" style="color: var(--text-secondary); font-weight: 600;">${item.pool_size}</span>/5
         </td>
         <td style="max-width: 200px;">
           ${formatUnlockedPills(item.unlocked_powerups)}
         </td>
         <td>${formatPowerup(item.powerup_1)}</td>
         <td>${formatPowerup(item.powerup_2)}</td>
+        <td>
+          <span class="mono" style="font-size: 0.72rem; color: ${item.sabotage_target && item.sabotage_target !== '-' ? 'var(--rose-500)' : 'var(--text-tertiary)'};">
+            ${item.sabotage_target || '-'}
+          </span>
+        </td>
         <td>
           ${item.powerups_confirmed
             ? `<span style="color: var(--text-primary); font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;"><span class="status-dot-sm"></span>Confirmed</span>`
