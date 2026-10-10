@@ -15,10 +15,19 @@ if (process.env.NODE_ENV !== 'test') app.use(morgan('dev'));
 app.use(express.static(path.join(__dirname, 'dist')));
 
 // Paths
-const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
+const DATA_DIR = process.env.DATA_DIR || (process.env.VERCEL ? path.join('/tmp', 'codebountyquiz-data') : path.join(__dirname, 'data'));
 const PUZZLES_FILE = path.join(DATA_DIR, 'puzzles.json');
 const ROOM_FILE = path.join(DATA_DIR, 'room_config.json');
 const DATASET_FILE = path.join(DATA_DIR, 'dataset.json');
+
+if (process.env.VERCEL) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+  for (const name of ['puzzles.json', 'room_config.json', 'dataset.json']) {
+    const source = path.join(__dirname, 'data', name);
+    const target = path.join(DATA_DIR, name);
+    if (fs.existsSync(source) && !fs.existsSync(target)) fs.copyFileSync(source, target);
+  }
+}
 
 // Helpers for reading/writing data
 function readJSON(file, fallback = []) {

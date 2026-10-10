@@ -775,5 +775,57 @@
     "pool_size": 0,
     "current_stage": 1,
     "revision": 1
+  },
+  {
+    "id": "att_r2_2d9bf03c-f39c-4483-941c-c00fe91e2275",
+    "session_hash": "bd3c817f80fbc60d6d278dae03ad6f911194acc3ef0059268b8c8930ac05d1df",
+    "validation_version": 2,
+    "track": "track2",
+    "student_id": "CST-71481E9D",
+    "student_name": "Browser Retry",
+    "college": "Browser Test",
+    "lab": "Lab 2",
+    "batch": "Cohort 1",
+    "puzzle_id": "puzzle-10x10-pro",
+    "puzzle_name": "Track 2: All Other Years (Harder)",
+    "difficulty": "Expert",
+    "status": "IN_PROGRESS",
+    "time_limit_seconds": 1800,
+    "start_time": "2026-10-10T08:14:24.336Z",
+    "finish_time": null,
+    "duration_seconds": null,
+    "formatted_time": "--:--",
+    "stages": {
+      "stage1": {
+        "status": "PENDING",
+        "valid": false,
+        "score": 0
+      },
+      "stage2": {
+        "status": "LOCKED",
+        "valid": false,
+        "score": 0
+      },
+      "stage3": {
+        "status": "LOCKED",
+        "valid": false,
+        "score": 0
+      }
+    },
+    "answers": {},
+    "powerups_selected": [],
+    "powerups_confirmed": false,
+    "powerups_locked_at": null,
+    "sabotage_target": null,
+    "moves_count": 0,
+    "mistakes_count": 0,
+    "undos_count": 0,
+    "tab_switches": 0,
+    "questions_solved": 0,
+    "score": 0,
+    "unlocked_powerups": [],
+    "pool_size": 0,
+    "current_stage": 1,
+    "revision": 1
   }
 ]
