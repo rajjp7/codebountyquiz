@@ -815,6 +815,38 @@ app.post('/api/round2/validate-stage', (req, res) => {
           stage3: { status: 'LOCKED' }
         };
 
+        // ── Sequential gate: stage N requires stage N-1 to be COMPLETED ──
+        if (stageNum === 2) {
+          const prev = att.stages.stage1;
+          if (!prev || (prev.status !== 'COMPLETED' && prev.valid !== true)) {
+            return res.json({
+              stage: stageNum,
+              track: targetTrack,
+              valid: false,
+              reason: 'Stage 1 must be completed before attempting Stage 2.',
+              questions_solved: att.questions_solved || 0,
+              pool_size: att.pool_size || 0,
+              unlocked_powerups: att.unlocked_powerups || [],
+              next_stage_unlocked: false
+            });
+          }
+        }
+        if (stageNum === 3) {
+          const prev = att.stages.stage2;
+          if (!prev || (prev.status !== 'COMPLETED' && prev.valid !== true)) {
+            return res.json({
+              stage: stageNum,
+              track: targetTrack,
+              valid: false,
+              reason: 'Stage 2 must be completed before attempting Stage 3.',
+              questions_solved: att.questions_solved || 0,
+              pool_size: att.pool_size || 0,
+              unlocked_powerups: att.unlocked_powerups || [],
+              next_stage_unlocked: false
+            });
+          }
+        }
+
         if (result.valid) {
           att.stages[`stage${stageNum}`] = {
             status: 'COMPLETED',
