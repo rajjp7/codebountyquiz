@@ -477,9 +477,61 @@
     "puzzle_id": "puzzle-fy-10x10",
     "puzzle_name": "Track 1: FY Track (First Years)",
     "difficulty": "Classic",
-    "status": "IN_PROGRESS",
+    "status": "EXPIRED",
     "time_limit_seconds": 1800,
     "start_time": "2026-10-10T07:35:15.432Z",
+    "finish_time": "2026-10-10T08:05:30.986Z",
+    "duration_seconds": 1800,
+    "formatted_time": "30:00.0",
+    "stages": {
+      "stage1": {
+        "status": "PENDING",
+        "valid": false,
+        "score": 0
+      },
+      "stage2": {
+        "status": "LOCKED",
+        "valid": false,
+        "score": 0
+      },
+      "stage3": {
+        "status": "LOCKED",
+        "valid": false,
+        "score": 0
+      }
+    },
+    "answers": {},
+    "powerups_selected": [],
+    "powerups_confirmed": false,
+    "powerups_locked_at": null,
+    "sabotage_target": null,
+    "moves_count": 0,
+    "mistakes_count": 0,
+    "undos_count": 0,
+    "tab_switches": 0,
+    "questions_solved": 0,
+    "score": 0,
+    "unlocked_powerups": [],
+    "pool_size": 0,
+    "current_stage": 1,
+    "revision": 1
+  },
+  {
+    "id": "att_r2_86f6e49a-10b0-421a-8ae8-cf25db116c89",
+    "session_hash": "31b1e9a72cb8f80acbd713b0381a722cf931f4d8add2857d1efb0e860c3dfde1",
+    "validation_version": 2,
+    "track": "track1",
+    "student_id": "CST-9E7EA1D1",
+    "student_name": "sdf",
+    "college": "fasd",
+    "lab": "Lab 1",
+    "batch": "Cohort 1",
+    "puzzle_id": "puzzle-fy-10x10",
+    "puzzle_name": "Track 1: FY Track (First Years)",
+    "difficulty": "Classic",
+    "status": "IN_PROGRESS",
+    "time_limit_seconds": 1800,
+    "start_time": "2026-10-10T08:08:04.579Z",
     "finish_time": null,
     "duration_seconds": null,
     "formatted_time": "--:--",
@@ -513,6 +565,215 @@
     "score": 0,
     "unlocked_powerups": [],
     "pool_size": 0,
-    "current_stage": 1
+    "current_stage": 1,
+    "revision": 1
+  },
+  {
+    "id": "att_r2_87338981-95f8-4880-b6ef-037152147983",
+    "session_hash": "b94429969f3a6d16944477f3164219452f5e922a5c00bf3d3bea15744ee1830e",
+    "validation_version": 2,
+    "track": "track1",
+    "student_id": "CST-62F0E834",
+    "student_name": "sdf",
+    "college": "fasd",
+    "lab": "Lab 1",
+    "batch": "Cohort 1",
+    "puzzle_id": "puzzle-fy-10x10",
+    "puzzle_name": "Track 1: FY Track (First Years)",
+    "difficulty": "Classic",
+    "status": "IN_PROGRESS",
+    "time_limit_seconds": 1800,
+    "start_time": "2026-10-10T08:08:51.097Z",
+    "finish_time": null,
+    "duration_seconds": null,
+    "formatted_time": "--:--",
+    "stages": {
+      "stage1": {
+        "status": "PENDING",
+        "valid": false,
+        "score": 0
+      },
+      "stage2": {
+        "status": "LOCKED",
+        "valid": false,
+        "score": 0
+      },
+      "stage3": {
+        "status": "LOCKED",
+        "valid": false,
+        "score": 0
+      }
+    },
+    "answers": {},
+    "powerups_selected": [],
+    "powerups_confirmed": false,
+    "powerups_locked_at": null,
+    "sabotage_target": null,
+    "moves_count": 0,
+    "mistakes_count": 0,
+    "undos_count": 0,
+    "tab_switches": 0,
+    "questions_solved": 0,
+    "score": 0,
+    "unlocked_powerups": [],
+    "pool_size": 0,
+    "current_stage": 1,
+    "revision": 1
+  },
+  {
+    "id": "att_r2_8587a0fd-e5a7-4ac3-8946-e4424d26fe5e",
+    "session_hash": "e9d3cad96375d0ca971171242a1d4f9232f391e705a6926c97f279b1e18287ab",
+    "validation_version": 2,
+    "track": "track1",
+    "student_id": "CST-368E7B7B",
+    "student_name": "Test User",
+    "college": "Test College",
+    "lab": "Lab 1",
+    "batch": "Cohort 1",
+    "puzzle_id": "puzzle-fy-10x10",
+    "puzzle_name": "Track 1: FY Track (First Years)",
+    "difficulty": "Classic",
+    "status": "IN_PROGRESS",
+    "time_limit_seconds": 1800,
+    "start_time": "2026-10-10T08:10:19.415Z",
+    "finish_time": null,
+    "duration_seconds": null,
+    "formatted_time": "--:--",
+    "stages": {
+      "stage1": {
+        "status": "PENDING",
+        "valid": false,
+        "score": 0
+      },
+      "stage2": {
+        "status": "LOCKED",
+        "valid": false,
+        "score": 0
+      },
+      "stage3": {
+        "status": "LOCKED",
+        "valid": false,
+        "score": 0
+      }
+    },
+    "answers": {},
+    "powerups_selected": [],
+    "powerups_confirmed": false,
+    "powerups_locked_at": null,
+    "sabotage_target": null,
+    "moves_count": 0,
+    "mistakes_count": 0,
+    "undos_count": 0,
+    "tab_switches": 0,
+    "questions_solved": 0,
+    "score": 0,
+    "unlocked_powerups": [],
+    "pool_size": 0,
+    "current_stage": 1,
+    "revision": 1
+  },
+  {
+    "id": "att_r2_f91af992-f26b-4b7d-89b1-f343ad828d30",
+    "session_hash": "938bb7c847d6ad3d4ef968dcd84bf0b02bc339defd221045598a9727b0e35dbc",
+    "validation_version": 2,
+    "track": "track1",
+    "student_id": "CST-EF097C14",
+    "student_name": "sdf",
+    "college": "fasd",
+    "lab": "Lab 1",
+    "batch": "Cohort 1",
+    "puzzle_id": "puzzle-fy-10x10",
+    "puzzle_name": "Track 1: FY Track (First Years)",
+    "difficulty": "Classic",
+    "status": "IN_PROGRESS",
+    "time_limit_seconds": 1800,
+    "start_time": "2026-10-10T08:10:30.753Z",
+    "finish_time": null,
+    "duration_seconds": null,
+    "formatted_time": "--:--",
+    "stages": {
+      "stage1": {
+        "status": "PENDING",
+        "valid": false,
+        "score": 0
+      },
+      "stage2": {
+        "status": "LOCKED",
+        "valid": false,
+        "score": 0
+      },
+      "stage3": {
+        "status": "LOCKED",
+        "valid": false,
+        "score": 0
+      }
+    },
+    "answers": {},
+    "powerups_selected": [],
+    "powerups_confirmed": false,
+    "powerups_locked_at": null,
+    "sabotage_target": null,
+    "moves_count": 0,
+    "mistakes_count": 0,
+    "undos_count": 0,
+    "tab_switches": 0,
+    "questions_solved": 0,
+    "score": 0,
+    "unlocked_powerups": [],
+    "pool_size": 0,
+    "current_stage": 1,
+    "revision": 1
+  },
+  {
+    "id": "att_r2_dbb41cf0-74b9-44e0-8b2e-5e9f1e2de7f9",
+    "session_hash": "afc48fb69401485c8a4311de5ef11e2ddae082c3ba2c5fef57c8dc343d5345af",
+    "validation_version": 2,
+    "track": "track1",
+    "student_id": "CST-5859F2F6",
+    "student_name": "adsf",
+    "college": "adfa",
+    "lab": "Lab 1",
+    "batch": "Cohort 1",
+    "puzzle_id": "puzzle-fy-10x10",
+    "puzzle_name": "Track 1: FY Track (First Years)",
+    "difficulty": "Classic",
+    "status": "IN_PROGRESS",
+    "time_limit_seconds": 1800,
+    "start_time": "2026-10-10T08:10:58.141Z",
+    "finish_time": null,
+    "duration_seconds": null,
+    "formatted_time": "--:--",
+    "stages": {
+      "stage1": {
+        "status": "PENDING",
+        "valid": false,
+        "score": 0
+      },
+      "stage2": {
+        "status": "LOCKED",
+        "valid": false,
+        "score": 0
+      },
+      "stage3": {
+        "status": "LOCKED",
+        "valid": false,
+        "score": 0
+      }
+    },
+    "answers": {},
+    "powerups_selected": [],
+    "powerups_confirmed": false,
+    "powerups_locked_at": null,
+    "sabotage_target": null,
+    "moves_count": 0,
+    "mistakes_count": 0,
+    "undos_count": 0,
+    "tab_switches": 0,
+    "questions_solved": 0,
+    "score": 0,
+    "unlocked_powerups": [],
+    "pool_size": 0,
+    "current_stage": 1,
+    "revision": 1
   }
 ]

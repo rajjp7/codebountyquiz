@@ -127,11 +127,10 @@ test('Admin routes require server authentication, settings do not reveal passwor
 test('Persistence errors cannot return accepted or unlocked progress', async () => {
   const session = await start();
   const file = path.join(temp, 'dataset.json'), saved = fs.readFileSync(file);
-  // Force the atomic write target to fail while keeping reads valid.
-  const target = `${file}.${process.pid}.tmp`;
-  fs.mkdirSync(target);
+  const writeFileSync = fs.writeFileSync;
+  fs.writeFileSync = (...args) => { if (String(args[0]).startsWith(`${file}.`)) throw new Error('simulated persistence failure'); return writeFileSync(...args); };
   try { const result = await validate(session, 1, solution('track1')); assert.equal(result.status, 500); assert.equal(result.data.valid, false); assert.equal(result.data.attempt, undefined); }
-  finally { fs.rmdirSync(target); }
+  finally { fs.writeFileSync = writeFileSync; }
   assert.deepEqual(fs.readFileSync(file), saved);
   assert.equal((await getAttempt(session)).data.attempt.questions_solved, 0);
 });

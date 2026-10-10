@@ -2,6 +2,7 @@ const { validateHashiSolution, validatePigFortressSolution, validateOfficersSolu
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
+const crypto = require('node:crypto');
 const path = require('path');
 const fs = require('fs');
 
@@ -32,12 +33,13 @@ function readJSON(file, fallback = []) {
 }
 
 function writeJSON(file, data) {
+  const temporary = `${file}.${process.pid}.${crypto.randomUUID()}.tmp`;
   try {
-    const temporary = `${file}.${process.pid}.tmp`;
     fs.writeFileSync(temporary, JSON.stringify(data, null, 2), 'utf8');
     fs.renameSync(temporary, file);
     return true;
   } catch (err) {
+    try { if (fs.existsSync(temporary)) fs.unlinkSync(temporary); } catch (cleanupError) { console.error(`Error cleaning up ${temporary}:`, cleanupError); }
     console.error(`Error writing ${file}:`, err);
     throw err;
   }
