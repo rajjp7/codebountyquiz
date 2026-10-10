@@ -64,3 +64,12 @@ test('Alphametic enforces ten distinct digits, no leading zeros, both sums, and 
   reject(v.validateZeroToCroreSolution({ ...crore, quotient_value: 1 }));
   reject(v.validateZeroToCroreSolution({ ...crore, final_word: 'WRONG' }));
 });
+test('Deepfake requires five separate video choices, not concatenated or nested tokens', () => {
+  for (const upload_order of [['BACED'], ['BA', 'C', 'E', 'D'], [['B'], 'A', 'C', 'E', 'D'], ['B', 'A', 'C', 'E', 'D', '']]) reject(v.validateDeepfakeSolution({ ...deepfake, upload_order }));
+  reject(v.validateDeepfakeSolution({ ...deepfake, deepfake: ['C'] }));
+});
+test('Answer schemas reject coercible arrays and extra mapping letters', () => {
+  reject(v.validatePigFortressSolution({ ...pig, pigs: { ...pig.pigs, King: ['HONEST'] } }));
+  reject(v.validateZeroToCroreSolution({ ...crore, final_word: ['CRANE'] }));
+  reject(v.validateZeroToCroreSolution({ ...crore, mapping: { ...crore.mapping, X: 0 } }));
+});

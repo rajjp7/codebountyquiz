@@ -50,8 +50,9 @@ module.exports = function installRound2(app, deps) {
 
   // Contestants cannot bypass validation by editing room settings or the dataset.
   app.use('/api', (req, res, next) => {
-    const protectedRoute = req.path.startsWith('/dataset') || req.path.startsWith('/leaderboard') ||
-      (req.path.startsWith('/admin/') && req.path !== '/admin/login') || (req.path === '/room' && req.method !== 'GET');
+    const routePath = req.path.toLowerCase().replace(/\/+$/, '');
+    const protectedRoute = routePath.startsWith('/dataset') || routePath.startsWith('/leaderboard') ||
+      (routePath.startsWith('/admin/') && routePath !== '/admin/login') || (routePath === '/room' && req.method !== 'GET');
     if (protectedRoute && (adminSessions.get(digest(tokenFrom(req))) || 0) < Date.now()) {
       return res.status(401).json({ error: 'Administrator authentication required' });
     }

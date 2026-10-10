@@ -1,4 +1,7 @@
 // Server-only validators. Never accept client completion flags or partial solutions.
+const isRecord = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+const cleanText = value => typeof value === 'string' ? value.trim() : '';
+
 function strictInteger(value) {
   if (typeof value === 'number') return Number.isSafeInteger(value) ? value : NaN;
   return typeof value === 'string' && /^\d+$/.test(value.trim()) ? Number(value.trim()) : NaN;
@@ -6,7 +9,7 @@ function strictInteger(value) {
 
 function validateHashiSolution(puzzle, bridges) {
   // puzzle: { islands: [{ id, r, c, number }] }
-  // bridges: array of { u, v, count } or map
+  // bridges: array of { u, v, count }
   if (!puzzle || !Array.isArray(puzzle.islands) || !puzzle.islands.length || !Array.isArray(bridges)) return { valid: false, score: 0, reason: 'Invalid puzzle or bridge data' };
   const islands = puzzle.islands;
   const islandMap = new Map();
@@ -136,21 +139,21 @@ function validateHashiSolution(puzzle, bridges) {
 
 
 function validatePigFortressSolution(answer) {
-  if (!answer) return { valid: false, reason: 'No answer provided for Pig Fortress problem', score: 0 };
+  if (!isRecord(answer)) return { valid: false, reason: 'No answer provided for Pig Fortress problem', score: 0 };
 
   const pigs = answer.pigs || {};
-  const isMinionCorrect = String(pigs.Minion || '').trim().toUpperCase() === 'HONEST';
-  const isCorporalCorrect = String(pigs.Corporal || '').trim().toUpperCase() === 'LIAR';
-  const isForemanCorrect = String(pigs.Foreman || '').trim().toUpperCase() === 'LIAR';
-  const isKingCorrect = String(pigs.King || '').trim().toUpperCase() === 'HONEST';
-  const isHelmetCorrect = String(pigs.Helmet || '').trim().toUpperCase() === 'HONEST';
+  const isMinionCorrect = cleanText(pigs.Minion).toUpperCase() === 'HONEST';
+  const isCorporalCorrect = cleanText(pigs.Corporal).toUpperCase() === 'LIAR';
+  const isForemanCorrect = cleanText(pigs.Foreman).toUpperCase() === 'LIAR';
+  const isKingCorrect = cleanText(pigs.King).toUpperCase() === 'HONEST';
+  const isHelmetCorrect = cleanText(pigs.Helmet).toUpperCase() === 'HONEST';
   const pigsAllCorrect = isMinionCorrect && isCorporalCorrect && isForemanCorrect && isKingCorrect && isHelmetCorrect;
 
   let orderClean = [];
   if (Array.isArray(answer.launch_order)) {
-    orderClean = answer.launch_order.map(x => String(x).trim().toLowerCase());
+    orderClean = answer.launch_order.map(x => cleanText(x).toLowerCase());
   } else if (typeof answer.launch_order === 'string') {
-    orderClean = answer.launch_order.toLowerCase().split(/[,\s->]+/).filter(Boolean);
+    orderClean = answer.launch_order.toLowerCase().split(/(?:\s*(?:,|->|→)\s*|\s+)/).filter(Boolean);
   }
   const expectedOrder = ['red', 'chuck', 'matilda', 'bomb', 'hal'];
   const isOrderCorrect = orderClean.length === 5 && orderClean.every((b, i) => b === expectedOrder[i]);
@@ -185,9 +188,9 @@ function validatePigFortressSolution(answer) {
 
 
 function validateOfficersSolution(answer) {
-  if (!answer) return { valid: false, reason: 'No answer provided for 25 Officers puzzle', score: 0 };
+  if (!isRecord(answer)) return { valid: false, reason: 'No answer provided for 25 Officers puzzle', score: 0 };
 
-  // Check 2: 5x5 arrangement array
+  // Require the actual 5x5 arrangement; passcodes are not proof of a solution.
   const arrangement = answer.arrangement;
   if (Array.isArray(arrangement) && arrangement.length === 25) {
     const size = 5;
@@ -256,17 +259,17 @@ function validateOfficersSolution(answer) {
 
 
 function validateDeepfakeSolution(answer) {
-  if (!answer) return { valid: false, reason: 'No answer provided for Deepfake puzzle', score: 0 };
-  const deepfakeClean = String(answer.deepfake || '').trim().toUpperCase();
+  if (!isRecord(answer)) return { valid: false, reason: 'No answer provided for Deepfake puzzle', score: 0 };
+  const deepfakeClean = cleanText(answer.deepfake).toUpperCase();
   const isDeepfakeCorrect = deepfakeClean === 'C';
 
   let orderClean = [];
   if (Array.isArray(answer.upload_order)) {
-    orderClean = answer.upload_order.map(x => String(x).trim().toUpperCase());
+    orderClean = answer.upload_order.map(x => cleanText(x).toUpperCase());
   } else if (typeof answer.upload_order === 'string') {
     orderClean = answer.upload_order.trim().toUpperCase().split(/(?:\s*(?:,|->|→)\s*|\s+)/).filter(Boolean);
   }
-  const isOrderCorrect = orderClean.join('') === 'BACED';
+  const isOrderCorrect = orderClean.length === 5 && orderClean.every((video, index) => video === 'BACED'[index]);
 
   let score = 0;
   if (isDeepfakeCorrect) score += 500;
@@ -291,9 +294,9 @@ function validateDeepfakeSolution(answer) {
 
 
 function validateZeroToCroreSolution(answer) {
-  if (!answer) return { valid: false, reason: 'No answer provided for Zero to Crore puzzle', score: 0 };
+  if (!isRecord(answer)) return { valid: false, reason: 'No answer provided for Zero to Crore puzzle', score: 0 };
 
-  const finalWordClean = String(answer.final_word || '').trim().toUpperCase();
+  const finalWordClean = cleanText(answer.final_word).toUpperCase();
   const sareeVal = strictInteger(answer.saree_value);
   const quotVal = strictInteger(answer.quotient_value);
 
@@ -302,7 +305,7 @@ function validateZeroToCroreSolution(answer) {
     const letters = ['R', 'A', 'J', 'Z', 'E', 'O', 'C', 'G', 'N', 'S'];
     const m = Object.fromEntries(letters.map(letter => [letter, strictInteger(answer.mapping[letter])]));
     const digits = Object.values(m);
-    const digitsValid = digits.every(n => Number.isInteger(n) && n >= 0 && n <= 9) && new Set(digits).size === 10 && ['R', 'Z', 'C', 'G', 'S'].every(letter => m[letter] !== 0);
+    const digitsValid = Object.keys(answer.mapping).length === 10 && digits.every(n => Number.isInteger(n) && n >= 0 && n <= 9) && new Set(digits).size === 10 && ['R', 'Z', 'C', 'G', 'S'].every(letter => m[letter] !== 0);
     const raja = Number(m.R) * 1000 + Number(m.A) * 100 + Number(m.J) * 10 + Number(m.A);
     const zero = Number(m.Z) * 1000 + Number(m.E) * 100 + Number(m.R) * 10 + Number(m.O);
     const crore = Number(m.C) * 10000 + Number(m.R) * 1000 + Number(m.O) * 100 + Number(m.R) * 10 + Number(m.E);

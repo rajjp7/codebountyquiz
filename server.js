@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-app.use(morgan('dev'));
+if (process.env.NODE_ENV !== 'test') app.use(morgan('dev'));
 app.use(express.static(path.join(__dirname, 'dist')));
 
 // Paths
@@ -27,7 +27,7 @@ function readJSON(file, fallback = []) {
     return JSON.parse(content);
   } catch (err) {
     console.error(`Error reading ${file}:`, err);
-    return fallback;
+    throw err;
   }
 }
 
@@ -39,7 +39,7 @@ function writeJSON(file, data) {
     return true;
   } catch (err) {
     console.error(`Error writing ${file}:`, err);
-    return false;
+    throw err;
   }
 }
 

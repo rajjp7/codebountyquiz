@@ -1,145 +1,91 @@
-# Hashi Bridges • Cohort Quiz & Competition Platform
+# Hashi • Cohort Quiz Platform
 
-An interactive **Hashiwokakero (Bridges)** quiz platform built for classrooms and competitive coding batches, inspired by [puzzle-bridges.com](https://www.puzzle-bridges.com/). Designed specifically for **30-student cohorts (Batch A, Batch B, etc.)** to participate simultaneously, store telemetry into a persistent dataset, and track real-time timings and live leaderboards.
+A React application with an Express backend for the 30-minute Round 2 competition. Both tracks contain three sequential challenges:
 
----
+- **Track 1 / First Years:** Hashi, Pig Fortress, and 25 Officers.
+- **Track 2 / Other Years:** Hashi Hard, Deepfake, and Zero to Crore.
 
-## 🌟 Key Features
+## Run
 
-### 1. Faithful Bridges (Hashi) Game Mechanics
-- **Orthogonal Bridges**: Single (1 line) or Double (2 parallel lines) connections between islands.
-- **Crossing Prevention**: Strictly blocks illegal bridge crossings and provides instant visual and acoustic error feedback.
-- **Multiple Input Methods**:
-  - **Click & Drag**: Drag a line directly between two islands in line of sight.
-  - **Click-to-Click**: Click island A, then click island B to connect.
-  - **Direct Path Click**: Click anywhere on the corridor between two islands to cycle bridges (0 ➔ 1 ➔ 2 ➔ 0).
-  - **Right-Click**: Decrement or remove bridges.
-- **Auto Status & Degree Feedback**:
-  - Islands turn **Emerald Green** with a checkmark ring when their target bridge count is reached.
-  - Islands turn **Crimson Red** with a shake animation when overconnected.
-  - Remaining needed bridges are calculated in real time.
-- **Connectivity Validation**: BFS algorithm verifies that all islands form a single connected graph (no isolated networks).
-- **Undo / Redo / Reset**: Supports keyboard shortcuts (`Ctrl+Z`, `Ctrl+Y`).
-- **Web Audio FX**: Synthesizes custom interactive audio for island clicks, bridge connections, errors, and celebratory victory fanfares.
+Requires Node.js 18 or newer and npm.
 
-### 2. Multi-Track Championship: Track 1 & 2nd Track
-- **Track 1: Hashi Classic Circuit**: Single-puzzle speed challenge for cohort testing on pure Hashiwokakero boards.
-- **2nd Track: Codestars Tri-Challenge**: Tri-stage multi-disciplinary championship:
-  1. **Hashi 10*10 HARD**: Official size 52 specifications ([puzzle-bridges.com/?size=52](https://www.puzzle-bridges.com/?size=52)) with 18 islands and strict connectivity rules.
-  2. **WHO IS THE DEEPFAKE? (Codestars Non-Tech Brain Teaser)**:
-     - 5 short videos (A, B, C, D, E) with claim pairings.
-     - Deepfake contains 2 false claims; genuine videos contain exactly 1 false claim.
-     - Recovered evidence and AI fact-check analysis with warning of 1 incorrect conclusion.
-     - Interactive Deepfake selector + 5-video upload order timeline builder (`B -> A -> C -> E -> D`).
-  3. **ZERO TO CRORE (Alphametic Logic Puzzle)**:
-     - Cryptarithm: `RAJA + ZERO = CRORE` and `GANGA + ZERO = SAREE`.
-     - 10 distinct letters mapped to unique digits 0–9.
-     - Interactive digit keypad with live arithmetic balance verification.
-     - SAREE numerical value calculation (75288), division by 6 (12548), and final decoded English word (**CRANE**).
-     - 5 expandable strategic hints.
-
-### 3. 30-Student Cohort Quiz System
-- **Batch Management**: Pre-configured for **Batch A (30 students)**, **Batch B (30 students)**, and custom batches.
-- **Student Registration**: Students join by entering their Name, Student ID / Roll Number, and selecting their Batch.
-- **Live Stopwatch**: Millisecond-accurate precision stopwatch measuring total solve duration.
-- **Quiz Integrity Monitoring**: Automatically tracks window focus and tab switches (`visibilitychange`).
-- **Real-Time Telemetry**: Tracks moves count, mistake count, undo count, and island completion percentage.
-- **Server Verification**: Dual-layer verification (instant client feedback + strict server-side graph validation).
-
-### 3. Live Leaderboard & Podiums
-- **Top 3 Podium**: Animated Gold (🥇), Silver (🥈), and Bronze (🥉) podium cards with student avatars, solve times, and scores.
-- **Cohort Filter**: Toggle between Batch A (30 students), Batch B (30 students), and All Cohorts.
-- **Live Stream Mode**: 3-second auto-refresh polling with live indicator.
-- **Ranking Metrics**: Ranked by completion status first, fastest completion time second, and fewest mistakes third.
-
-### 4. Cohort Dataset & Analytics Center
-- **Key Metrics (KPIs)**:
-  - Total Enrolled Students
-  - Completion Rate (%)
-  - Average Solve Time (formatted `mm:ss.s`)
-  - Fastest Record Time
-- **Export Options**:
-  - **Export as CSV**: Generates a spreadsheet-compatible `.csv` file.
-  - **Export as JSON**: Generates complete `.json` dataset records.
-- **1-Click Cohort Seeding**: Built-in buttons to seed 30 sample students for Batch A and Batch B with realistic varied timings.
-- **Search & Filter**: Search students by name or roll number with real-time table updates.
-
-### 5. Teacher / Room Administration
-- **Contest Puzzle Selection**: Switch competition puzzle across presets:
-  - 7x7 Classic Warmup (8-10 islands)
-  - 7x7 Speed Challenge (10-12 islands)
-  - 9x9 Standard Tournament (14-16 islands)
-  - 10x10 Championship (18-20 islands)
-  - 12x12 Grand Master (24-26 islands)
-- **Time Limits**: Set 5-minute speed runs, 10-minute standard, or unlimited modes.
-
----
-
-## 🚀 Quick Start Guide
-
-### 1. Start the Server
 ```bash
+npm ci
 npm start
 ```
-The server will run at:
-**[http://localhost:3000](http://localhost:3000)**
 
-### 2. Re-seed 30-30 Student Cohorts (Optional)
-To populate 30 students in Batch A and 30 students in Batch B:
+`npm start` builds the React application and serves it at `http://localhost:3000`. Set `PORT` to change the port. For frontend development:
+
 ```bash
-npm run seed
+npm run dev
 ```
 
----
+The development command rebuilds React source changes automatically. Refresh the page after changes; restart the command after backend changes.
 
-## 📂 Project Structure
+For deployment, run `npm ci && npm run build`, then `node server.js`. The included Render configuration uses these commands. Serve the generated `dist/` folder through Express so the UI and API share an origin. Build dependencies must be installed during the build step.
 
+## Acceptance and round state
+
+The server is the authority for accepted answers, stage unlocks, scores, timer deadlines, and rewards. Browser storage keeps the session token and draft answers; stored client completion flags are never trusted.
+
+- **Hashi:** integer endpoints, one or two bridges per unique pair, no self-loops, orthogonal neighboring islands, no crossings, exact degrees, and one connected network.
+- **Pig Fortress:** every pig classification, all five launch positions, total damage, and the PIN must be correct together.
+- **25 Officers:** all 25 cells must contain allowed officers; colors and pieces must be unique in every row and column, and all 25 pairs must be distinct. A passcode alone is no longer accepted.
+- **Deepfake:** both the selected video and all five separate upload positions must be correct.
+- **Zero to Crore:** all ten letter assignments must use distinct digits, obey leading-digit rules, satisfy both equations, and match SAREE, the quotient, and the decoded word.
+
+Incorrect or incomplete stages award no score or power-ups. A stage can only be submitted after all earlier stages are accepted. Accepted answers are saved and locked. The final accepted stage completes the round automatically; finishing early records only already accepted stages. Expiration locks the round using server time. Duplicate requests cannot award a stage twice.
+
+Network errors never create an offline acceptance. If a response is lost after the server saved an answer, the client recovers the stored result from the attempt endpoint. A failed save returns an error before acceptance is displayed. Dataset writes use an atomic file replacement.
+
+The Hashi board supports click, tap, drag, keyboard island selection, bridge removal, guides, undo, redo, and clear. Drafts are restored after refresh. The officers board uses select-and-place controls, including selecting an occupied cell to move its officer.
+
+## Power-ups and administration
+
+Accepted challenges unlock 2, 4, and 5 power-ups respectively. After a round ends, select exactly two from the earned pool. Confirmation permanently locks the choices.
+
+Administrator views provide challenge previews, leaderboard, searchable dataset, power-up overview, room settings, and CSV/JSON/Excel exports. Polling refreshes reports every ten seconds. Authentication is enforced on the server, including exports and dataset mutations.
+
+Set `ADMIN_PASSWORD` for administrator access. Otherwise, the server uses `admin_password` in `data/room_config.json`, with `admin123` as the development fallback. Administrator sessions expire after eight hours or a server restart; contestant session tokens remain associated with their saved attempts. Passwords are excluded from public room configuration.
+
+Round 2 uses fixed track puzzles and a fixed 30-minute limit. Legacy default-room puzzle and time settings are retained for administration but do not override Round 2 rules.
+
+## Tests
+
+```bash
+npm test
+npm run build
 ```
-codebountyquiz/
-├── package.json               # Scripts and dependencies
-├── server.js                  # Express backend, graph validator, dataset & CSV APIs
-├── scripts/
-│   ├── generate_puzzles.js    # Procedural Hashi puzzle generator
-│   └── seed_cohorts.js        # 30-student cohort seeder utility
-├── data/
-│   ├── puzzles.json           # Curated competition puzzle bank
-│   ├── room_config.json       # Active room settings
-│   └── dataset.json           # Persistent student quiz attempts dataset
-└── public/
-    ├── index.html             # Single-page application container
-    ├── css/
-    │   ├── style.css          # Design system, dark/light theme, glassmorphism
-    │   └── animations.css     # Glowing pulses, conflicts, and victory confetti
-    └── js/
-        ├── audio.js           # Web Audio API sound synthesizers
-        ├── bridges-engine.js  # Interactive Hashi game engine & SVG renderer
-        ├── student-quiz.js    # Student quiz taker, stopwatch, submit workflow
-        ├── leaderboard.js     # Live leaderboard, podiums, auto-refresh
-        ├── dataset-view.js    # Dataset analytics table, CSV/JSON exporter
-        ├── admin-controls.js  # Teacher room controller
-        └── app.js             # Main navigation & toast manager
+
+Tests cover the actual server validators, authenticated API flows for both tracks, malformed and partial answers, sequence locks, deadline enforcement, replay prevention, persistence failures, React state transitions, and server-side rendering of components. They do not open a browser. API tests bind a temporary localhost port and use a separate temporary dataset; they never modify `data/dataset.json`.
+
+The old `scripts/test_*.js` and `scripts/verify_all_requirements.js` entry points now run the production validators or the current test suite instead of duplicating validation logic.
+
+## Structure
+
+```text
+src/
+  App.jsx                  Session, round navigation, timer, and request lifecycle
+  state.js                 Round reducer; drafts cannot grant acceptance
+  api.js                   API and browser-storage helpers
+  components/              React challenge, board, power-up, auth, and admin views
+server/
+  validation.cjs           Server-only strict challenge validators
+  round2.cjs               Authenticated round lifecycle and power-up selection
+server.js                  Express app, challenge configuration, reports, and exports
+public/                    HTML entry point and existing styles
+scripts/build.cjs          React production build
+scripts/dev.cjs            React watch build and development server
+tests/                     Validator, API, reducer, and render tests
+data/                      Persistent dataset, room settings, and puzzle bank
 ```
 
----
+`DATA_DIR` can point to an alternate directory containing `dataset.json`, `puzzles.json`, and `room_config.json`. The JSON datastore is intended for one server process; use a transactional database before running multiple writer processes or replicas.
 
-## 📊 Dataset Schema
+## Migration notes
 
-Each student attempt in `data/dataset.json` contains:
-| Field | Type | Description |
-|---|---|---|
-| `id` | String | Unique attempt identifier |
-| `batch` | String | Cohort name (e.g. `Batch A`, `Batch B`) |
-| `student_id` | String | Roll number / Student ID (e.g. `BATCHA-001`) |
-| `student_name` | String | Student's full name |
-| `puzzle_name` | String | Contest puzzle name (e.g. `7x7 Classic Warmup`) |
-| `status` | String | `COMPLETED`, `IN_PROGRESS`, or `FAILED` |
-| `duration_seconds` | Number | Exact time taken (e.g. `114.2`) |
-| `formatted_time` | String | Human readable time (`01:54.2`) |
-| `moves_count` | Number | Total bridge placement moves |
-| `mistakes_count` | Number | Degree overflows or illegal bridge attempts |
-| `undos_count` | Number | Number of undos performed |
-| `tab_switches` | Number | Focus loss / tab blurs for exam integrity |
-| `score` | Number | Calculated points based on speed and accuracy |
-| `start_time` | String | ISO timestamp of quiz start |
-| `finish_time` | String | ISO timestamp of final submission |
-| `bridges` | Array | Full submitted bridges configuration |
+The old DOM managers have been replaced with React components. Express remains the backend so validation and answer keys stay off the client. The browser bundle does not include puzzle solutions or server validators.
+
+New contestant sessions use `/api/round2/start`, `/api/round2/attempt/:id`, `/api/round2/validate-stage`, `/api/round2/submit`, and `/api/round2/select-powerups`, with a bearer token from the start response. Old `/api/student/*` mutations and `/api/track2/{start,validate-stage,submit}` return HTTP 410; they cannot bypass the new workflow. Final submission only finalizes stored accepted answers; clients must validate each stage first.
+
+Legacy browser sessions must start a new authenticated attempt. Existing dataset records remain available for reporting and are not retroactively regraded. The demo seeder (`npm run seed`) replaces sample data; use it only when intended.

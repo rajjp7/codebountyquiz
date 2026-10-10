@@ -5,6 +5,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { pig, officers, deepfake, crore, solution } = require('./fixtures.cjs');
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'hashi-react-test-'));
+process.env.NODE_ENV = 'test';
 process.env.DATA_DIR = temp;
 process.env.ADMIN_PASSWORD = 'test-admin-password';
 fs.copyFileSync(path.join(__dirname, '../data/puzzles.json'), path.join(temp, 'puzzles.json'));
@@ -112,13 +113,14 @@ test('Legacy APIs cannot bypass the authenticated workflow', async () => {
 });
 test('Admin routes require server authentication, settings do not reveal passwords, and exports work', async () => {
   const publicRoom = await request('/api/room'); assert.equal(publicRoom.data.admin_password, undefined);
-  for (const route of ['/api/dataset', '/api/admin/powerups', '/api/leaderboard', '/api/dataset/export/json', '/api/admin/export/excel']) assert.equal((await request(route)).status, 401);
+  for (const route of ['/api/dataset', '/api/admin/powerups', '/api/leaderboard', '/api/dataset/export/json', '/api/admin/export/excel', '/api/DATASET/', '/api/ADMIN/powerups/']) assert.equal((await request(route)).status, 401);
   assert.equal((await request('/api/room', { body: { status: 'active' } })).status, 401);
+  assert.equal((await request('/api/ROOM/', { body: { status: 'active' } })).status, 401);
   assert.equal((await request('/api/admin/login', { body: { password: 'wrong' } })).status, 401);
   const login = await request('/api/admin/login', { body: { password: process.env.ADMIN_PASSWORD } });
   const token = login.data.token; assert.ok(token);
   for (const route of ['/api/dataset', '/api/admin/powerups', '/api/leaderboard']) assert.equal((await request(route, { token })).status, 200);
-  for (const route of ['/api/dataset/export/json', '/api/dataset/export/csv', '/api/admin/export/excel']) assert.equal((await fetch(base + route, { headers: { Authorization: `Bearer ${token}` } })).status, 200);
+  for (const route of ['/api/dataset/export/json', '/api/dataset/export/csv', '/api/admin/export/excel', '/api/DATASET/', '/api/ADMIN/powerups/']) assert.equal((await fetch(base + route, { headers: { Authorization: `Bearer ${token}` } })).status, 200);
   assert.equal((await request('/api/admin/logout', { token, body: {} })).status, 200);
   assert.equal((await request('/api/dataset', { token })).status, 401);
 });
