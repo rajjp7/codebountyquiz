@@ -88,7 +88,6 @@ class App {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to start session');
 
-        const startTimeMs = data.start_time ? new Date(data.start_time).getTime() : Date.now();
         const profile = {
           role: 'contestant',
           name,
@@ -96,20 +95,16 @@ class App {
           lab,
           track,
           student_id: data.student_id,
-          attempt_id: data.attempt_id,
-          startTime: startTimeMs
+          attempt_id: data.attempt_id
         };
 
         localStorage.setItem('round2_auth', JSON.stringify(profile));
-        localStorage.setItem(`round2_start_time_${profile.attempt_id}`, String(startTimeMs));
-        localStorage.setItem('round2_start_time', String(startTimeMs));
         this.applyContestantSession(profile);
         this.showToast(`Welcome ${name}! Track locked to ${track === 'track1' ? 'FY Track' : 'Track 2'}.`, 'success');
       } catch (err) {
         console.warn('Network issue during round2 start, activating offline session:', err);
         const fallbackAttemptId = `att_offline_${Date.now()}`;
         const fallbackStudentId = `stu_offline_${Date.now()}`;
-        const startTimeMs = Date.now();
         const profile = {
           role: 'contestant',
           name,
@@ -117,12 +112,9 @@ class App {
           lab,
           track,
           student_id: fallbackStudentId,
-          attempt_id: fallbackAttemptId,
-          startTime: startTimeMs
+          attempt_id: fallbackAttemptId
         };
         localStorage.setItem('round2_auth', JSON.stringify(profile));
-        localStorage.setItem(`round2_start_time_${profile.attempt_id}`, String(startTimeMs));
-        localStorage.setItem('round2_start_time', String(startTimeMs));
         this.applyContestantSession(profile);
         this.showToast(`Welcome ${name}! Session active (Progress auto-saved in browser).`, 'info');
       }
@@ -263,19 +255,21 @@ class App {
         window.powerupsManager.restoreState(profile.attempt_id);
       }
 
-      const attemptStartTime = profile.startTime
-        || parseInt(localStorage.getItem(`round2_start_time_${profile.attempt_id}`) || localStorage.getItem('round2_start_time') || '0', 10)
-        || Date.now();
-
       if (profile.track === 'track1') {
         if (window.track1Manager) {
-          window.track1Manager.startOrResumeAttempt(profile.name, profile.student_id, profile.college, profile.lab, profile.attempt_id, attemptStartTime);
+          window.track1Manager.startOrResumeAttempt(profile.name, profile.student_id, profile.college, profile.lab, profile.attempt_id);
+          if (window.track2Manager?.resetForNewAttempt) {
+            window.track2Manager.resetForNewAttempt('', '', '', '', null);
+          }
         } else if (retries > 0) {
           setTimeout(() => initAttempt(retries - 1), 50);
         }
       } else {
         if (window.track2Manager) {
-          window.track2Manager.startOrResumeAttempt(profile.name, profile.student_id, profile.college, profile.lab, profile.attempt_id, attemptStartTime);
+          window.track2Manager.startOrResumeAttempt(profile.name, profile.student_id, profile.college, profile.lab, profile.attempt_id);
+          if (window.track1Manager?.resetForNewAttempt) {
+            window.track1Manager.resetForNewAttempt('', '', '', '', null);
+          }
         } else if (retries > 0) {
           setTimeout(() => initAttempt(retries - 1), 50);
         }
