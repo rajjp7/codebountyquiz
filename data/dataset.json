@@ -217,5 +217,188 @@
     "tab_switches": 0,
     "score": 0,
     "bridges": []
+  },
+  {
+    "id": "att_r2_1791604273893_x01t6",
+    "track": "track1",
+    "batch": "Cohort 1",
+    "lab": "Lab 1",
+    "college": "adsfa",
+    "student_id": "CST-211",
+    "student_name": "adsfa",
+    "puzzle_id": "puzzle-fy-10x10",
+    "puzzle_name": "FY Track Challenge",
+    "difficulty": "Classic",
+    "status": "IN_PROGRESS",
+    "time_limit_seconds": 1800,
+    "questions_solved": 3,
+    "pool_size": 5,
+    "unlocked_powerups": [
+      "time_cracker",
+      "topic_finder",
+      "penalty_sweeper",
+      "jumper_points",
+      "sweet_sabotage"
+    ],
+    "powerups_selected": [],
+    "powerups_confirmed": false,
+    "powerups_locked_at": null,
+    "sabotage_target": null,
+    "current_stage": 1,
+    "stages": {
+      "stage1": {
+        "status": "COMPLETED",
+        "valid": true,
+        "score": 500,
+        "completed_at": "2026-10-10T03:53:30.029Z"
+      },
+      "stage2": {
+        "status": "COMPLETED",
+        "valid": true,
+        "score": 1300,
+        "completed_at": "2026-10-10T03:54:09.167Z",
+        "reason": "Outstanding logic deduction! Pigs identified (3 Honest, 2 Liars), Launch Order: Red → Chuck → Matilda → Bomb → Hal, Total Damage: 298, Vault PIN: 1788."
+      },
+      "stage3": {
+        "status": "COMPLETED",
+        "valid": true,
+        "score": 1000,
+        "completed_at": "2026-10-10T03:54:16.754Z",
+        "reason": "25 Officer Puzzle verified! Secret passcode tuhaikon@codestars confirmed."
+      }
+    },
+    "start_time": "2026-10-10T03:51:13.893Z",
+    "finish_time": null,
+    "duration_seconds": null,
+    "formatted_time": "--:--",
+    "moves_count": 0,
+    "mistakes_count": 0,
+    "undos_count": 0,
+    "tab_switches": 0,
+    "score": 0,
+    "bridges": []
+  },
+  {
+    "id": "att_r2_1791604689666_bfbuf",
+    "track": "track1",
+    "batch": "Cohort 1",
+    "lab": "Lab 1",
+    "college": "adsfplm",
+    "student_id": "CST-353",
+    "student_name": "temp",
+    "puzzle_id": "puzzle-fy-10x10",
+    "puzzle_name": "FY Track Challenge",
+    "difficulty": "Classic",
+    "status": "IN_PROGRESS",
+    "time_limit_seconds": 1800,
+    "questions_solved": 3,
+    "pool_size": 5,
+    "unlocked_powerups": [
+      "time_cracker",
+      "topic_finder",
+      "penalty_sweeper",
+      "jumper_points",
+      "sweet_sabotage"
+    ],
+    "powerups_selected": [],
+    "powerups_confirmed": false,
+    "powerups_locked_at": null,
+    "sabotage_target": null,
+    "current_stage": 1,
+    "stages": {
+      "stage1": {
+        "status": "COMPLETED",
+        "valid": true,
+        "score": 500,
+        "completed_at": "2026-10-10T03:59:45.286Z"
+      },
+      "stage2": {
+        "status": "COMPLETED",
+        "valid": true,
+        "score": 1200,
+        "completed_at": "2026-10-10T04:00:06.452Z",
+        "reason": "Outstanding logic deduction! Pigs identified (3 Honest, 2 Liars), Launch Order: Red → Chuck → Matilda → Bomb → Hal, Total Damage: 298, Vault PIN: 1788."
+      },
+      "stage3": {
+        "status": "COMPLETED",
+        "valid": true,
+        "score": 1000,
+        "completed_at": "2026-10-10T04:00:15.353Z",
+        "reason": "25 Officer Puzzle verified! Secret passcode tuhaikon@codestars confirmed."
+      }
+    },
+    "start_time": "2026-10-10T03:58:09.666Z",
+    "finish_time": null,
+    "duration_seconds": null,
+    "formatted_time": "--:--",
+    "moves_count": 0,
+    "mistakes_count": 0,
+    "undos_count": 0,
+    "tab_switches": 0,
+    "score": 0,
+    "bridges": []
+  },
+  {
+    "id": "att_r2_1791605003788_gs6zl",
+    "track": "track1",
+    "batch": "Cohort 1",
+    "lab": "Lab 1",
+    "college": "asdflkj",
+    "student_id": "CST-945",
+    "student_name": "viraj",
+    "puzzle_id": "puzzle-fy-10x10",
+    "puzzle_name": "FY Track Challenge",
+    "difficulty": "Classic",
+    "status": "IN_PROGRESS",
+    "time_limit_seconds": 1800,
+    "questions_solved": 3,
+    "pool_size": 5,
+    "unlocked_powerups": [
+      "time_cracker",
+      "topic_finder",
+      "penalty_sweeper",
+      "jumper_points",
+      "sweet_sabotage"
+    ],
+    "powerups_selected": [
+      "sweet_sabotage",
+      "penalty_sweeper"
+    ],
+    "powerups_confirmed": true,
+    "powerups_locked_at": "2026-10-10T04:05:08.108Z",
+    "sabotage_target": null,
+    "current_stage": 1,
+    "stages": {
+      "stage1": {
+        "status": "COMPLETED",
+        "valid": true,
+        "score": 500,
+        "completed_at": "2026-10-10T04:04:15.581Z"
+      },
+      "stage2": {
+        "status": "COMPLETED",
+        "valid": true,
+        "score": 1200,
+        "completed_at": "2026-10-10T04:04:47.331Z",
+        "reason": "Outstanding logic deduction! Pigs identified (3 Honest, 2 Liars), Launch Order: Red → Chuck → Matilda → Bomb → Hal, Total Damage: 298, Vault PIN: 1788."
+      },
+      "stage3": {
+        "status": "COMPLETED",
+        "valid": true,
+        "score": 1000,
+        "completed_at": "2026-10-10T04:04:57.990Z",
+        "reason": "25 Officer Puzzle verified! Secret passcode tuhaikon@codestars confirmed."
+      }
+    },
+    "start_time": "2026-10-10T04:03:23.788Z",
+    "finish_time": null,
+    "duration_seconds": null,
+    "formatted_time": "--:--",
+    "moves_count": 0,
+    "mistakes_count": 0,
+    "undos_count": 0,
+    "tab_switches": 0,
+    "score": 0,
+    "bridges": []
   }
 ]
