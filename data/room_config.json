@@ -4,10 +4,13 @@
   "quiz_title": "Round 2: The Non-Tech Round",
   "admin_password": "admin123",
   "labs": [
-    "Lab 1 (Hall A)",
-    "Lab 2 (Ground Floor)",
-    "Lab 3 (First Floor)",
-    "Lab 4 (Second Floor)"
+    "DS Lab 1",
+    "DS Lab 2",
+    "DS Lab 3",
+    "DS Lab 4",
+    "AIML Lab 1",
+    "AIML Lab 2",
+    "47"
   ],
   "batches": [
     "Batch A",
