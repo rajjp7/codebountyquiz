@@ -322,6 +322,26 @@ class App {
     this.closeAuthModal();
     this.switchTab('admin');
     window.adminControls?.loadPowerupsData();
+
+    // 5. Unlock all stages for admin — admin can freely inspect any question
+    this._unlockAllStagesForAdmin();
+  }
+
+  _unlockAllStagesForAdmin() {
+    const allUnlocked = { 1: true, 2: true, 3: true, 4: true };
+    const allCompleted = { 1: false, 2: false, 3: false };
+
+    if (window.track1Manager) {
+      window.track1Manager.stagesUnlocked = { ...allUnlocked };
+      window.track1Manager.stagesCompleted = { ...allCompleted };
+      window.track1Manager.updateStepperUI?.();
+    }
+
+    if (window.track2Manager) {
+      window.track2Manager.stagesUnlocked = { ...allUnlocked };
+      window.track2Manager.stagesCompleted = { ...allCompleted };
+      window.track2Manager.updateStepperUI?.();
+    }
   }
 
   promptSwitchOrLogout() {
@@ -451,6 +471,9 @@ class App {
       window.powerupsManager.renderPowerupsUI();
     } else if (tabId === 'admin' && window.adminControls) {
       window.adminControls.loadPowerupsData();
+    } else if (tabId === 'quiz' && this.currentRole === 'admin') {
+      // Re-apply admin unlock every time admin visits the Quiz tab
+      this._unlockAllStagesForAdmin();
     }
   }
 
