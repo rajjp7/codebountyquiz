@@ -5,9 +5,7 @@
   "functions": {
     "api/[...path].js": {
       "runtime": "nodejs20.x",
-      "includeFiles": [
-        "data/*.json"
-      ]
+      "includeFiles": "data/*.json"
     }
   }
 }
