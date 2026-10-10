@@ -554,13 +554,6 @@ class Track2Manager {
       return;
     }
 
-    if (this.stagesCompleted[3]) {
-      window.powerupsManager?.updatePool(3);
-      this.switchStage(4);
-      window.app?.switchTab('powerups');
-      return;
-    }
-
     const wordInput = document.getElementById('tr2-input-word');
     const sareeInput = document.getElementById('tr2-input-saree');
     const quotientInput = document.getElementById('tr2-input-quotient');
@@ -570,17 +563,34 @@ class Track2Manager {
     const wordVal = String(wordInput?.value || '').trim().toUpperCase();
 
     if (!sareeRaw) {
+      this.stagesCompleted[3] = false;
+      this.stagesUnlocked[4] = false;
+      this.syncButtonStates();
       window.app?.showToast('Please enter the numerical value of SAREE (Field 1)!', 'warning');
       return;
     }
 
     if (!quotientRaw) {
+      this.stagesCompleted[3] = false;
+      this.stagesUnlocked[4] = false;
+      this.syncButtonStates();
       window.app?.showToast('Please enter the quotient (SAREE ÷ 6) (Field 2)!', 'warning');
       return;
     }
 
     if (!wordVal) {
+      this.stagesCompleted[3] = false;
+      this.stagesUnlocked[4] = false;
+      this.syncButtonStates();
       window.app?.showToast('Please enter the decoded secret word (Field 3)!', 'warning');
+      return;
+    }
+
+    // Only skip if already legitimately completed with all 3 correct answers
+    if (this.stagesCompleted[3] && sareeRaw === '75288' && quotientRaw === '12548' && wordVal === 'CRANE') {
+      window.powerupsManager?.updatePool(3);
+      this.switchStage(4);
+      window.app?.switchTab('powerups');
       return;
     }
 
@@ -1257,7 +1267,7 @@ class Track2Manager {
     }
   }
 
-  restoreProgress(attemptId) {
+  restoreProgress(attemptId, attemptStartTime = null) {
     if (!attemptId) return false;
     try {
       const key = `hashi_tr2_progress_${attemptId}`;
@@ -1268,9 +1278,28 @@ class Track2Manager {
       if (!data) return false;
 
       this.attempt = data.attempt || this.attempt;
-      this.startTime = data.startTime || Date.now();
+      const storedTime = attemptStartTime
+        || data.startTime
+        || parseInt(localStorage.getItem(`round2_start_time_${attemptId}`) || localStorage.getItem('round2_start_time') || '0', 10);
+      this.startTime = storedTime || Date.now();
+      localStorage.setItem(`round2_start_time_${attemptId}`, String(this.startTime));
+      localStorage.setItem('round2_start_time', String(this.startTime));
+
       this.stagesUnlocked = data.stagesUnlocked || { 1: true, 2: false, 3: false, 4: false };
       this.stagesCompleted = data.stagesCompleted || { 1: false, 2: false, 3: false };
+
+      // State integrity check: Stage 3 cannot be marked completed if fields are missing or wrong
+      const s3Saree = String(data.saree_value || '').trim();
+      const s3Quot = String(data.quotient_value || '').trim();
+      const s3Word = String(data.final_word || '').trim().toUpperCase();
+      if (this.stagesCompleted[3] && (s3Saree !== '75288' || s3Quot !== '12548' || s3Word !== 'CRANE')) {
+        this.stagesCompleted[3] = false;
+        this.stagesUnlocked[4] = false;
+      }
+      if (this.stagesCompleted[2] && (String(data.selectedDeepfake || '').toUpperCase() !== 'C' || (data.uploadOrder || []).join('').toUpperCase() !== 'BACED')) {
+        this.stagesCompleted[2] = false;
+        this.stagesUnlocked[3] = false;
+      }
       this.currentStage = data.currentStage || 1;
       this.isTimeUp = false;
 
@@ -1406,11 +1435,28 @@ class Track2Manager {
       }
     });
 
+  resetForNewAttempt(studentName, studentId, batch, lab, attemptId, attemptStartTime = null) {
+    if (!attemptId || !studentName) {
+      return;
+    }
+    this.attempt = {
+      id: attemptId || `att_tr2_${Date.now()}`,
+      student_name: studentName,
+      student_id: studentId,
+      batch,
+      lab
+    };
+    this.isTimeUp = false;
+
     // Reset stages state
     this.stagesUnlocked = { 1: true, 2: false, 3: false, 4: false };
     this.stagesCompleted = { 1: false, 2: false, 3: false };
     this.currentStage = 1;
-    this.startTime = Date.now();
+    const existingStartTime = attemptStartTime
+      || parseInt(localStorage.getItem(`round2_start_time_${attemptId}`) || localStorage.getItem('round2_start_time') || '0', 10);
+    this.startTime = existingStartTime || Date.now();
+    localStorage.setItem(`round2_start_time_${attemptId}`, String(this.startTime));
+    localStorage.setItem('round2_start_time', String(this.startTime));
 
     this.updateStudentHeader(studentName, studentId, batch, lab);
     this.updateStepperUI();
@@ -1419,7 +1465,7 @@ class Track2Manager {
     this.saveProgress();
   }
 
-  startOrResumeAttempt(studentName, studentId, batch, lab, attemptId) {
+  startOrResumeAttempt(studentName, studentId, batch, lab, attemptId, attemptStartTime = null) {
     this.attempt = {
       id: attemptId,
       student_name: studentName,
@@ -1429,9 +1475,9 @@ class Track2Manager {
     };
     this.updateStudentHeader(studentName, studentId, batch, lab);
 
-    const restored = this.restoreProgress(attemptId);
+    const restored = this.restoreProgress(attemptId, attemptStartTime);
     if (!restored) {
-      this.resetForNewAttempt(studentName, studentId, batch, lab, attemptId);
+      this.resetForNewAttempt(studentName, studentId, batch, lab, attemptId, attemptStartTime);
       window.app?.showToast(`Joined Track 2 as ${studentName}! 30-minute timer started.`, 'success');
     } else {
       window.app?.showToast(`Welcome back, ${studentName}! Progress restored.`, 'info');

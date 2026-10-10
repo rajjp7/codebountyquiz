@@ -1093,7 +1093,7 @@ class Track1Manager {
     }
   }
 
-  restoreProgress(attemptId) {
+  restoreProgress(attemptId, attemptStartTime = null) {
     if (!attemptId) return false;
     const raw = localStorage.getItem(`hashi_tr1_progress_${attemptId}`);
     if (!raw) return false;
@@ -1102,7 +1102,12 @@ class Track1Manager {
       if (!data) return false;
 
       this.attempt = data.attempt || this.attempt;
-      this.startTime = data.startTime || Date.now();
+      const storedTime = attemptStartTime
+        || data.startTime
+        || parseInt(localStorage.getItem(`round2_start_time_${attemptId}`) || localStorage.getItem('round2_start_time') || '0', 10);
+      this.startTime = storedTime || Date.now();
+      localStorage.setItem(`round2_start_time_${attemptId}`, String(this.startTime));
+      localStorage.setItem('round2_start_time', String(this.startTime));
       this.stagesUnlocked = data.stagesUnlocked || { 1: true, 2: false, 3: false, 4: false };
       this.stagesCompleted = data.stagesCompleted || { 1: false, 2: false, 3: false };
       this.currentStage = data.currentStage || 1;
@@ -1267,11 +1272,28 @@ class Track1Manager {
       }
     });
 
+  resetForNewAttempt(studentName, studentId, batch, lab, attemptId, attemptStartTime = null) {
+    if (!attemptId || !studentName) {
+      return;
+    }
+    this.attempt = {
+      id: attemptId || `att_tr1_${Date.now()}`,
+      student_name: studentName,
+      student_id: studentId,
+      batch,
+      lab
+    };
+    this.isTimeUp = false;
+
     // Reset stages state
     this.stagesUnlocked = { 1: true, 2: false, 3: false, 4: false };
     this.stagesCompleted = { 1: false, 2: false, 3: false };
     this.currentStage = 1;
-    this.startTime = Date.now();
+    const existingStartTime = attemptStartTime
+      || parseInt(localStorage.getItem(`round2_start_time_${attemptId}`) || localStorage.getItem('round2_start_time') || '0', 10);
+    this.startTime = existingStartTime || Date.now();
+    localStorage.setItem(`round2_start_time_${attemptId}`, String(this.startTime));
+    localStorage.setItem('round2_start_time', String(this.startTime));
 
     this.updateStudentHeader(studentName, studentId, batch, lab);
     this.updateStepperUI();
@@ -1280,7 +1302,7 @@ class Track1Manager {
     this.saveProgress();
   }
 
-  startOrResumeAttempt(studentName, studentId, batch, lab, attemptId) {
+  startOrResumeAttempt(studentName, studentId, batch, lab, attemptId, attemptStartTime = null) {
     this.attempt = {
       id: attemptId,
       student_name: studentName,
@@ -1290,7 +1312,7 @@ class Track1Manager {
     };
     this.updateStudentHeader(studentName, studentId, batch, lab);
 
-    const restored = this.restoreProgress(attemptId);
+    const restored = this.restoreProgress(attemptId, attemptStartTime);
     if (!restored) {
       this.resetForNewAttempt(studentName, studentId, batch, lab, attemptId);
       window.app?.showToast(`Joined FY Track as ${studentName}! 30-minute timer started.`, 'success');
