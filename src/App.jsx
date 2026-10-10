@@ -8,6 +8,17 @@ import Admin from './components/Admin';
 
 const AUTH_KEY = 'hashi_react_session_v2';
 const draftKey = id => `hashi_react_drafts_v2:${id}`;
+const hasValue = value => value !== undefined && value !== null && String(value).trim() !== '';
+function isAnswerComplete(config, answer) {
+  if (!answer || typeof answer !== 'object' || Array.isArray(answer)) return false;
+  if (config.type === 'alphametic') {
+    return config.letters.every(letter => hasValue(answer.mapping?.[letter])) &&
+      hasValue(answer.saree_value) &&
+      hasValue(answer.quotient_value) &&
+      hasValue(answer.final_word);
+  }
+  return true;
+}
 function Contestant({ session, onExit }) {
   const [state, dispatch] = useReducer(roundReducer, initialState);
   const [config, setConfig] = useState(null), [powerups, setPowerups] = useState([]);
@@ -65,6 +76,8 @@ function Contestant({ session, onExit }) {
   const ended = attempt?.status !== 'IN_PROGRESS';
   const locked = pending || ended || remaining === 0;
   const answer = attempt?.answers?.[`stage${stage}`] || drafts[`stage${stage}`] || {};
+  const currentConfig = config?.stages?.[stage - 1];
+  const answerComplete = currentConfig ? isAnswerComplete(currentConfig, answer) : false;
   return <>
     <header className="navbar"><strong className="brand-name">HASHI</strong><nav className="nav-tabs">{['challenges', 'powerups'].map(name => <button key={name} className={`tab-btn ${tab === name ? 'active' : ''}`} disabled={pending} onClick={() => setTab(name)}>{name === 'challenges' ? 'Challenges' : `Power-Ups ${attempt?.pool_size || 0}/5`}</button>)}</nav><div className="nav-actions"><span>{attempt?.student_name} · {attempt?.track === 'track1' ? 'FY Track' : 'Track 2'}</span>{attempt && <span className="mono timer" aria-label="Time remaining">{ended ? attempt.status : `${String(Math.floor(remaining / 60)).padStart(2, '0')}:${String(remaining % 60).padStart(2, '0')}`}</span>}<button disabled={pending} onClick={onExit}>Exit</button></div></header>
     <main className="main-wrapper react-main">
@@ -76,7 +89,7 @@ function Contestant({ session, onExit }) {
           <div className="tr1-stepper">{[1, 2, 3, 4].map(n => <button key={n} className={`tr1-step-btn ${stage === n ? 'active' : ''}`} disabled={pending || (n < 4 && attempt.stages[`stage${n}`].status === 'LOCKED')} onClick={() => dispatch({ type: 'STAGE', stage: n })}>{n === 4 ? 'Review' : `${n}. ${attempt.stages[`stage${n}`].valid ? '✓ Accepted' : attempt.stages[`stage${n}`].status === 'LOCKED' ? 'Locked' : 'Challenge'}`}</button>)}</div>
           {stage === 4 ? <section><h2>Round review</h2><p>{attempt.questions_solved}/3 challenges accepted. Unverified drafts do not count toward your score or power-ups.</p>{config.stages.map((challenge, index) => <div key={challenge.id} className="dossier-card"><strong>{challenge.title}</strong><p>{attempt.stages[challenge.id].valid === true ? 'Accepted — all conditions passed' : 'Not accepted'}</p><button onClick={() => dispatch({ type: 'STAGE', stage: index + 1 })} disabled={attempt.stages[challenge.id].status === 'LOCKED'}>View challenge</button></div>)}{!ended && <button className="btn-primary" disabled={locked} onClick={() => { if (window.confirm('Finish the round now? Unaccepted answers will not count, and all answers will be locked.')) action('/api/round2/submit', {}, 'finish'); }}>Finish round and lock answers</button>}</section> : <>
             <Challenge key={`${attempt.id}-${stage}`} config={config.stages[stage - 1]} puzzle={config.puzzle || config.puzzle10x10} answer={answer} disabled={locked || attempt.stages[`stage${stage}`].valid === true} onChange={value => dispatch({ type: 'EDIT', stage, answer: value })} />
-            <div className="stage-actions-row"><span>{attempt.stages[`stage${stage}`].valid === true ? '✓ Accepted and locked' : 'Every part must be correct to unlock the next stage.'}</span>{attempt.stages[`stage${stage}`].valid === true ? <button className="btn-primary" disabled={pending} onClick={() => dispatch({ type: 'STAGE', stage: stage + 1 })}>Continue →</button> : <button className="btn-primary" disabled={locked} onClick={() => action('/api/round2/validate-stage', { stage, track: attempt.track, data: answer }, 'verify')}>{pending ? 'Verifying…' : 'Verify complete solution'}</button>}</div>
+            <div className="stage-actions-row"><span>{attempt.stages[`stage${stage}`].valid === true ? '✓ Accepted and locked' : answerComplete ? 'Every part must be correct to unlock the next stage.' : 'Fill every field before verifying your solution.'}</span>{attempt.stages[`stage${stage}`].valid === true ? <button className="btn-primary" disabled={pending} onClick={() => dispatch({ type: 'STAGE', stage: stage + 1 })}>Continue →</button> : <button className="btn-primary" disabled={locked || !answerComplete} onClick={() => action('/api/round2/validate-stage', { stage, track: attempt.track, data: answer }, 'verify')}>{pending ? 'Verifying…' : 'Verify complete solution'}</button>}</div>
           </>}
         </>}
       </>}
