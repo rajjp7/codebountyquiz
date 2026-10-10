@@ -128,6 +128,15 @@ class SoundManager {
     osc.stop(now + 0.1);
   }
 
+  // Celebration audio must never interrupt stage completion or reward updates.
+  playFanfare() {
+    try {
+      this.playVictory();
+    } catch (err) {
+      console.warn('Completion audio unavailable:', err);
+    }
+  }
+
   // Elegant warm completion chord
   playVictory() {
     if (this.muted) return;

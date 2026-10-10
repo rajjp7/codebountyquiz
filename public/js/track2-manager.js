@@ -158,9 +158,12 @@ class Track2Manager {
           const btn = document.getElementById('tr2-btn-verify-stage1');
           if (btn && !this.stagesCompleted[1]) {
             btn.classList.add('pulse-ready');
-            btn.innerHTML = '<span>⚡ Board Solved! Click to Verify & Unlock 2 Power-Ups →</span>';
+            btn.innerHTML = '<span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Board Solved! Click to Verify & Unlock 2 Power-Ups →</span>';
           }
-          window.app?.showToast('Board solved. Verify Stage 1 to unlock the next stage and power-ups.', 'success');
+          if (window.powerupsManager) {
+            window.powerupsManager.updatePool(1, ['time_cracker', 'topic_finder']);
+          }
+          window.app?.showToast('🎉 All islands satisfied! 2 Power-Ups Unlocked in Real Time (Time Cracker <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> + Topic Finder <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>)!', 'success');
         }
       });
 
@@ -259,6 +262,7 @@ class Track2Manager {
     const btn3 = document.getElementById('tr2-btn-verify-stage3');
     if (btn3) {
       if (this.stagesCompleted[3]) {
+      window.powerupsManager?.updatePool(3);
         btn3.className = 'btn-primary btn-success-verified';
         btn3.innerHTML = '<span>✓ Stage 3 Accepted • Open Power-Ups →</span>';
         btn3.disabled = false;
@@ -362,9 +366,10 @@ class Track2Manager {
         this.saveProgress();
         this.syncButtonStates();
 
+        window.powerupsManager?.updatePool(result.questions_solved || 1, result.unlocked_powerups || ['time_cracker', 'topic_finder']);
+
         window.soundManager?.playFanfare();
         window.app?.triggerConfetti();
-        window.powerupsManager?.updatePool(result.questions_solved || 1, result.unlocked_powerups || ['time_cracker', 'topic_finder']);
 
         window.app?.showAcceptedToast(1, ['Time Cracker', 'Topic Finder'], '2/4');
 
@@ -455,9 +460,10 @@ class Track2Manager {
         this.saveProgress();
         this.syncButtonStates();
 
+        window.powerupsManager?.updatePool(result.questions_solved || 2, result.unlocked_powerups || ['time_cracker', 'topic_finder', 'penalty_sweeper', 'jumper_points']);
+
         window.soundManager?.playFanfare();
         window.app?.triggerConfetti();
-        window.powerupsManager?.updatePool(result.questions_solved || 2, result.unlocked_powerups || ['time_cracker', 'topic_finder', 'penalty_sweeper', 'jumper_points']);
 
         window.app?.showAcceptedToast(2, ['Penalty Sweeper', 'Jumper Points'], '4/4');
 
@@ -503,7 +509,9 @@ class Track2Manager {
     }
 
     if (this.stagesCompleted[3]) {
-      this.submitTrack2(true);
+      window.powerupsManager?.updatePool(3);
+      this.switchStage(4);
+      window.app?.switchTab('powerups');
       return;
     }
 
@@ -572,9 +580,10 @@ class Track2Manager {
         this.saveProgress();
         this.syncButtonStates();
 
+        window.powerupsManager?.updatePool(3, result.unlocked_powerups || ['time_cracker', 'topic_finder', 'penalty_sweeper', 'jumper_points', 'sweet_sabotage']);
+
         window.soundManager?.playFanfare();
         window.app?.triggerConfetti();
-        window.powerupsManager?.updatePool(3, result.unlocked_powerups || ['time_cracker', 'topic_finder', 'penalty_sweeper', 'jumper_points']);
 
         window.app?.showAcceptedToast(3, [], '4/4');
 
@@ -756,8 +765,34 @@ class Track2Manager {
       return;
     }
 
-    const correct = this.selectedDeepfake === 'C' && this.uploadOrder.join('') === 'BACED';
-    window.app?.showToast(correct ? 'Deduction looks correct. Click Verify Stage 2 to record it.' : 'The deepfake or upload order is incorrect.', correct ? 'success' : 'error');
+    try {
+      const res = await fetch('/api/round2/validate-stage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          attempt_id: this.attempt?.id || localStorage.getItem('hashi_tr2_latest_attempt_id') || '',
+          track: 'track2',
+          stage: 2,
+          data: {
+            deepfake: this.selectedDeepfake,
+            upload_order: this.uploadOrder
+          }
+        })
+      });
+      const data = await res.json();
+      if (data.valid) {
+        if (window.powerupsManager) {
+          window.powerupsManager.updatePool(2);
+        }
+        window.app?.showToast('🎉 Question 2 Verified! 4 Power-Ups Unlocked in Real Time (+Penalty Sweeper <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> + Jumper Points <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>)!', 'success');
+        if (window.soundManager) window.soundManager.playVictory();
+      } else {
+        window.app?.showToast(data.reason, 'error');
+        if (window.soundManager) window.soundManager.playError();
+      }
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   // ------------------------------------------------------------------

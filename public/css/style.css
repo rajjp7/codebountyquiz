@@ -2378,17 +2378,20 @@ body {
    =================================================== */
 .powerups-selection-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.25rem;
   margin-top: 1.5rem;
   margin-bottom: 2rem;
 }
 
-.powerup-empty-state {
+.powerups-selection-grid .powerup-card[data-id="sweet_sabotage"] {
   grid-column: 1 / -1;
-  padding: 1.5rem;
-  color: var(--text-secondary);
-  text-align: center;
+}
+
+@media (max-width: 540px) {
+  .powerups-selection-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .powerup-card {
@@ -2409,9 +2412,18 @@ body {
 }
 
 .powerup-card.selected {
-  border: 1px solid var(--text-primary);
-  background: var(--bg-surface-elevated);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  border: 1px solid #facc15;
+  background: rgba(250, 204, 21, 0.08);
+  box-shadow: 0 0 0 1px #facc15;
+}
+
+.powerup-card.selected .powerup-status-label {
+  color: #facc15;
+}
+
+.powerup-card:focus-visible {
+  outline: 2px solid #facc15;
+  outline-offset: 4px;
 }
 
 .powerup-card.locked {
@@ -3051,8 +3063,16 @@ body {
 }
 .qps-chips-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.6rem;
+}
+.qps-chips-grid .chip-ultimate {
+  grid-column: 1 / -1;
+}
+@media (max-width: 540px) {
+  .qps-chips-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .qps-chip {
   display: flex;
@@ -3260,3 +3280,26 @@ body {
   line-height: 1.35;
 }
 
+
+/* Shared power-up SVGs in compact rewards, badges, and notifications. */
+.qps-chip-icon svg,
+.lsp-icon svg,
+.live-stage-powerup-icon svg,
+.powerup-capsule-icon svg,
+.qps-bolt svg,
+.header-capsule-chip svg,
+.qps-realtime-badge svg,
+.live-stage-powerup-status svg,
+.mpu-title svg,
+.mpu-icon svg,
+.toast svg {
+  width: 1.2em;
+  height: 1.2em;
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+.mpu-icon svg {
+  width: 22px;
+  height: 22px;
+}

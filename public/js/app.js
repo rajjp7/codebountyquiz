@@ -497,7 +497,7 @@ class App {
           <strong style="color: #10b981; font-size: 0.875rem;">Stage ${stageNumber} Verified!</strong>
         </div>
         ${pStr ? `<div style="font-size: 0.775rem; color: var(--text-secondary); margin-top: 1px;">
-          ✨ Unlocked: <strong style="color: #facc15;">${pStr}</strong> (${poolSize} in pool)
+          ${window.powerupsManager?.getIconSvg(isLast ? 'sweet_sabotage' : 'time_cracker') || ''} Unlocked: <strong style="color: #facc15;">${pStr}</strong> (${poolSize} in pool)
         </div>` : ''}
       </div>
     `;
@@ -529,10 +529,11 @@ class App {
       msgEl.textContent = message || 'Challenge successfully verified.';
 
       const powerupMeta = {
-        time_cracker: { name: 'Time Cracker', icon: '⚡', tag: 'TIME', desc: 'Deducts 20% of your total solve time in Round 3.' },
-        topic_finder: { name: 'Topic Finder', icon: '🔍', tag: 'INTEL', desc: 'Reveals the concept and algorithm needed for the question.' },
-        penalty_sweeper: { name: 'Penalty Sweeper', icon: '🛡️', tag: 'SHIELD', desc: 'Removes all penalty points on a question in the next round.' },
-        jumper_points: { name: 'Jumper Points', icon: '🚀', tag: 'BOOST', desc: 'Multiplies points for the selected question by 1.5x.' }
+        time_cracker: { name: 'Time Cracker', icon: window.powerupsManager?.getIconSvg('time_cracker') || '', tag: 'TIME', desc: 'Deducts 20% of your total solve time in Round 3.' },
+        topic_finder: { name: 'Topic Finder', icon: window.powerupsManager?.getIconSvg('topic_finder') || '', tag: 'INTEL', desc: 'Reveals the concept and algorithm needed for the question.' },
+        penalty_sweeper: { name: 'Penalty Sweeper', icon: window.powerupsManager?.getIconSvg('penalty_sweeper') || '', tag: 'SHIELD', desc: 'Removes all penalty points on a question in the next round.' },
+        jumper_points: { name: 'Jumper Points', icon: window.powerupsManager?.getIconSvg('jumper_points') || '', tag: 'BOOST', desc: 'Multiplies points for the selected question by 1.5x.' },
+        sweet_sabotage: { name: 'Sweet Sabotage', icon: window.powerupsManager?.getIconSvg('sweet_sabotage') || '', tag: 'ULTIMATE', desc: 'Use on any one participant sitting in your lab. Reduces their points by 10%!' }
       };
 
       const pList = unlockedPowerups || (stageNumber === 1 ? ['time_cracker', 'topic_finder'] : (stageNumber === 2 ? ['penalty_sweeper', 'jumper_points'] : []));
@@ -540,7 +541,7 @@ class App {
 
       let powerupsHtml = '';
       if (pList.length > 0) {
-        const headline = `✨ ${pList.length} Power-Ups Unlocked for Round 3!`;
+        const headline = (stageNumber === 3) ? `${window.powerupsManager?.getIconSvg('sweet_sabotage') || ''} Ultimate Power-Up Unlocked!` : `✨ ${pList.length} Power-Ups Unlocked for Round 3!`;
         powerupsHtml = `
           <div class="modal-powerups-unlock-block">
             <div class="mpu-headline">

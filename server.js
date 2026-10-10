@@ -1002,6 +1002,7 @@ app.get('/api/round2/attempt/:attemptId/powerups', (req, res) => {
 
 app.post('/api/round2/select-powerups', (req, res) => {
   const { attempt_id, selected_powerups } = req.body;
+  const { attempt_id, selected_powerups } = req.body;
   if (!attempt_id) return res.status(400).json({ error: 'attempt_id required' });
 
   const dataset = readJSON(DATASET_FILE, []);
@@ -1034,7 +1035,7 @@ app.post('/api/round2/select-powerups', (req, res) => {
 
   // Validation: exactly 2 power-ups required if pool size >= 2
   const requiredCount = Math.min(2, availablePool.length);
-  if (selected.length !== requiredCount) {
+  if (requiredCount === 0 || selected.length !== requiredCount || new Set(selected).size !== selected.length) {
     return res.status(400).json({
       error: `You must select exactly ${requiredCount} power-up(s) from your unlocked pool of ${availablePool.length}`
     });
@@ -1048,9 +1049,9 @@ app.post('/api/round2/select-powerups', (req, res) => {
       });
     }
   }
-  if (new Set(selected).size !== selected.length) {
-    return res.status(400).json({ error: 'Choose two different power-ups' });
-  }
+
+  // Target selection is not part of choosing Round 3 power-ups.
+  const target = null;
 
   attempt.powerups_selected = selected;
   attempt.powerups_confirmed = true;
